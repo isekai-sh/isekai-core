@@ -1,4 +1,4 @@
-# Isekai
+# Isekai Core
 
 [![CI](https://github.com/isekai-sh/isekai-core/actions/workflows/ci.yml/badge.svg)](https://github.com/isekai-sh/isekai-core/actions/workflows/ci.yml)
 
@@ -11,7 +11,7 @@ Isekai is a modern web application that helps artists manage their DeviantArt po
 - **DeviantArt Integration**: OAuth authentication and seamless posting
 - **Scheduled Publishing**: Plan and automate your DeviantArt posts
 - **Draft Management**: Organize and edit your artwork before publishing
-- **ComfyUI Integration**: Generate and manage AI artwork
+- **ComfyUI Integration**: Generate and manage AI artwork -- check out [Isekai Comfy Node](https://github.com/isekai-sh/isekai-comfy-node)
 - **Cloud Storage**: Cloudflare R2 for reliable file storage
 
 ## Tech Stack
@@ -53,34 +53,21 @@ Isekai is a modern web application that helps artists manage their DeviantArt po
 - PostgreSQL 16 (or use Docker)
 - Redis 7 (or use Docker)
 - Prisma CLI (installed via pnpm)
+- DeviantArt Application -- register your own app at https://www.deviantart.com/developers/apps
+- Cloudflare R2 credentials, free tier is enough for testing
 
-### Local Installation
+### Running the app locally
 
 ```bash
 # Clone the repository
 git clone https://github.com/isekai-sh/isekai-core.git
 cd isekai-core
 
-# Install dependencies
-pnpm install
+# Copy and edit your environment variables
+cp .env.example .env
 
-# Start database and Redis with Docker
-docker-compose up -d postgres redis
-
-# Set up environment variables
-cp apps/isekai-backend/.env.example apps/isekai-backend/.env
-cp apps/isekai-frontend/.env.example apps/isekai-frontend/.env
-cp apps/isekai-publisher/.env.example apps/isekai-publisher/.env
-cp packages/shared/.env.example packages/shared/.env
-
-
-# Edit .env files with your credentials
-
-# Run database migrations
-pnpm db:migrate
-
-# Start development servers
-pnpm dev
+# Start the Docker container
+docker compose up --build
 ```
 
 The application will be available at:
@@ -104,6 +91,26 @@ isekai/
 ```
 
 ## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start database and Redis with Docker
+docker-compose up -d postgres redis
+
+# Set up individual environment variables
+cp apps/isekai-backend/.env.example apps/isekai-backend/.env
+cp apps/isekai-frontend/.env.example apps/isekai-frontend/.env
+cp apps/isekai-publisher/.env.example apps/isekai-publisher/.env
+cp packages/shared/.env.example packages/shared/.env
+
+# Run database migrations
+pnpm db:migrate
+
+# Start development servers
+pnpm dev
+```
 
 ### Available Scripts
 
