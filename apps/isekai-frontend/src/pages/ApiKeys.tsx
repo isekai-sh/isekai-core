@@ -212,6 +212,7 @@ export function ApiKeys() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setRevokeKeyId(key.id)}
+                          aria-label="Delete API key"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
