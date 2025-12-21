@@ -1,5 +1,10 @@
 FROM node:20-alpine AS builder
 
+# Build arguments for versioning (optional)
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
@@ -34,37 +39,49 @@ COPY packages/shared ./packages/shared
 # This is fast because packages are already cached
 RUN pnpm install --frozen-lockfile
 
-# Accept build arguments for environment variables
-ARG VITE_API_URL
-ARG DEVIANTART_CLIENT_ID
-
-# Set as environment variables for Vite build
-ENV VITE_API_URL=$VITE_API_URL
-ENV DEVIANTART_CLIENT_ID=$DEVIANTART_CLIENT_ID
-
 # Build shared package first, then frontend
+# Note: No build-time environment variables needed - config is injected at runtime
 RUN pnpm --filter @isekai/shared build && \
     pnpm --filter isekai-frontend build
 
 # Production stage
-FROM node:20-alpine
+FROM nginx:alpine
 
-# Install serve for serving static files
-RUN npm install -g serve
+# Metadata labels
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.title="Isekai Frontend" \
+      org.opencontainers.image.description="Isekai frontend service with runtime configuration" \
+      org.opencontainers.image.licenses="AGPL-3.0"
 
-WORKDIR /app
+# Copy custom nginx config for SPA support
+RUN echo 'server { \
+    listen 80; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    location /config.js { \
+        expires -1; \
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# Copy built files
-COPY --from=builder /app/apps/isekai-frontend/dist ./dist
+# Copy built files from builder stage
+COPY --from=builder /app/apps/isekai-frontend/dist /usr/share/nginx/html
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
+# Copy entrypoint script
+COPY apps/isekai-frontend/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-USER nodejs
+EXPOSE 80
 
-EXPOSE 3000
-
-# Serve the built app with SPA support
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Use custom entrypoint to inject runtime config, then start nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

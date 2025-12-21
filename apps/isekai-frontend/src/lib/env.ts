@@ -17,51 +17,32 @@
 
 import { z } from "zod";
 
-const envSchema = z.object({
-  // Required
-  VITE_API_URL: z.string().min(1, "VITE_API_URL is required"),
-  VITE_DEVIANTART_CLIENT_ID: z
-    .string()
-    .min(1, "VITE_DEVIANTART_CLIENT_ID is required"),
+// NOTE: This file is kept for backwards compatibility with tests
+// The application now uses runtime configuration from window.ISEKAI_CONFIG
+// instead of build-time environment variables
 
-  // Optional
-  VITE_R2_PUBLIC_URL: z.string().url().default("https://storage.isekai.sh"),
+const envSchema = z.object({
+  // Optional - these are only used in test environment
+  // Production uses window.ISEKAI_CONFIG loaded from /config.js
+  VITE_API_URL: z.string().default("/api"),
+  VITE_DEVIANTART_CLIENT_ID: z.string().default(""),
+  VITE_R2_PUBLIC_URL: z.string().default("https://storage.isekai.sh"),
 });
 
 export type Env = z.infer<typeof envSchema>;
 
 export function validateEnv(): Env {
+  // For test environment compatibility
   const result = envSchema.safeParse(import.meta.env);
 
   if (!result.success) {
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("Environment Variable Validation Failed");
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("\nMissing or invalid environment variables:\n");
-
-    const errors = result.error.flatten();
-
-    // Show field-specific errors
-    for (const [field, messages] of Object.entries(errors.fieldErrors)) {
-      if (messages && messages.length > 0) {
-        console.error(`  ${field}:`);
-        messages.forEach((msg) => console.error(`    - ${msg}`));
-      }
-    }
-
-    // Show form-level errors if any
-    if (errors.formErrors.length > 0) {
-      console.error("\nGeneral errors:");
-      errors.formErrors.forEach((msg) => console.error(`  - ${msg}`));
-    }
-
-    console.error("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("Please check your .env file and ensure all required");
-    console.error("environment variables are set correctly.");
-    console.error("See apps/isekai-frontend/.env.example for reference.");
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-
-    throw new Error("Invalid environment variables - see console for details");
+    console.warn("Environment validation warning (tests only):", result.error);
+    // Return defaults instead of throwing
+    return {
+      VITE_API_URL: "/api",
+      VITE_DEVIANTART_CLIENT_ID: "",
+      VITE_R2_PUBLIC_URL: "https://storage.isekai.sh",
+    };
   }
 
   return result.data;

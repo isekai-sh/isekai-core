@@ -1,5 +1,10 @@
 FROM node:20-alpine AS base
 
+# Build arguments for versioning (optional)
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
@@ -41,6 +46,17 @@ RUN pnpm --filter @isekai/shared build && \
 # Production stage
 FROM node:20-alpine
 
+# Metadata labels
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.title="Isekai Publisher" \
+      org.opencontainers.image.description="Isekai publisher worker service" \
+      org.opencontainers.image.licenses="AGPL-3.0"
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
@@ -54,6 +70,9 @@ COPY apps/isekai-publisher/package.json ./apps/isekai-publisher/
 
 # Copy entire shared package from builder (needed for workspace linking)
 COPY --from=base /app/packages/shared ./packages/shared
+
+# Set dummy DATABASE_URL for prisma generate during install (doesn't actually connect)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Set NODE_ENV to production for runtime stage
 ENV NODE_ENV=production

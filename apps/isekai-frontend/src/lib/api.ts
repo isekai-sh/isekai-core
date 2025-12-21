@@ -35,7 +35,9 @@ import type {
   CreateApiKeyResponse,
 } from "@isekai/shared";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+// Runtime-only configuration - NO build-time environment variables
+// This ensures the same built image works across all environments
+const API_URL = (window as any).ISEKAI_CONFIG?.API_URL || "/api";
 
 class ApiError extends Error {
   constructor(

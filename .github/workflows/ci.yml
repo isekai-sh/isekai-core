@@ -43,7 +43,8 @@ jobs:
         env:
           # Required for tests
           DATABASE_URL: postgresql://user:password@localhost:5432/dbname
-          # Frontend env vars (required for env validation tests)
+          # Frontend env vars (optional - used as fallback during local dev)
+          # Frontend now uses runtime config, but these are kept for backwards compatibility
           VITE_API_URL: http://localhost:3000
           VITE_DEVIANTART_CLIENT_ID: test-client-id
 

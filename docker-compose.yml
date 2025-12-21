@@ -141,11 +141,16 @@ services:
     build:
       context: .
       dockerfile: apps/isekai-frontend/Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:4000/api}
-        - DEVIANTART_CLIENT_ID=${DEVIANTART_CLIENT_ID}
+      # No build args needed - config is injected at runtime
     ports:
-      - '3000:3000'
+      - '3000:80'  # Map host 3000 to container 80 (nginx)
+    environment:
+      # Runtime environment variables (injected by entrypoint script)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:4000/api}
+      VITE_DEVIANTART_CLIENT_ID: ${DEVIANTART_CLIENT_ID}
+      VITE_R2_PUBLIC_URL: ${R2_PUBLIC_URL}
+    env_file:
+      - .env
     depends_on:
       - backend
     restart: unless-stopped

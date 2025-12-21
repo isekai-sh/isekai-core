@@ -13,16 +13,14 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    // Map non-VITE_ vars to VITE_ vars
-    define: {
-      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'http://localhost:4000/api'),
-      'import.meta.env.VITE_DEVIANTART_CLIENT_ID': JSON.stringify(env.DEVIANTART_CLIENT_ID || ''),
-    },
+    // Runtime config approach - NO build-time env variable injection
+    // Configuration is loaded from /config.js at runtime instead
+    // This enables "Build Once, Run Anywhere" for Docker images
     server: {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:4000',
+          target: env.VITE_API_URL || 'http://localhost:4000',
           changeOrigin: true,
           cookieDomainRewrite: 'localhost',
           cookiePathRewrite: '/',
