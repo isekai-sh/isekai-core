@@ -747,7 +747,7 @@ export function AutomationDetail() {
                         {rule.daysOfWeek && rule.daysOfWeek.length > 0 && (
                           <p className="text-xs text-muted-foreground">
                             {rule.daysOfWeek
-                              .map((d: string) => d.slice(0, 3))
+                              .map((d: string) => d.charAt(0).toUpperCase() + d.slice(1, 3))
                               .join(", ")}
                           </p>
                         )}

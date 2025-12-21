@@ -89,7 +89,6 @@ export function AutomationList() {
         description: error.message || "Failed to create workflow",
         variant: "destructive",
       });
-      throw error;
     }
   };
 
