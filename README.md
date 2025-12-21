@@ -50,8 +50,6 @@ Isekai is a modern web application that helps artists manage their DeviantArt po
 - **Features**: Fault isolation, independent scaling, graceful shutdown
 - **Monitoring**: Health check endpoints (/health, /ready, /metrics)
 
-## Quick Start
-
 ### Prerequisites
 
 - Node.js 20+
@@ -63,7 +61,9 @@ Isekai is a modern web application that helps artists manage their DeviantArt po
 - DeviantArt Application -- register your own app at https://www.deviantart.com/developers/apps
 - Cloudflare R2 credentials, free tier is enough for testing
 
-### Running the app locally
+## Quick Start
+
+### Running Docker with pre-built image
 
 ```bash
 # Clone the repository
@@ -82,6 +82,13 @@ The application will be available at:
 - Frontend (React): http://localhost:3000
 - Backend (API): http://localhost:4000
 - Publisher (Health): http://localhost:8000
+
+### Building Docker image locally
+
+```bash
+# Development: build locally and run
+docker-compose -f docker-compose.local.yml up --build
+```
 
 ## Project Structure
 
