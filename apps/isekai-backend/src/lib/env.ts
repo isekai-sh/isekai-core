@@ -41,6 +41,8 @@ const envSchema = z.object({
   // Security
   SESSION_SECRET: z.string().min(1, "SESSION_SECRET is required"),
   COOKIE_DOMAIN: z.string().optional(),
+  SESSION_MAX_AGE_DAYS: z.coerce.number().int().positive().default(7),
+  REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().int().positive().default(90),
 
   // Application
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),

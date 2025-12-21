@@ -121,7 +121,7 @@ async function startServer() {
         httpOnly: true,
         sameSite: "lax",
         domain: env.COOKIE_DOMAIN, // Set to ".yourdomain.com" to share cookies across subdomains
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        maxAge: 1000 * 60 * 60 * 24 * env.SESSION_MAX_AGE_DAYS,
       },
     })
   );

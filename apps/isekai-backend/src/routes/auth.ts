@@ -19,6 +19,7 @@ import { Router } from "express";
 import { prisma } from "../db/index.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { logger } from "../lib/logger.js";
+import { env } from "../lib/env.js";
 
 const router = Router();
 
@@ -109,8 +110,8 @@ router.get("/deviantart/callback", async (req, res) => {
     const userData = await userResponse.json();
     const tokenExpiresAt = new Date(Date.now() + expires_in * 1000);
     const refreshTokenExpiresAt = new Date(
-      Date.now() + 90 * 24 * 60 * 60 * 1000
-    ); // 90 days
+      Date.now() + env.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+    );
 
     // Upsert user
     const existingUser = await prisma.user.findUnique({

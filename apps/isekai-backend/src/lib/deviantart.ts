@@ -22,6 +22,7 @@ import type { UploadMode } from "@isekai/shared";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import https from "https";
 import { logger } from "./logger.js";
+import { env } from "./env.js";
 
 const DEVIANTART_TOKEN_URL = "https://www.deviantart.com/oauth2/token";
 const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
@@ -107,7 +108,9 @@ export async function refreshTokenIfNeeded(user: User): Promise<string> {
   const tokenExpiresAt = new Date(Date.now() + expires_in * 1000);
 
   // When we successfully refresh, we also get a NEW refresh token with extended expiry
-  const refreshTokenExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
+  const refreshTokenExpiresAt = new Date(
+    Date.now() + env.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+  );
 
   await prisma.user.update({
     where: { id: user.id },
