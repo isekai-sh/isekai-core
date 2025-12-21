@@ -120,7 +120,7 @@ async function startServer() {
         secure: env.NODE_ENV === "production" && !env.FRONTEND_URL.startsWith("http://localhost"),
         httpOnly: true,
         sameSite: "lax",
-        domain: env.NODE_ENV === "production" && !env.FRONTEND_URL.includes("localhost") ? ".isekai.sh" : undefined, // Share cookie across subdomains in production
+        domain: env.COOKIE_DOMAIN, // Set to ".yourdomain.com" to share cookies across subdomains
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       },
     })

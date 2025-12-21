@@ -40,6 +40,7 @@ const envSchema = z.object({
 
   // Security
   SESSION_SECRET: z.string().min(1, "SESSION_SECRET is required"),
+  COOKIE_DOMAIN: z.string().optional(),
 
   // Application
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
