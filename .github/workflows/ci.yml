@@ -43,6 +43,9 @@ jobs:
         env:
           # Required for tests
           DATABASE_URL: postgresql://user:password@localhost:5432/dbname
+          # Frontend env vars (required for env validation tests)
+          VITE_API_URL: http://localhost:3000
+          VITE_DEVIANTART_CLIENT_ID: test-client-id
 
       - name: Build all packages
         run: pnpm build

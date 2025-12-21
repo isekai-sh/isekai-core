@@ -43,7 +43,9 @@ describe('getTimezoneName', () => {
   it('should return a timezone name', () => {
     const result = getTimezoneName();
     expect(typeof result).toBe('string');
-    expect(result).toMatch(/\//); // Timezone names have format like "America/New_York"
+    expect(result.length).toBeGreaterThan(0);
+    // Timezone can be "UTC" or "America/New_York" format
+    expect(result).toMatch(/^[A-Za-z_\/]+$/);
   });
 });
 
