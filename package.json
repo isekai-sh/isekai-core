@@ -17,6 +17,12 @@
     "build:services": "pnpm --parallel --filter isekai-backend --filter isekai-publisher build",
     "start:backend": "pnpm --filter isekai-backend start",
     "start:publisher": "pnpm --filter isekai-publisher start",
+    "test": "pnpm -r run test",
+    "test:ui": "pnpm -r --parallel run test:ui",
+    "test:coverage": "pnpm -r run test:coverage",
+    "test:backend": "pnpm --filter isekai-backend test",
+    "test:publisher": "pnpm --filter isekai-publisher test",
+    "test:watch": "pnpm --filter isekai-backend test:watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
@@ -45,9 +51,12 @@
     "@eslint/js": "^9.39.1",
     "@faker-js/faker": "^10.1.0",
     "@types/node-cron": "^3.0.11",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "eslint": "^9.39.1",
     "globals": "^15.15.0",
     "prettier": "^3.7.4",
-    "typescript-eslint": "^8.48.1"
+    "typescript-eslint": "^8.48.1",
+    "vitest": "^4.0.16"
   }
 }
