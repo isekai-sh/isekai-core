@@ -76,11 +76,11 @@ vi.mock('@isekai/shared/storage', () => ({
 import {
   validateFileType,
   validateFileSize,
-  generateR2Key,
+  generateStorageKey,
   getPublicUrl,
   checkStorageLimit,
-  uploadToR2,
-  deleteFromR2,
+  uploadToStorage,
+  deleteFromStorage,
   getPresignedUploadUrl,
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
@@ -157,27 +157,27 @@ describe('upload-service', () => {
     });
   });
 
-  describe('generateR2Key', () => {
+  describe('generateStorageKey', () => {
     it('should generate key with correct structure', () => {
-      const key = generateR2Key('user-123', 'my-image.jpg');
+      const key = generateStorageKey('user-123', 'my-image.jpg');
       expect(key).toMatch(/^deviations\/user-123\/my-image---[a-f0-9]{8}\.jpg$/);
     });
 
     it('should sanitize filename with special characters', () => {
-      const key = generateR2Key('user-123', 'my file!@#$%.jpg');
+      const key = generateStorageKey('user-123', 'my file!@#$%.jpg');
       // Special characters are replaced with hyphens
       expect(key).toMatch(/^deviations\/user-123\/my-file-+---[a-f0-9]{8}\.jpg$/);
     });
 
     it('should handle different file extensions', () => {
-      expect(generateR2Key('user-123', 'file.png')).toMatch(/\.png$/);
-      expect(generateR2Key('user-123', 'file.gif')).toMatch(/\.gif$/);
-      expect(generateR2Key('user-123', 'file.webp')).toMatch(/\.webp$/);
-      expect(generateR2Key('user-123', 'file.mp4')).toMatch(/\.mp4$/);
+      expect(generateStorageKey('user-123', 'file.png')).toMatch(/\.png$/);
+      expect(generateStorageKey('user-123', 'file.gif')).toMatch(/\.gif$/);
+      expect(generateStorageKey('user-123', 'file.webp')).toMatch(/\.webp$/);
+      expect(generateStorageKey('user-123', 'file.mp4')).toMatch(/\.mp4$/);
     });
 
     it('should include user ID in path', () => {
-      const key = generateR2Key('user-456', 'file.jpg');
+      const key = generateStorageKey('user-456', 'file.jpg');
       expect(key).toMatch(/^deviations\/user-456\//);
     });
   });
@@ -235,13 +235,13 @@ describe('upload-service', () => {
     });
   });
 
-  describe('uploadToR2', () => {
+  describe('uploadToStorage', () => {
     it('should upload file using storage service', async () => {
       const buffer = Buffer.from('test file content');
       const key = 'deviations/user-123/test.jpg';
       const mimeType = 'image/jpeg';
 
-      await uploadToR2(key, buffer, mimeType);
+      await uploadToStorage(key, buffer, mimeType);
 
       expect(mockUpload).toHaveBeenCalledWith(key, buffer, mimeType);
     });
@@ -249,28 +249,28 @@ describe('upload-service', () => {
     it('should handle different mime types', async () => {
       const buffer = Buffer.from('video data');
 
-      await uploadToR2('video.mp4', buffer, 'video/mp4');
+      await uploadToStorage('video.mp4', buffer, 'video/mp4');
       expect(mockUpload).toHaveBeenCalledWith('video.mp4', buffer, 'video/mp4');
 
-      await uploadToR2('image.png', buffer, 'image/png');
+      await uploadToStorage('image.png', buffer, 'image/png');
       expect(mockUpload).toHaveBeenCalledWith('image.png', buffer, 'image/png');
     });
   });
 
-  describe('deleteFromR2', () => {
+  describe('deleteFromStorage', () => {
     it('should delete file using storage service', async () => {
       const key = 'deviations/user-123/test.jpg';
 
-      await deleteFromR2(key);
+      await deleteFromStorage(key);
 
       expect(mockDelete).toHaveBeenCalledWith(key);
     });
 
     it('should handle different keys', async () => {
-      await deleteFromR2('path/to/file.jpg');
+      await deleteFromStorage('path/to/file.jpg');
       expect(mockDelete).toHaveBeenCalledWith('path/to/file.jpg');
 
-      await deleteFromR2('simple.png');
+      await deleteFromStorage('simple.png');
       expect(mockDelete).toHaveBeenCalledWith('simple.png');
     });
   });

@@ -329,7 +329,7 @@ export function EditDeviation() {
                     className="relative aspect-square rounded-lg overflow-hidden border"
                   >
                     <img
-                      src={file.r2Url}
+                      src={file.storageUrl}
                       alt={file.originalFilename}
                       className="w-full h-full object-cover"
                     />

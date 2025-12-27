@@ -20,16 +20,16 @@ const connection = new Redis(redisUrl, {
   } : undefined,
 });
 
-export interface R2CleanupJobData {
+export interface StorageCleanupJobData {
   deviationId: string;
   userId: string;
 }
 
 /**
- * Queue for cleaning up R2 files after successful publish
+ * Queue for cleaning up storage files after successful publish
  * Separate from main publisher queue to allow independent retries
  */
-export const r2CleanupQueue = new Queue<R2CleanupJobData>('r2-cleanup', {
+export const storageCleanupQueue = new Queue<StorageCleanupJobData>('storage-cleanup', {
   connection,
   defaultJobOptions: {
     attempts: 5,
@@ -49,17 +49,17 @@ export const r2CleanupQueue = new Queue<R2CleanupJobData>('r2-cleanup', {
 });
 
 /**
- * Worker to process R2 cleanup jobs
- * Deletes files from R2, updates storage quota, and removes DB records
+ * Worker to process storage cleanup jobs
+ * Deletes files from storage, updates storage quota, and removes DB records
  */
-export const r2CleanupWorker = new Worker<R2CleanupJobData>(
-  'r2-cleanup',
-  async (job: Job<R2CleanupJobData>) => {
+export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
+  'storage-cleanup',
+  async (job: Job<StorageCleanupJobData>) => {
     const { deviationId, userId } = job.data;
     const attemptNumber = job.attemptsMade + 1;
     const logger = StructuredLogger.createJobLogger(job);
 
-    logger.info('Starting R2 cleanup job', {
+    logger.info('Starting storage cleanup job', {
       deviationId,
       userId,
       attemptNumber,
@@ -77,7 +77,7 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
 
     const totalSize = files.reduce((sum, f) => sum + f.fileSize, 0);
 
-    logger.info('Starting R2 file deletion', {
+    logger.info('Starting storage file deletion', {
       fileCount: files.length,
       totalSizeBytes: totalSize,
     });
@@ -86,15 +86,15 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
     const deletionResults = await Promise.allSettled(
       files.map(async (file) => {
         try {
-          await deleteFromStorage(file.r2Key);
+          await deleteFromStorage(file.storageKey);
           logger.debug('Deleted file from storage', {
-            r2Key: file.r2Key,
+            storageKey: file.storageKey,
             fileName: file.originalFilename,
           });
-          return { success: true, key: file.r2Key };
+          return { success: true, key: file.storageKey };
         } catch (error) {
           logger.error('Failed to delete file from storage', error, {
-            r2Key: file.r2Key,
+            storageKey: file.storageKey,
             fileName: file.originalFilename,
           });
           throw error; // Trigger job retry
@@ -115,7 +115,7 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
       where: { deviationId },
     });
 
-    logger.info('R2 cleanup completed successfully', {
+    logger.info('Storage cleanup completed successfully', {
       deviationId,
       filesDeleted: files.length,
       bytesFreed: totalSize,
@@ -133,36 +133,36 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
 );
 
 /**
- * Queue R2 cleanup job for a published deviation
+ * Queue storage cleanup job for a published deviation
  * Uses jobId to prevent duplicate cleanup jobs for the same deviation
  */
-export async function queueR2Cleanup(
+export async function queueStorageCleanup(
   deviationId: string,
   userId: string
 ): Promise<void> {
-  await r2CleanupQueue.add(
+  await storageCleanupQueue.add(
     'cleanup',
     { deviationId, userId },
     {
-      jobId: `r2-cleanup-${deviationId}`, // Prevent duplicates
+      jobId: `storage-cleanup-${deviationId}`, // Prevent duplicates
     }
   );
 }
 
 // Event handlers for monitoring
-r2CleanupWorker.on('completed', (job) => {
+storageCleanupWorker.on('completed', (job) => {
   const logger = StructuredLogger.createJobLogger(job);
-  logger.info('R2 cleanup job completed', {
+  logger.info('Storage cleanup job completed', {
     deviationId: job.data.deviationId,
     filesDeleted: job.returnvalue?.filesDeleted,
     bytesFreed: job.returnvalue?.bytesFreed,
   });
 });
 
-r2CleanupWorker.on('failed', (job, error) => {
+storageCleanupWorker.on('failed', (job, error) => {
   if (job) {
     const logger = StructuredLogger.createJobLogger(job);
-    logger.error('R2 cleanup job failed', error, {
+    logger.error('Storage cleanup job failed', error, {
       deviationId: job.data.deviationId,
       attemptsMade: job.attemptsMade,
       maxAttempts: job.opts.attempts,
@@ -170,6 +170,6 @@ r2CleanupWorker.on('failed', (job, error) => {
   }
 });
 
-r2CleanupWorker.on('stalled', (jobId) => {
-  console.error(`R2 cleanup job ${jobId} has stalled`);
+storageCleanupWorker.on('stalled', (jobId) => {
+  console.error(`Storage cleanup job ${jobId} has stalled`);
 });

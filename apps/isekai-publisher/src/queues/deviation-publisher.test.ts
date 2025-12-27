@@ -83,10 +83,10 @@ vi.mock('../lib/deviantart.js', () => ({
   publishToDeviantArt: (...args: any[]) => mockPublishToDeviantArt(...args),
 }));
 
-// Mock queueR2Cleanup
-const mockQueueR2Cleanup = vi.fn();
-vi.mock('./r2-cleanup.js', () => ({
-  queueR2Cleanup: (...args: any[]) => mockQueueR2Cleanup(...args),
+// Mock queueStorageCleanup
+const mockQueueStorageCleanup = vi.fn();
+vi.mock('./storage-cleanup.js', () => ({
+  queueStorageCleanup: (...args: any[]) => mockQueueStorageCleanup(...args),
 }));
 
 // Mock email service
@@ -244,7 +244,7 @@ describe('deviation-publisher', () => {
           CircuitBreaker: expect.any(Object),
           withCircuitBreaker: expect.any(Function),
           publishToDeviantArt: expect.any(Function),
-          queueR2Cleanup: expect.any(Function),
+          queueStorageCleanup: expect.any(Function),
           errorCategorizer: expect.any(Object),
         })
       );
@@ -415,10 +415,10 @@ describe('deviation-publisher', () => {
       expect(mockSendRefreshTokenExpiredJobNotification).not.toHaveBeenCalled();
     });
 
-    it('should pass queueR2Cleanup function to publishDeviationJob', async () => {
+    it('should pass queueStorageCleanup function to publishDeviationJob', async () => {
       mockPublishDeviationJob.mockImplementation(async (job, deps) => {
-        // Test that queueR2Cleanup works
-        await deps.queueR2Cleanup('dev-456', 'user-456');
+        // Test that queueStorageCleanup works
+        await deps.queueStorageCleanup('dev-456', 'user-456');
         return {
           success: true,
           results: [],
@@ -438,7 +438,7 @@ describe('deviation-publisher', () => {
 
       await workerProcessor(mockJob);
 
-      expect(mockQueueR2Cleanup).toHaveBeenCalledWith('dev-456', 'user-456');
+      expect(mockQueueStorageCleanup).toHaveBeenCalledWith('dev-456', 'user-456');
     });
   });
 
@@ -1106,15 +1106,15 @@ describe('deviation-publisher', () => {
       expect(deps).toHaveProperty('CircuitBreaker');
       expect(deps).toHaveProperty('withCircuitBreaker');
       expect(deps).toHaveProperty('publishToDeviantArt');
-      expect(deps).toHaveProperty('queueR2Cleanup');
+      expect(deps).toHaveProperty('queueStorageCleanup');
       expect(deps).toHaveProperty('errorCategorizer');
     });
 
-    it('should provide working queueR2Cleanup function', async () => {
-      let capturedQueueR2Cleanup: Function | null = null;
+    it('should provide working queueStorageCleanup function', async () => {
+      let capturedQueueStorageCleanup: Function | null = null;
 
       mockPublishDeviationJob.mockImplementation(async (job, deps) => {
-        capturedQueueR2Cleanup = deps.queueR2Cleanup;
+        capturedQueueStorageCleanup = deps.queueStorageCleanup;
         return { success: true, results: [] };
       });
 
@@ -1131,11 +1131,11 @@ describe('deviation-publisher', () => {
 
       await workerProcessor(mockJob);
 
-      expect(capturedQueueR2Cleanup).toBeTruthy();
+      expect(capturedQueueStorageCleanup).toBeTruthy();
 
       // Test the captured function
-      await capturedQueueR2Cleanup!('test-dev-id', 'test-user-id');
-      expect(mockQueueR2Cleanup).toHaveBeenCalledWith('test-dev-id', 'test-user-id');
+      await capturedQueueStorageCleanup!('test-dev-id', 'test-user-id');
+      expect(mockQueueStorageCleanup).toHaveBeenCalledWith('test-dev-id', 'test-user-id');
     });
   });
 

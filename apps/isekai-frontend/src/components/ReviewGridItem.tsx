@@ -62,9 +62,9 @@ export function ReviewGridItem({
 
         {/* Thumbnail */}
         <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-muted">
-          {deviation.files?.[0]?.r2Url ? (
+          {deviation.files?.[0]?.storageUrl ? (
             <img
-              src={deviation.files[0].r2Url}
+              src={deviation.files[0].storageUrl}
               alt={deviation.title}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -115,9 +115,9 @@ export function ReviewGridItem({
       )}
 
       {/* Thumbnail image */}
-      {deviation.files?.[0]?.r2Url ? (
+      {deviation.files?.[0]?.storageUrl ? (
         <img
-          src={deviation.files[0].r2Url}
+          src={deviation.files[0].storageUrl}
           alt={deviation.title}
           className="w-full h-full object-cover absolute inset-0"
           loading="lazy"

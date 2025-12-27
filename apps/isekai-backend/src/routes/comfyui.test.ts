@@ -34,8 +34,8 @@ vi.mock('../db/index.js', () => ({
 vi.mock('../lib/upload-service.js', () => ({
   validateFileType: vi.fn(),
   validateFileSize: vi.fn(),
-  generateR2Key: vi.fn(),
-  uploadToR2: vi.fn(),
+  generateStorageKey: vi.fn(),
+  uploadToStorage: vi.fn(),
   getPublicUrl: vi.fn(),
   checkStorageLimit: vi.fn(),
 }));
@@ -56,8 +56,8 @@ import { prisma } from '../db/index.js';
 import {
   validateFileType,
   validateFileSize,
-  generateR2Key,
-  uploadToR2,
+  generateStorageKey,
+  uploadToStorage,
   getPublicUrl,
 } from '../lib/upload-service.js';
 import sharp from 'sharp';
@@ -88,8 +88,8 @@ describe('comfyui routes', () => {
     id: 'file-123',
     deviationId: 'deviation-123',
     originalFilename: 'test.jpg',
-    r2Key: 'deviations/user-123/test---abc123.jpg',
-    r2Url: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
+    storageKey: 'deviations/user-123/test---abc123.jpg',
+    storageUrl: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
     mimeType: 'image/jpeg',
     fileSize: 1024,
     width: 1920,
@@ -137,8 +137,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -153,8 +153,8 @@ describe('comfyui routes', () => {
 
       expect(validateFileType).toHaveBeenCalledWith('image/jpeg');
       expect(validateFileSize).toHaveBeenCalledWith(1024);
-      expect(generateR2Key).toHaveBeenCalledWith('user-123', 'test.jpg');
-      expect(uploadToR2).toHaveBeenCalledWith(
+      expect(generateStorageKey).toHaveBeenCalledWith('user-123', 'test.jpg');
+      expect(uploadToStorage).toHaveBeenCalledWith(
         'deviations/user-123/test---abc123.jpg',
         expect.any(Buffer),
         'image/jpeg'
@@ -177,8 +177,8 @@ describe('comfyui routes', () => {
         data: {
           deviationId: 'deviation-123',
           originalFilename: 'test.jpg',
-          r2Key: 'deviations/user-123/test---abc123.jpg',
-          r2Url: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
+          storageKey: 'deviations/user-123/test---abc123.jpg',
+          storageUrl: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
           mimeType: 'image/jpeg',
           fileSize: 1024,
           width: 1920,
@@ -284,8 +284,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/my-artwork---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/my-artwork---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/my-artwork---abc123.jpg');
 
       const mockSharpInstance = {
@@ -323,8 +323,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -361,8 +361,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -402,8 +402,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -441,8 +441,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -480,8 +480,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -525,8 +525,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.mp4');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.mp4');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.mp4');
 
       (prisma.deviation.create as any).mockResolvedValue(mockDeviation);
@@ -565,8 +565,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -610,8 +610,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {
@@ -672,8 +672,8 @@ describe('comfyui routes', () => {
 
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (uploadToR2 as any).mockResolvedValue(undefined);
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (uploadToStorage as any).mockResolvedValue(undefined);
       (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
 
       const mockSharpInstance = {

@@ -392,9 +392,9 @@ function ScheduledDeviationCard({
       {/* Thumbnail */}
       {deviation.files &&
       deviation.files.length > 0 &&
-      deviation.files[0].r2Url ? (
+      deviation.files[0].storageUrl ? (
         <img
-          src={deviation.files[0].r2Url}
+          src={deviation.files[0].storageUrl}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
         />
@@ -453,9 +453,9 @@ function PublishingDeviationCard({ deviation }: { deviation: Deviation }) {
       {/* Thumbnail */}
       {deviation.files &&
       deviation.files.length > 0 &&
-      deviation.files[0].r2Url ? (
+      deviation.files[0].storageUrl ? (
         <img
-          src={deviation.files[0].r2Url}
+          src={deviation.files[0].storageUrl}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
         />
@@ -497,9 +497,9 @@ function FailedDeviationCard({
       {/* Thumbnail */}
       {deviation.files &&
       deviation.files.length > 0 &&
-      deviation.files[0].r2Url ? (
+      deviation.files[0].storageUrl ? (
         <img
-          src={deviation.files[0].r2Url}
+          src={deviation.files[0].storageUrl}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
         />

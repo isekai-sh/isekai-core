@@ -154,9 +154,9 @@ export function ReviewDetailPanel({
               className="relative rounded-lg bg-muted overflow-hidden cursor-pointer hover:opacity-90 transition-opacity group"
               onClick={() => setLightboxOpen(true)}
             >
-              {deviation.files?.[0]?.r2Url && (
+              {deviation.files?.[0]?.storageUrl && (
                 <img
-                  src={deviation.files[0].r2Url}
+                  src={deviation.files[0].storageUrl}
                   alt={deviation.title}
                   className="w-full h-auto"
                 />
@@ -323,14 +323,14 @@ export function ReviewDetailPanel({
       </Card>
 
       {/* Lightbox overlay */}
-      {lightboxOpen && deviation.files?.[0]?.r2Url && (
+      {lightboxOpen && deviation.files?.[0]?.storageUrl && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <div className="relative max-w-full max-h-full">
             <img
-              src={deviation.files[0].r2Url}
+              src={deviation.files[0].storageUrl}
               alt={deviation.title}
               className="max-w-full max-h-[95vh] object-contain"
               onClick={(e) => e.stopPropagation()}

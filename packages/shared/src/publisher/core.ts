@@ -430,13 +430,13 @@ export async function publishDeviationJob(
         await autoCreateSaleQueue(deviation, tx, logger);
       });
 
-      // STEP 6: Queue R2 cleanup (fire-and-forget, separate queue with retries)
-      // Don't fail the job if R2 cleanup queueing fails - the deviation is already published
+      // STEP 6: Queue storage cleanup (fire-and-forget, separate queue with retries)
+      // Don't fail the job if storage cleanup queueing fails - the deviation is already published
       try {
-        await deps.queueR2Cleanup(deviationId, userId);
+        await deps.queueStorageCleanup(deviationId, userId);
       } catch (cleanupError) {
         logger.warn(
-          "Failed to queue R2 cleanup - will not retry, files will remain in R2",
+          "Failed to queue storage cleanup - will not retry, files will remain in storage",
           {
             cleanupError:
               cleanupError instanceof Error

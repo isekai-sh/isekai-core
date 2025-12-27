@@ -22,9 +22,9 @@ import { AppError } from "../middleware/error.js";
 import {
   validateFileType,
   validateFileSize,
-  generateR2Key,
+  generateStorageKey,
   getPublicUrl,
-  deleteFromR2,
+  deleteFromStorage,
   getPresignedUploadUrl,
 } from "../lib/upload-service.js";
 
@@ -53,14 +53,14 @@ router.post("/presigned", async (req, res) => {
   }
 
   const fileId = randomUUID();
-  const r2Key = generateR2Key(user.id, filename);
+  const storageKey = generateStorageKey(user.id, filename);
 
-  const uploadUrl = await getPresignedUploadUrl(r2Key, contentType, fileSize);
+  const uploadUrl = await getPresignedUploadUrl(storageKey, contentType, fileSize);
 
   res.json({
     uploadUrl,
     fileId,
-    r2Key,
+    storageKey,
   });
 });
 
@@ -70,7 +70,7 @@ router.post("/complete", async (req, res) => {
   const {
     fileId,
     deviationId,
-    r2Key,
+    storageKey,
     originalFilename,
     mimeType,
     fileSize,
@@ -82,7 +82,7 @@ router.post("/complete", async (req, res) => {
   if (
     !fileId ||
     !deviationId ||
-    !r2Key ||
+    !storageKey ||
     !originalFilename ||
     !mimeType ||
     !fileSize
@@ -90,7 +90,7 @@ router.post("/complete", async (req, res) => {
     throw new AppError(400, "Missing required fields");
   }
 
-  const r2Url = getPublicUrl(r2Key);
+  const storageUrl = getPublicUrl(storageKey);
 
   // Get current file count for this deviation to set sort order
   const existingFiles = await prisma.deviationFile.findMany({
@@ -107,8 +107,8 @@ router.post("/complete", async (req, res) => {
       id: fileId,
       deviationId,
       originalFilename,
-      r2Key,
-      r2Url,
+      storageKey,
+      storageUrl,
       mimeType,
       fileSize,
       width,
@@ -139,7 +139,7 @@ router.delete("/:fileId", async (req, res) => {
 
   // Delete from storage
   try {
-    await deleteFromR2(file.r2Key);
+    await deleteFromStorage(file.storageKey);
   } catch (error) {
     console.error("Failed to delete from storage:", error);
     // Continue with DB deletion even if storage fails
@@ -180,7 +180,7 @@ router.post("/batch-delete", async (req, res) => {
   }
 
   // Delete from storage (parallel, ignore failures)
-  await Promise.allSettled(files.map((file) => deleteFromR2(file.r2Key)));
+  await Promise.allSettled(files.map((file) => deleteFromStorage(file.storageKey)));
 
   // Delete from DB
   await prisma.deviationFile.deleteMany({

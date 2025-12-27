@@ -275,7 +275,7 @@ export const deviations = {
 // Uploads
 export const uploads = {
   getPresignedUrl: (filename: string, contentType: string, fileSize: number) =>
-    request<{ uploadUrl: string; fileId: string; r2Key: string }>(
+    request<{ uploadUrl: string; fileId: string; storageKey: string }>(
       "/uploads/presigned",
       {
         method: "POST",
@@ -285,7 +285,7 @@ export const uploads = {
   complete: (
     fileId: string,
     deviationId: string,
-    r2Key: string,
+    storageKey: string,
     originalFilename: string,
     mimeType: string,
     fileSize: number,
@@ -298,7 +298,7 @@ export const uploads = {
       body: JSON.stringify({
         fileId,
         deviationId,
-        r2Key,
+        storageKey,
         originalFilename,
         mimeType,
         fileSize,

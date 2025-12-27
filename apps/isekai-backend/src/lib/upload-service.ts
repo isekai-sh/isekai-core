@@ -28,13 +28,14 @@ import {
   type StorageService,
 } from "@isekai/shared/storage";
 
-// Re-export for backward compatibility
+// Re-export utilities and storage key generator
 export {
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
   validateFileType,
   validateFileSize,
   checkStorageLimit,
+  generateStorageKey,
 };
 
 // Create storage service singleton
@@ -64,17 +65,9 @@ export function getBucket(): string {
 }
 
 /**
- * Generate storage key with sanitized filename.
- * Alias for generateStorageKey for backward compatibility.
- */
-export function generateR2Key(userId: string, filename: string): string {
-  return generateStorageKey(userId, filename);
-}
-
-/**
  * Upload file directly to storage.
  */
-export async function uploadToR2(
+export async function uploadToStorage(
   key: string,
   buffer: Buffer,
   mimeType: string
@@ -85,7 +78,7 @@ export async function uploadToR2(
 /**
  * Delete file from storage.
  */
-export async function deleteFromR2(key: string): Promise<void> {
+export async function deleteFromStorage(key: string): Promise<void> {
   return getStorageService().delete(key);
 }
 

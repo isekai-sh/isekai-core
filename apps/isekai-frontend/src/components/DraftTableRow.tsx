@@ -209,9 +209,9 @@ export function DraftTableRow({
 
       {/* Preview */}
       <TableCell>
-        {draft.files && draft.files.length > 0 && draft.files[0].r2Url ? (
+        {draft.files && draft.files.length > 0 && draft.files[0].storageUrl ? (
           <img
-            src={draft.files[0].r2Url}
+            src={draft.files[0].storageUrl}
             alt={draft.title}
             className="w-20 h-20 object-cover rounded"
           />

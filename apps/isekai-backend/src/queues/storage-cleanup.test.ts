@@ -19,12 +19,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Job } from 'bullmq';
 
 // Mock dependencies
-const mockDeleteFromR2 = vi.fn();
+const mockDeleteFromStorage = vi.fn();
 const mockPrismaDeviationFileFindMany = vi.fn();
 const mockPrismaDeviationFileDeleteMany = vi.fn();
 
 vi.mock('../lib/upload-service.js', () => ({
-  deleteFromR2: mockDeleteFromR2,
+  deleteFromStorage: mockDeleteFromStorage,
 }));
 
 vi.mock('../db/index.js', () => ({
@@ -81,7 +81,7 @@ vi.mock('../lib/structured-logger.js', () => ({
   },
 }));
 
-describe('r2-cleanup', () => {
+describe('storage-cleanup', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     capturedWorkerProcessor = null;
@@ -90,7 +90,7 @@ describe('r2-cleanup', () => {
 
     // Import the module to initialize everything
     await vi.resetModules();
-    await import('./r2-cleanup.js');
+    await import('./storage-cleanup.js');
   });
 
   describe('r2CleanupWorker processor', () => {
@@ -115,7 +115,7 @@ describe('r2-cleanup', () => {
       expect(mockPrismaDeviationFileFindMany).toHaveBeenCalledWith({
         where: { deviationId: 'dev-123' },
       });
-      expect(mockDeleteFromR2).not.toHaveBeenCalled();
+      expect(mockDeleteFromStorage).not.toHaveBeenCalled();
       expect(mockPrismaDeviationFileDeleteMany).not.toHaveBeenCalled();
       expect(mockLoggerInfo).toHaveBeenCalledWith(
         'No files to clean up for published deviation',
@@ -128,21 +128,21 @@ describe('r2-cleanup', () => {
         {
           id: 'file-1',
           deviationId: 'dev-123',
-          r2Key: 'uploads/file1.png',
+          storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
         },
         {
           id: 'file-2',
           deviationId: 'dev-123',
-          r2Key: 'uploads/file2.png',
+          storageKey: 'uploads/file2.png',
           originalFilename: 'file2.png',
           fileSize: 2048,
         },
       ];
 
       mockPrismaDeviationFileFindMany.mockResolvedValue(mockFiles);
-      mockDeleteFromR2.mockResolvedValue(undefined);
+      mockDeleteFromStorage.mockResolvedValue(undefined);
       mockPrismaDeviationFileDeleteMany.mockResolvedValue({ count: 2 });
 
       const mockJob: Partial<Job> = {
@@ -160,14 +160,14 @@ describe('r2-cleanup', () => {
         filesDeleted: 2,
         bytesFreed: 3072,
       });
-      expect(mockDeleteFromR2).toHaveBeenCalledTimes(2);
-      expect(mockDeleteFromR2).toHaveBeenCalledWith('uploads/file1.png');
-      expect(mockDeleteFromR2).toHaveBeenCalledWith('uploads/file2.png');
+      expect(mockDeleteFromStorage).toHaveBeenCalledTimes(2);
+      expect(mockDeleteFromStorage).toHaveBeenCalledWith('uploads/file1.png');
+      expect(mockDeleteFromStorage).toHaveBeenCalledWith('uploads/file2.png');
       expect(mockPrismaDeviationFileDeleteMany).toHaveBeenCalledWith({
         where: { deviationId: 'dev-123' },
       });
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        'R2 cleanup completed successfully',
+        'Storage cleanup completed successfully',
         {
           deviationId: 'dev-123',
           filesDeleted: 2,
@@ -181,14 +181,14 @@ describe('r2-cleanup', () => {
         {
           id: 'file-1',
           deviationId: 'dev-123',
-          r2Key: 'uploads/file1.png',
+          storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
         },
       ];
 
       mockPrismaDeviationFileFindMany.mockResolvedValue(mockFiles);
-      mockDeleteFromR2.mockRejectedValue(new Error('S3 error'));
+      mockDeleteFromStorage.mockRejectedValue(new Error('S3 error'));
 
       const mockJob: Partial<Job> = {
         id: 'job-123',
@@ -200,7 +200,7 @@ describe('r2-cleanup', () => {
       };
 
       await expect(capturedWorkerProcessor!(mockJob as Job)).rejects.toThrow(
-        'Failed to delete 1 of 1 files from R2'
+        'Failed to delete 1 of 1 files from storage'
       );
       expect(mockPrismaDeviationFileDeleteMany).not.toHaveBeenCalled();
       expect(mockLoggerError).toHaveBeenCalled();
@@ -211,21 +211,21 @@ describe('r2-cleanup', () => {
         {
           id: 'file-1',
           deviationId: 'dev-123',
-          r2Key: 'uploads/file1.png',
+          storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
         },
         {
           id: 'file-2',
           deviationId: 'dev-123',
-          r2Key: 'uploads/file2.png',
+          storageKey: 'uploads/file2.png',
           originalFilename: 'file2.png',
           fileSize: 2048,
         },
       ];
 
       mockPrismaDeviationFileFindMany.mockResolvedValue(mockFiles);
-      mockDeleteFromR2
+      mockDeleteFromStorage
         .mockResolvedValueOnce(undefined) // First file succeeds
         .mockRejectedValueOnce(new Error('S3 error')); // Second file fails
 
@@ -239,7 +239,7 @@ describe('r2-cleanup', () => {
       };
 
       await expect(capturedWorkerProcessor!(mockJob as Job)).rejects.toThrow(
-        'Failed to delete 1 of 2 files from R2'
+        'Failed to delete 1 of 2 files from storage'
       );
     });
 
@@ -262,32 +262,32 @@ describe('r2-cleanup', () => {
     });
   });
 
-  describe('queueR2Cleanup', () => {
+  describe('queueStorageCleanup', () => {
     it('should queue cleanup job with correct parameters', async () => {
-      const { queueR2Cleanup } = await import('./r2-cleanup.js');
+      const { queueStorageCleanup } = await import('./storage-cleanup.js');
 
       mockQueueAdd.mockResolvedValue({ id: 'job-123' });
 
-      await queueR2Cleanup('dev-123', 'user-123');
+      await queueStorageCleanup('dev-123', 'user-123');
 
       expect(mockQueueAdd).toHaveBeenCalledWith(
         'cleanup',
         { deviationId: 'dev-123', userId: 'user-123' },
-        { jobId: 'r2-cleanup-dev-123' }
+        { jobId: 'storage-cleanup-dev-123' }
       );
     });
 
     it('should use jobId to prevent duplicate jobs', async () => {
-      const { queueR2Cleanup } = await import('./r2-cleanup.js');
+      const { queueStorageCleanup } = await import('./storage-cleanup.js');
 
       mockQueueAdd.mockResolvedValue({ id: 'job-123' });
 
-      await queueR2Cleanup('dev-456', 'user-456');
+      await queueStorageCleanup('dev-456', 'user-456');
 
       expect(mockQueueAdd).toHaveBeenCalledWith(
         'cleanup',
         { deviationId: 'dev-456', userId: 'user-456' },
-        { jobId: 'r2-cleanup-dev-456' }
+        { jobId: 'storage-cleanup-dev-456' }
       );
     });
   });
@@ -365,7 +365,7 @@ describe('r2-cleanup', () => {
 
       stalledHandler('job-123');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('R2 cleanup job job-123 has stalled');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Storage cleanup job job-123 has stalled');
 
       consoleErrorSpy.mockRestore();
     });

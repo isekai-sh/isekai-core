@@ -20,7 +20,7 @@ import type { Job } from 'bullmq';
 
 // Mock dependencies
 const mockPublishDeviationJob = vi.fn();
-const mockQueueR2Cleanup = vi.fn();
+const mockQueueStorageCleanup = vi.fn();
 const mockPublishToDeviantArt = vi.fn();
 const mockQueueAdd = vi.fn();
 const mockQueueGetJob = vi.fn();
@@ -40,8 +40,8 @@ vi.mock('@isekai/shared', () => ({
   publishDeviationJob: mockPublishDeviationJob,
 }));
 
-vi.mock('./r2-cleanup.js', () => ({
-  queueR2Cleanup: mockQueueR2Cleanup,
+vi.mock('./storage-cleanup.js', () => ({
+  queueStorageCleanup: mockQueueStorageCleanup,
 }));
 
 vi.mock('../lib/deviantart.js', () => ({
@@ -176,13 +176,13 @@ describe('deviation-publisher', () => {
       expect(deps.rateLimiter).toBeDefined();
       expect(deps.metricsCollector).toBeDefined();
       expect(deps.publishToDeviantArt).toBeDefined();
-      expect(deps.queueR2Cleanup).toBeDefined();
+      expect(deps.queueStorageCleanup).toBeDefined();
       expect(deps.errorCategorizer).toBeDefined();
     });
 
-    it('should call queueR2Cleanup when provided in dependencies', async () => {
+    it('should call queueStorageCleanup when provided in dependencies', async () => {
       mockPublishDeviationJob.mockImplementation(async (job, deps) => {
-        await deps.queueR2Cleanup('dev-123', 'user-123');
+        await deps.queueStorageCleanup('dev-123', 'user-123');
         return { success: true };
       });
 
@@ -198,7 +198,7 @@ describe('deviation-publisher', () => {
 
       await capturedWorkerProcessor!(mockJob as Job);
 
-      expect(mockQueueR2Cleanup).toHaveBeenCalledWith('dev-123', 'user-123');
+      expect(mockQueueStorageCleanup).toHaveBeenCalledWith('dev-123', 'user-123');
     });
   });
 

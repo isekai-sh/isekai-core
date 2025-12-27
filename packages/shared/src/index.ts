@@ -99,8 +99,8 @@ export interface DeviationFile {
   id: string;
   deviationId: string;
   originalFilename: string;
-  r2Key: string;
-  r2Url: string;
+  storageKey: string;
+  storageUrl: string;
   mimeType: string;
   fileSize: number;
   width: number | null;
@@ -239,7 +239,7 @@ export interface PresignedUrlRequest {
 export interface PresignedUrlResponse {
   uploadUrl: string;
   fileId: string;
-  r2Key: string;
+  storageKey: string;
 }
 
 export interface CreateGalleryRequest {

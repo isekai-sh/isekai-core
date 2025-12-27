@@ -24,7 +24,7 @@ const mockPrismaDeviationUpdateMany = vi.fn();
 const mockPrismaDeviationFileCount = vi.fn();
 const mockPrismaTransaction = vi.fn();
 const mockScheduleDeviation = vi.fn();
-const mockQueueR2Cleanup = vi.fn();
+const mockQueueStorageCleanup = vi.fn();
 const mockPublisherAlertsHighStuckJobRecoveryRate = vi.fn();
 const mockCronSchedule = vi.fn();
 
@@ -46,8 +46,8 @@ vi.mock('../queues/deviation-publisher.js', () => ({
   scheduleDeviation: mockScheduleDeviation,
 }));
 
-vi.mock('../queues/r2-cleanup.js', () => ({
-  queueR2Cleanup: mockQueueR2Cleanup,
+vi.mock('../queues/storage-cleanup.js', () => ({
+  queueStorageCleanup: mockQueueStorageCleanup,
 }));
 
 vi.mock('../lib/alerting.js', () => ({
@@ -131,7 +131,7 @@ describe('stuck-job-recovery', () => {
         mockPrismaDeviationFileCount.mockResolvedValue(3);
         return await callback(tx);
       });
-      mockQueueR2Cleanup.mockResolvedValue(undefined);
+      mockQueueStorageCleanup.mockResolvedValue(undefined);
 
       const { startStuckJobRecovery } = await import('./stuck-job-recovery.js');
       startStuckJobRecovery();
@@ -148,7 +148,7 @@ describe('stuck-job-recovery', () => {
         },
       });
       expect(mockPrismaTransaction).toHaveBeenCalled();
-      expect(mockQueueR2Cleanup).toHaveBeenCalledWith('dev-123', 'user-123');
+      expect(mockQueueStorageCleanup).toHaveBeenCalledWith('dev-123', 'user-123');
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Completed ghost publish')
       );
@@ -435,7 +435,7 @@ describe('stuck-job-recovery', () => {
         };
         return await callback(tx);
       });
-      mockQueueR2Cleanup.mockResolvedValue(undefined);
+      mockQueueStorageCleanup.mockResolvedValue(undefined);
 
       const { startStuckJobRecovery } = await import('./stuck-job-recovery.js');
       startStuckJobRecovery();
@@ -471,7 +471,7 @@ describe('stuck-job-recovery', () => {
         };
         return await callback(tx);
       });
-      mockQueueR2Cleanup.mockResolvedValue(undefined);
+      mockQueueStorageCleanup.mockResolvedValue(undefined);
 
       const { startStuckJobRecovery } = await import('./stuck-job-recovery.js');
       startStuckJobRecovery();
@@ -507,7 +507,7 @@ describe('stuck-job-recovery', () => {
         };
         return await callback(tx);
       });
-      mockQueueR2Cleanup.mockResolvedValue(undefined);
+      mockQueueStorageCleanup.mockResolvedValue(undefined);
 
       const { startStuckJobRecovery } = await import('./stuck-job-recovery.js');
       startStuckJobRecovery();

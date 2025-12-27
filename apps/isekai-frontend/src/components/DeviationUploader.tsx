@@ -109,13 +109,13 @@ export function DeviationUploader() {
         );
 
         // Get presigned URL
-        const { uploadUrl, fileId, r2Key } = await uploads.getPresignedUrl(
+        const { uploadUrl, fileId, storageKey } = await uploads.getPresignedUrl(
           fileData.file.name,
           fileData.file.type,
           fileData.file.size
         );
 
-        // Upload to R2
+        // Upload to storage
         const xhr = new XMLHttpRequest();
         await new Promise((resolve, reject) => {
           xhr.upload.addEventListener("progress", (e) => {
@@ -172,7 +172,7 @@ export function DeviationUploader() {
         await uploads.complete(
           fileId,
           deviationId,
-          r2Key,
+          storageKey,
           fileData.file.name,
           fileData.file.type,
           fileData.file.size,

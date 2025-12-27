@@ -92,9 +92,9 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
         CircuitBreaker,
         withCircuitBreaker,
         publishToDeviantArt,
-        queueR2Cleanup: async (deviationId: string, userId: string) => {
-          const { queueR2Cleanup } = await import('./r2-cleanup.js');
-          await queueR2Cleanup(deviationId, userId);
+        queueStorageCleanup: async (deviationId: string, userId: string) => {
+          const { queueStorageCleanup } = await import('./storage-cleanup.js');
+          await queueStorageCleanup(deviationId, userId);
         },
         errorCategorizer,
       });

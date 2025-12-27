@@ -58,8 +58,8 @@ export interface PublisherDependencies {
     uploadMode: UploadMode
   ) => Promise<PublishResult | PublishResult[]>;
 
-  /** Function to queue R2 cleanup */
-  queueR2Cleanup: (deviationId: string, userId: string) => Promise<void>;
+  /** Function to queue storage cleanup */
+  queueStorageCleanup: (deviationId: string, userId: string) => Promise<void>;
 
   /** Error categorizer instance */
   errorCategorizer: any; // Will use ErrorCategorizer type

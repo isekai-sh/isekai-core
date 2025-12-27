@@ -74,7 +74,7 @@ describe('EditDeviation', () => {
     files: [
       {
         id: 'file-1',
-        r2Url: 'https://example.com/image.jpg',
+        storageUrl: 'https://example.com/image.jpg',
         originalFilename: 'image.jpg',
       },
     ],

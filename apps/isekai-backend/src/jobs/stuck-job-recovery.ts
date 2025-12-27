@@ -224,9 +224,9 @@ async function completeGhostPublish(
     }
   });
 
-  // Queue R2 cleanup
-  const { queueR2Cleanup } = await import("../queues/r2-cleanup.js");
-  await queueR2Cleanup(deviation.id, deviation.userId);
+  // Queue storage cleanup
+  const { queueStorageCleanup } = await import("../queues/storage-cleanup.js");
+  await queueStorageCleanup(deviation.id, deviation.userId);
 
   console.log(
     `[Stuck Job Recovery] Ghost publish completed: ${deviation.id} (${deviation.deviationUrl})`

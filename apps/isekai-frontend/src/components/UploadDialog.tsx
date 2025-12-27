@@ -36,8 +36,8 @@ interface FileWithMetadata {
   file: File;
   preview: string;
   fileId?: string;
-  r2Key?: string;
-  r2Url?: string;
+  storageKey?: string;
+  storageUrl?: string;
   uploadProgress?: number;
   error?: string;
 }
@@ -119,13 +119,13 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       );
 
       // Get presigned URL
-      const { uploadUrl, fileId, r2Key } = await uploads.getPresignedUrl(
+      const { uploadUrl, fileId, storageKey } = await uploads.getPresignedUrl(
         fileData.file.name,
         fileData.file.type,
         fileData.file.size
       );
 
-      // Upload to R2
+      // Upload to storage
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -185,10 +185,10 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
 
       // Store metadata
       fileData.fileId = fileId;
-      fileData.r2Key = r2Key;
-      fileData.r2Url = `${
+      fileData.storageKey = storageKey;
+      fileData.storageUrl = `${
         (window as any).ISEKAI_CONFIG?.S3_PUBLIC_URL || "http://localhost:9000/isekai-uploads"
-      }/${r2Key}`;
+      }/${storageKey}`;
       fileData.uploadProgress = 100;
 
       // Store dimensions for later
@@ -228,7 +228,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       await uploads.complete(
         fileData.fileId!,
         draft.id,
-        fileData.r2Key!,
+        fileData.storageKey!,
         fileData.file.name,
         fileData.file.type,
         fileData.file.size,
@@ -271,7 +271,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       await uploads.complete(
         fileData.fileId!,
         draft.id,
-        fileData.r2Key!,
+        fileData.storageKey!,
         fileData.file.name,
         fileData.file.type,
         fileData.file.size,

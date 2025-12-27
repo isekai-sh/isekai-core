@@ -88,7 +88,7 @@ describe('Scheduled', () => {
       {
         id: `file-${id}`,
         deviationId: id,
-        r2Url: `https://example.com/file-${id}.jpg`,
+        storageUrl: `https://example.com/file-${id}.jpg`,
         filename: `file-${id}.jpg`,
         mimeType: 'image/jpeg',
         filesize: 1024,

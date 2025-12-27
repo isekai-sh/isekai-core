@@ -23,8 +23,8 @@ import { AppError } from "../middleware/error.js";
 import {
   validateFileType,
   validateFileSize,
-  generateR2Key,
-  uploadToR2,
+  generateStorageKey,
+  uploadToStorage,
   getPublicUrl,
   checkStorageLimit,
 } from "../lib/upload-service.js";
@@ -106,10 +106,10 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }
   }
 
-  // Generate R2 key and upload
-  const r2Key = generateR2Key(user.id, file.originalname);
-  await uploadToR2(r2Key, file.buffer, file.mimetype);
-  const r2Url = getPublicUrl(r2Key);
+  // Generate storage key and upload
+  const storageKey = generateStorageKey(user.id, file.originalname);
+  await uploadToStorage(storageKey, file.buffer, file.mimetype);
+  const storageUrl = getPublicUrl(storageKey);
 
   // Create deviation with status 'review'
   const deviation = await prisma.deviation.create({
@@ -131,8 +131,8 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     data: {
       deviationId: deviation.id,
       originalFilename: file.originalname,
-      r2Key,
-      r2Url,
+      storageKey,
+      storageUrl,
       mimeType: file.mimetype,
       fileSize: file.size,
       width,

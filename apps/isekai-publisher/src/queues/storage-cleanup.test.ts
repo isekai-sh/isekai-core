@@ -97,7 +97,7 @@ vi.mock('../db/index.js', async () => {
   };
 });
 
-describe('r2-cleanup', () => {
+describe('storage-cleanup', () => {
   let prisma: any;
   let originalEnv: NodeJS.ProcessEnv;
 
@@ -121,7 +121,7 @@ describe('r2-cleanup', () => {
     prisma = db.prisma;
 
     // Import module to initialize queue and worker
-    await import('./r2-cleanup.js');
+    await import('./storage-cleanup.js');
   });
 
   afterEach(() => {
@@ -129,7 +129,7 @@ describe('r2-cleanup', () => {
     process.env = originalEnv;
   });
 
-  describe('R2 Cleanup Worker Processor', () => {
+  describe('Storage Cleanup Worker Processor', () => {
     it('should clean up files successfully', async () => {
       const mockJob = {
         data: { deviationId: 'dev-1', userId: 'user-1' },
@@ -137,8 +137,8 @@ describe('r2-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', r2Key: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
-        { id: 'file-2', deviationId: 'dev-1', r2Key: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
+        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
+        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -160,8 +160,8 @@ describe('r2-cleanup', () => {
         where: { deviationId: 'dev-1' },
       });
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting R2 cleanup job', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith('R2 cleanup completed successfully', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting storage cleanup job', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith('Storage cleanup completed successfully', expect.any(Object));
     });
 
     it('should handle case with no files to clean up', async () => {
@@ -195,7 +195,7 @@ describe('r2-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', r2Key: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
+        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -222,9 +222,9 @@ describe('r2-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', r2Key: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
-        { id: 'file-2', deviationId: 'dev-1', r2Key: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
-        { id: 'file-3', deviationId: 'dev-1', r2Key: 'key-3', originalFilename: 'file3.jpg', fileSize: 3000 },
+        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
+        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
+        { id: 'file-3', deviationId: 'dev-1', storageKey: 'key-3', originalFilename: 'file3.jpg', fileSize: 3000 },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -253,7 +253,7 @@ describe('r2-cleanup', () => {
 
       await workerProcessor(mockJob);
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting R2 cleanup job', {
+      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting storage cleanup job', {
         deviationId: 'dev-1',
         userId: 'user-1',
         attemptNumber: 3,
@@ -267,8 +267,8 @@ describe('r2-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', r2Key: 'key-1', originalFilename: 'file1.jpg', fileSize: 5000 },
-        { id: 'file-2', deviationId: 'dev-1', r2Key: 'key-2', originalFilename: 'file2.jpg', fileSize: 3000 },
+        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 5000 },
+        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 3000 },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -277,7 +277,7 @@ describe('r2-cleanup', () => {
 
       await workerProcessor(mockJob);
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting R2 file deletion', {
+      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting storage file deletion', {
         fileCount: 2,
         totalSizeBytes: 8000,
       });
@@ -290,7 +290,7 @@ describe('r2-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', r2Key: 'key-1', originalFilename: 'test.jpg', fileSize: 1000 },
+        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'test.jpg', fileSize: 1000 },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -300,34 +300,34 @@ describe('r2-cleanup', () => {
       await workerProcessor(mockJob);
 
       expect(mockLoggerDebug).toHaveBeenCalledWith('Deleted file from storage', {
-        r2Key: 'key-1',
+        storageKey: 'key-1',
         fileName: 'test.jpg',
       });
     });
   });
 
-  describe('queueR2Cleanup', () => {
+  describe('queueStorageCleanup', () => {
     it('should queue cleanup job with correct data', async () => {
       mockQueueAdd.mockResolvedValueOnce({ id: 'job-1' });
 
-      const { queueR2Cleanup } = await import('./r2-cleanup.js');
-      await queueR2Cleanup('dev-1', 'user-1');
+      const { queueStorageCleanup } = await import('./storage-cleanup.js');
+      await queueStorageCleanup('dev-1', 'user-1');
 
       expect(mockQueueAdd).toHaveBeenCalledWith(
         'cleanup',
         { deviationId: 'dev-1', userId: 'user-1' },
-        { jobId: 'r2-cleanup-dev-1' }
+        { jobId: 'storage-cleanup-dev-1' }
       );
     });
 
     it('should use deviationId in jobId to prevent duplicates', async () => {
       mockQueueAdd.mockResolvedValueOnce({ id: 'job-1' });
 
-      const { queueR2Cleanup } = await import('./r2-cleanup.js');
-      await queueR2Cleanup('dev-123', 'user-456');
+      const { queueStorageCleanup } = await import('./storage-cleanup.js');
+      await queueStorageCleanup('dev-123', 'user-456');
 
       const call = mockQueueAdd.mock.calls[0];
-      expect(call[2].jobId).toBe('r2-cleanup-dev-123');
+      expect(call[2].jobId).toBe('storage-cleanup-dev-123');
     });
   });
 

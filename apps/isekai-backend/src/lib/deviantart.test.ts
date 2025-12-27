@@ -427,7 +427,7 @@ describe('deviantart', () => {
     const mockFile: DeviationFile = {
       id: 'file-1',
       deviationId: 'dev-1',
-      r2Key: 'uploads/user-1/test-image.jpg',
+      storageKey: 'uploads/user-1/test-image.jpg',
       originalFilename: 'test-image.jpg',
       mimeType: 'image/jpeg',
       fileSize: 1024000,

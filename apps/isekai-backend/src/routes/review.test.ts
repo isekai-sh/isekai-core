@@ -35,11 +35,11 @@ vi.mock('../db/index.js', () => ({
 }));
 
 vi.mock('../lib/upload-service.js', () => ({
-  deleteFromR2: vi.fn(),
+  deleteFromStorage: vi.fn(),
 }));
 
 import { prisma } from '../db/index.js';
-import { deleteFromR2 } from '../lib/upload-service.js';
+import { deleteFromStorage } from '../lib/upload-service.js';
 
 describe('review routes', () => {
   const mockUser = {
@@ -71,8 +71,8 @@ describe('review routes', () => {
     id: 'file-123',
     deviationId: 'deviation-123',
     originalFilename: 'test.jpg',
-    r2Key: 'deviations/user-123/test---abc123.jpg',
-    r2Url: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
+    storageKey: 'deviations/user-123/test---abc123.jpg',
+    storageUrl: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
     mimeType: 'image/jpeg',
     fileSize: 1024,
     width: 1920,
@@ -357,7 +357,7 @@ describe('review routes', () => {
         ...mockDeviation,
         files: [mockDeviationFile],
       });
-      (deleteFromR2 as any).mockResolvedValue(undefined);
+      (deleteFromStorage as any).mockResolvedValue(undefined);
       (prisma.deviation.delete as any).mockResolvedValue(mockDeviation);
 
       await callRoute('POST', '/:id/reject', req, res);
@@ -370,7 +370,7 @@ describe('review routes', () => {
         },
         include: { files: true },
       });
-      expect(deleteFromR2).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
+      expect(deleteFromStorage).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
       expect(prisma.deviation.delete).toHaveBeenCalledWith({
         where: { id: 'deviation-123' },
       });
@@ -393,7 +393,7 @@ describe('review routes', () => {
 
       await callRoute('POST', '/:id/reject', req, res);
 
-      expect(deleteFromR2).not.toHaveBeenCalled();
+      expect(deleteFromStorage).not.toHaveBeenCalled();
       expect(prisma.deviation.delete).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(204);
     });
@@ -421,21 +421,21 @@ describe('review routes', () => {
 
       const files = [
         mockDeviationFile,
-        { ...mockDeviationFile, id: 'file-2', r2Key: 'deviations/user-123/test2.jpg' },
+        { ...mockDeviationFile, id: 'file-2', storageKey: 'deviations/user-123/test2.jpg' },
       ];
 
       (prisma.deviation.findFirst as any).mockResolvedValue({
         ...mockDeviation,
         files,
       });
-      (deleteFromR2 as any)
+      (deleteFromStorage as any)
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviation.delete as any).mockResolvedValue(mockDeviation);
 
       await callRoute('POST', '/:id/reject', req, res);
 
-      expect(deleteFromR2).toHaveBeenCalledTimes(2);
+      expect(deleteFromStorage).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.delete).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(204);
     });
@@ -541,12 +541,12 @@ describe('review routes', () => {
         {
           ...mockDeviation,
           id: 'deviation-2',
-          files: [{ ...mockDeviationFile, id: 'file-2', r2Key: 'key2.jpg' }],
+          files: [{ ...mockDeviationFile, id: 'file-2', storageKey: 'key2.jpg' }],
         },
       ];
 
       (prisma.deviation.findMany as any).mockResolvedValue(reviewDeviations);
-      (deleteFromR2 as any).mockResolvedValue(undefined);
+      (deleteFromStorage as any).mockResolvedValue(undefined);
       (prisma.deviation.deleteMany as any).mockResolvedValue({ count: 2 });
 
       await callRoute('POST', '/batch-reject', req, res);
@@ -559,7 +559,7 @@ describe('review routes', () => {
         },
         include: { files: true },
       });
-      expect(deleteFromR2).toHaveBeenCalledTimes(2);
+      expect(deleteFromStorage).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: deviationIds } },
       });
@@ -630,14 +630,14 @@ describe('review routes', () => {
       ];
 
       (prisma.deviation.findMany as any).mockResolvedValue(reviewDeviations);
-      (deleteFromR2 as any)
+      (deleteFromStorage as any)
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviation.deleteMany as any).mockResolvedValue({ count: 1 });
 
       await callRoute('POST', '/batch-reject', req, res);
 
-      expect(deleteFromR2).toHaveBeenCalledTimes(2);
+      expect(deleteFromStorage).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.deleteMany).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith({
         success: true,

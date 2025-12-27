@@ -72,7 +72,7 @@ describe('publishDeviationJob', () => {
       },
       withCircuitBreaker: vi.fn(),
       publishToDeviantArt: vi.fn(),
-      queueR2Cleanup: vi.fn(),
+      queueStorageCleanup: vi.fn(),
       errorCategorizer: {
         categorize: vi.fn(),
       },
@@ -408,7 +408,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockPrisma);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -455,7 +455,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockPrisma);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -520,7 +520,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockTx);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -591,7 +591,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockTx);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -658,7 +658,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockTx);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -727,7 +727,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockTx);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -791,7 +791,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockTx);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -833,7 +833,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockPrisma);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       mockJob.data.uploadMode = 'multiple';
@@ -878,7 +878,7 @@ describe('publishDeviationJob', () => {
       });
 
       // R2 cleanup fails but shouldn't affect the result
-      mockDeps.queueR2Cleanup.mockRejectedValueOnce(new Error('R2 service unavailable'));
+      mockDeps.queueStorageCleanup.mockRejectedValueOnce(new Error('R2 service unavailable'));
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       const result = await publishDeviationJob(mockJob, mockDeps);
@@ -1025,7 +1025,7 @@ describe('publishDeviationJob', () => {
         return await callback(mockPrisma);
       });
 
-      mockDeps.queueR2Cleanup.mockResolvedValueOnce(undefined);
+      mockDeps.queueStorageCleanup.mockResolvedValueOnce(undefined);
       mockDeps.rateLimiter.recordSuccess.mockResolvedValueOnce(undefined);
 
       await publishDeviationJob(mockJob, mockDeps);

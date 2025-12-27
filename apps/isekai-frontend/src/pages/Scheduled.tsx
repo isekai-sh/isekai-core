@@ -994,9 +994,9 @@ export function Scheduled() {
                   {/* Thumbnail */}
                   {deviation.files &&
                   deviation.files.length > 0 &&
-                  deviation.files[0].r2Url ? (
+                  deviation.files[0].storageUrl ? (
                     <img
-                      src={deviation.files[0].r2Url}
+                      src={deviation.files[0].storageUrl}
                       alt={deviation.title}
                       className="w-24 h-24 object-cover rounded flex-shrink-0"
                     />
@@ -1155,9 +1155,9 @@ function ScheduledRow({
       <TableCell>
         {deviation.files &&
         deviation.files.length > 0 &&
-        deviation.files[0].r2Url ? (
+        deviation.files[0].storageUrl ? (
           <img
-            src={deviation.files[0].r2Url}
+            src={deviation.files[0].storageUrl}
             alt={deviation.title}
             className="w-20 h-20 object-cover rounded"
           />

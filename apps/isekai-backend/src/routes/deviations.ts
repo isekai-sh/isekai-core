@@ -17,7 +17,6 @@
 
 import { Router } from "express";
 import { z } from "zod";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "../db/index.js";
 import { AppError } from "../middleware/error.js";
 import {
@@ -28,15 +27,7 @@ import {
 } from "../queues/deviation-publisher.js";
 import { scheduleRateLimit, batchRateLimit } from "../middleware/rate-limit.js";
 import type { DeviationStatus, MatureLevel, UploadMode } from "../db/index.js";
-
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
+import { deleteFromStorage } from "../lib/upload-service.js";
 
 const router = Router();
 
@@ -218,17 +209,10 @@ router.delete("/:id", async (req, res) => {
     throw new AppError(404, "Deviation not found");
   }
 
-  // Delete files from R2
+  // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
     await Promise.allSettled(
-      deviation.files.map((file) =>
-        s3Client.send(
-          new DeleteObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME!,
-            Key: file.r2Key,
-          })
-        )
-      )
+      deviation.files.map((file) => deleteFromStorage(file.storageKey))
     );
   }
 
@@ -526,17 +510,10 @@ router.post("/batch-delete", batchRateLimit, async (req, res) => {
     throw new AppError(400, "Can only delete draft deviations");
   }
 
-  // Delete files from R2
+  // Delete files from storage
   const allFiles = drafts.flatMap((d) => d.files);
   await Promise.allSettled(
-    allFiles.map((file) =>
-      s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME!,
-          Key: file.r2Key,
-        })
-      )
-    )
+    allFiles.map((file) => deleteFromStorage(file.storageKey))
   );
 
   // Delete from DB (cascade removes files)

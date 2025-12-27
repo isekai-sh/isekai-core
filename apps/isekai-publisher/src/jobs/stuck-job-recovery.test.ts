@@ -32,10 +32,10 @@ vi.mock('../queues/deviation-publisher.js', () => ({
   scheduleDeviation: (...args: any[]) => mockScheduleDeviation(...args),
 }));
 
-// Mock r2-cleanup
-const mockQueueR2Cleanup = vi.fn();
-vi.mock('../queues/r2-cleanup.js', () => ({
-  queueR2Cleanup: (...args: any[]) => mockQueueR2Cleanup(...args),
+// Mock storage-cleanup
+const mockQueueStorageCleanup = vi.fn();
+vi.mock('../queues/storage-cleanup.js', () => ({
+  queueStorageCleanup: (...args: any[]) => mockQueueStorageCleanup(...args),
 }));
 
 // Mock prisma
@@ -114,7 +114,7 @@ describe('stuck-job-recovery', () => {
       prisma.$transaction.mockImplementation(async (cb: any) => cb(mockTx));
 
       prisma.deviation.update.mockResolvedValue({}); // For releasing lock
-      mockQueueR2Cleanup.mockResolvedValue({});
+      mockQueueStorageCleanup.mockResolvedValue({});
 
       startStuckJobRecovery();
       await vi.advanceTimersByTimeAsync(5000); // Trigger initial recovery
@@ -378,7 +378,7 @@ describe('stuck-job-recovery', () => {
       prisma.$transaction.mockImplementation(async (cb: any) => cb(mockTx));
 
       prisma.deviation.update.mockResolvedValue({});
-      mockQueueR2Cleanup.mockResolvedValue({});
+      mockQueueStorageCleanup.mockResolvedValue({});
       mockScheduleDeviation.mockResolvedValue({});
 
       startStuckJobRecovery();

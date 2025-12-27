@@ -153,7 +153,7 @@ describe('UploadDialog', () => {
     vi.mocked(uploads.getPresignedUrl).mockResolvedValue({
       uploadUrl: 'https://test.com/upload',
       fileId: 'file-123',
-      r2Key: 'test-key',
+      storageKey: 'test-key',
     } as any);
 
     render(
@@ -180,7 +180,7 @@ describe('UploadDialog', () => {
     vi.mocked(uploads.getPresignedUrl).mockResolvedValue({
       uploadUrl: 'https://test.com/upload',
       fileId: 'file-123',
-      r2Key: 'test-key',
+      storageKey: 'test-key',
     } as any);
 
     render(

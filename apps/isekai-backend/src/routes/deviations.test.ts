@@ -260,7 +260,7 @@ describe('Deviations Routes', () => {
     it('should get single deviation successfully', async () => {
       const deviationWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
 
@@ -405,7 +405,7 @@ describe('Deviations Routes', () => {
     it('should delete deviation successfully', async () => {
       const deviationWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
       mockPrisma.deviation.delete.mockResolvedValue(mockDeviation);
@@ -454,7 +454,7 @@ describe('Deviations Routes', () => {
       };
       const deviationWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
       mockPrisma.deviation.update.mockResolvedValue(scheduledDev);
@@ -485,7 +485,7 @@ describe('Deviations Routes', () => {
     it('should validate scheduledAt is in the future', async () => {
       const deviationWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
 
@@ -520,7 +520,7 @@ describe('Deviations Routes', () => {
       };
       const deviationWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
       mockPrisma.deviation.update.mockResolvedValue(publishedDev);
@@ -552,7 +552,7 @@ describe('Deviations Routes', () => {
         ...mockDeviation,
         status: 'scheduled' as const,
         scheduledAt: new Date(),
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       const cancelledDev = {
         ...scheduledDev,
@@ -609,7 +609,7 @@ describe('Deviations Routes', () => {
     it('should batch delete deviations successfully', async () => {
       const draftDeviation = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findMany.mockResolvedValue([draftDeviation]);
       mockPrisma.deviation.deleteMany.mockResolvedValue({ count: 1 });
@@ -644,7 +644,7 @@ describe('Deviations Routes', () => {
         status: 'scheduled' as const,
         scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
         actualPublishAt: new Date(Date.now() + 3600100),
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findMany.mockResolvedValue([scheduledDev]);
       mockPrisma.deviation.update.mockResolvedValue(scheduledDev);
@@ -688,7 +688,7 @@ describe('Deviations Routes', () => {
         ...mockDeviation,
         status: 'scheduled' as const,
         scheduledAt: new Date(),
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       const cancelledDev = {
         ...scheduledDev,
@@ -728,7 +728,7 @@ describe('Deviations Routes', () => {
     it('should batch schedule deviations', async () => {
       const draftWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       const futureTime = Date.now() + 2 * 60 * 60 * 1000; // 2 hours
       const scheduledDev = {
@@ -776,7 +776,7 @@ describe('Deviations Routes', () => {
     it('should batch publish deviations immediately', async () => {
       const draftWithFiles = {
         ...mockDeviation,
-        files: [{ id: 'file-1', r2Key: 'test.jpg' }],
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       const publishingDev = {
         ...mockDeviation,

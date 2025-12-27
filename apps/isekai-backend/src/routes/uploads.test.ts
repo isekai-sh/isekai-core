@@ -35,10 +35,10 @@ vi.mock('../db/index.js', () => ({
 vi.mock('../lib/upload-service.js', () => ({
   validateFileType: vi.fn(),
   validateFileSize: vi.fn(),
-  generateR2Key: vi.fn(),
+  generateStorageKey: vi.fn(),
   getPublicUrl: vi.fn(),
   checkStorageLimit: vi.fn(),
-  deleteFromR2: vi.fn(),
+  deleteFromStorage: vi.fn(),
   getPresignedUploadUrl: vi.fn(),
 }));
 
@@ -51,9 +51,9 @@ import { prisma } from '../db/index.js';
 import {
   validateFileType,
   validateFileSize,
-  generateR2Key,
+  generateStorageKey,
   getPublicUrl,
-  deleteFromR2,
+  deleteFromStorage,
   getPresignedUploadUrl,
 } from '../lib/upload-service.js';
 import { randomUUID } from 'crypto';
@@ -69,8 +69,8 @@ describe('uploads routes', () => {
     id: 'file-123',
     deviationId: 'deviation-123',
     originalFilename: 'test.jpg',
-    r2Key: 'deviations/user-123/test---abc123.jpg',
-    r2Url: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
+    storageKey: 'deviations/user-123/test---abc123.jpg',
+    storageUrl: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
     mimeType: 'image/jpeg',
     fileSize: 1024,
     width: 1920,
@@ -111,14 +111,14 @@ describe('uploads routes', () => {
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
       (randomUUID as any).mockReturnValue('file-uuid-123');
-      (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+      (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
       (getPresignedUploadUrl as any).mockResolvedValue('https://presigned-url.com');
 
       await callRoute('POST', '/presigned', req, res);
 
       expect(validateFileType).toHaveBeenCalledWith('image/jpeg');
       expect(validateFileSize).toHaveBeenCalledWith(1024);
-      expect(generateR2Key).toHaveBeenCalledWith('user-123', 'test.jpg');
+      expect(generateStorageKey).toHaveBeenCalledWith('user-123', 'test.jpg');
       expect(getPresignedUploadUrl).toHaveBeenCalledWith(
         'deviations/user-123/test---abc123.jpg',
         'image/jpeg',
@@ -127,7 +127,7 @@ describe('uploads routes', () => {
       expect(res.json).toHaveBeenCalledWith({
         uploadUrl: 'https://presigned-url.com',
         fileId: 'file-uuid-123',
-        r2Key: 'deviations/user-123/test---abc123.jpg',
+        storageKey: 'deviations/user-123/test---abc123.jpg',
       });
     });
 
@@ -221,7 +221,7 @@ describe('uploads routes', () => {
         body: {
           fileId: 'file-uuid-123',
           deviationId: 'deviation-123',
-          r2Key: 'deviations/user-123/test---abc123.jpg',
+          storageKey: 'deviations/user-123/test---abc123.jpg',
           originalFilename: 'test.jpg',
           mimeType: 'image/jpeg',
           fileSize: 1024,
@@ -247,8 +247,8 @@ describe('uploads routes', () => {
           id: 'file-uuid-123',
           deviationId: 'deviation-123',
           originalFilename: 'test.jpg',
-          r2Key: 'deviations/user-123/test---abc123.jpg',
-          r2Url: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
+          storageKey: 'deviations/user-123/test---abc123.jpg',
+          storageUrl: 'https://cdn.example.com/deviations/user-123/test---abc123.jpg',
           mimeType: 'image/jpeg',
           fileSize: 1024,
           width: 1920,
@@ -266,7 +266,7 @@ describe('uploads routes', () => {
         body: {
           fileId: 'file-uuid-456',
           deviationId: 'deviation-123',
-          r2Key: 'deviations/user-123/test2---abc123.jpg',
+          storageKey: 'deviations/user-123/test2---abc123.jpg',
           originalFilename: 'test2.jpg',
           mimeType: 'image/jpeg',
           fileSize: 2048,
@@ -300,7 +300,7 @@ describe('uploads routes', () => {
         body: {
           fileId: 'file-uuid-123',
           deviationId: 'deviation-123',
-          r2Key: 'deviations/user-123/test---abc123.jpg',
+          storageKey: 'deviations/user-123/test---abc123.jpg',
           originalFilename: 'test.jpg',
           mimeType: 'image/jpeg',
           fileSize: 1024,
@@ -325,7 +325,7 @@ describe('uploads routes', () => {
         body: {
           fileId: 'file-uuid-123',
           deviationId: 'deviation-123',
-          // Missing r2Key, originalFilename, mimeType, fileSize
+          // Missing storageKey, originalFilename, mimeType, fileSize
         },
       });
       const res = createMockResponse();
@@ -348,7 +348,7 @@ describe('uploads routes', () => {
         ...mockDeviationFile,
         deviation: { userId: 'user-123' },
       });
-      (deleteFromR2 as any).mockResolvedValue(undefined);
+      (deleteFromStorage as any).mockResolvedValue(undefined);
       (prisma.deviationFile.delete as any).mockResolvedValue(mockDeviationFile);
 
       await callRoute('DELETE', '/:fileId', req, res);
@@ -357,7 +357,7 @@ describe('uploads routes', () => {
         where: { id: 'file-123' },
         include: { deviation: true },
       });
-      expect(deleteFromR2).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
+      expect(deleteFromStorage).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
       expect(prisma.deviationFile.delete).toHaveBeenCalledWith({
         where: { id: 'file-123' },
       });
@@ -403,7 +403,7 @@ describe('uploads routes', () => {
         ...mockDeviationFile,
         deviation: { userId: 'user-123' },
       });
-      (deleteFromR2 as any).mockRejectedValue(new Error('Storage error'));
+      (deleteFromStorage as any).mockRejectedValue(new Error('Storage error'));
       (prisma.deviationFile.delete as any).mockResolvedValue(mockDeviationFile);
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -439,7 +439,7 @@ describe('uploads routes', () => {
       }));
 
       (prisma.deviationFile.findMany as any).mockResolvedValue(files);
-      (deleteFromR2 as any).mockResolvedValue(undefined);
+      (deleteFromStorage as any).mockResolvedValue(undefined);
       (prisma.deviationFile.deleteMany as any).mockResolvedValue({ count: 3 });
 
       await callRoute('POST', '/batch-delete', req, res);
@@ -448,7 +448,7 @@ describe('uploads routes', () => {
         where: { id: { in: fileIds } },
         include: { deviation: true },
       });
-      expect(deleteFromR2).toHaveBeenCalledTimes(3);
+      expect(deleteFromStorage).toHaveBeenCalledTimes(3);
       expect(prisma.deviationFile.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: fileIds } },
       });
@@ -511,12 +511,12 @@ describe('uploads routes', () => {
       const files = fileIds.map((id) => ({
         ...mockDeviationFile,
         id,
-        r2Key: `deviations/user-123/${id}.jpg`,
+        storageKey: `deviations/user-123/${id}.jpg`,
         deviation: { userId: 'user-123' },
       }));
 
       (prisma.deviationFile.findMany as any).mockResolvedValue(files);
-      (deleteFromR2 as any)
+      (deleteFromStorage as any)
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviationFile.deleteMany as any).mockResolvedValue({ count: 2 });

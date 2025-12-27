@@ -122,10 +122,10 @@ export interface PublishResult {
 }
 
 // Helper function to fetch file from S3 storage
-async function fetchFileFromStorage(r2Key: string): Promise<Buffer> {
+async function fetchFileFromStorage(storageKey: string): Promise<Buffer> {
   const getCommand = new GetObjectCommand({
     Bucket: storageConfig.bucketName,
-    Key: r2Key,
+    Key: storageKey,
   });
 
   const response = await s3Client.send(getCommand);
@@ -157,7 +157,7 @@ async function uploadSingleFileToDeviantArt(
   } else {
     // Upload to sta.sh
     // Fetch file from S3 storage
-    const fileBuffer = await fetchFileFromStorage(file.r2Key);
+    const fileBuffer = await fetchFileFromStorage(file.storageKey);
 
   // Create form data for DeviantArt upload
   const formData = new FormData();

@@ -18,7 +18,7 @@
 import { Router } from "express";
 import { prisma } from "../db/index.js";
 import { AppError } from "../middleware/error.js";
-import { deleteFromR2 } from "../lib/upload-service.js";
+import { deleteFromStorage } from "../lib/upload-service.js";
 
 const router = Router();
 
@@ -123,7 +123,7 @@ router.post("/:id/reject", async (req, res) => {
   // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
     await Promise.allSettled(
-      deviation.files.map((file) => deleteFromR2(file.r2Key))
+      deviation.files.map((file) => deleteFromStorage(file.storageKey))
     );
   }
 
@@ -192,7 +192,7 @@ router.post("/batch-reject", async (req, res) => {
 
   // Delete files from storage
   const allFiles = reviewDeviations.flatMap((d) => d.files);
-  await Promise.allSettled(allFiles.map((file) => deleteFromR2(file.r2Key)));
+  await Promise.allSettled(allFiles.map((file) => deleteFromStorage(file.storageKey)));
 
   // Delete deviations
   await prisma.deviation.deleteMany({
