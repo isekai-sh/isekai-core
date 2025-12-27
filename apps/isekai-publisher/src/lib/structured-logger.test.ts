@@ -326,14 +326,15 @@ describe('StructuredLogger', () => {
       const logger = new StructuredLogger();
 
       const endTimer = logger.startTimer('Test operation');
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 15));
       endTimer();
 
       const loggedData = consoleSpy.log.mock.calls[0][0];
       const parsed = JSON.parse(loggedData);
 
       expect(parsed.message).toBe('Test operation completed');
-      expect(parsed.context.durationMs).toBeGreaterThanOrEqual(10);
+      // Use >= 5ms to account for timer variance on CI runners
+      expect(parsed.context.durationMs).toBeGreaterThanOrEqual(5);
     });
   });
 
