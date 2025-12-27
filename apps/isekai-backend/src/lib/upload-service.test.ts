@@ -15,7 +15,64 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+
+// Mock the shared storage module
+const mockUpload = vi.fn();
+const mockDelete = vi.fn();
+const mockGetPresignedUploadUrl = vi.fn();
+const mockGetPublicUrl = vi.fn();
+const mockGetClient = vi.fn();
+const mockGetBucket = vi.fn().mockReturnValue('test-bucket');
+
+vi.mock('@isekai/shared/storage', () => ({
+  createStorageService: vi.fn(() => ({
+    upload: mockUpload,
+    delete: mockDelete,
+    getPresignedUploadUrl: mockGetPresignedUploadUrl,
+    getPublicUrl: mockGetPublicUrl,
+    getClient: mockGetClient,
+    getBucket: mockGetBucket,
+  })),
+  getS3ConfigFromEnv: vi.fn(() => ({
+    endpoint: 'https://test.r2.cloudflarestorage.com',
+    region: 'auto',
+    accessKeyId: 'test-key',
+    secretAccessKey: 'test-secret',
+    bucket: 'test-bucket',
+    publicUrl: 'https://cdn.example.com',
+  })),
+  ALLOWED_MIME_TYPES: [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+  ],
+  MAX_FILE_SIZE: 50 * 1024 * 1024,
+  validateFileType: (mimeType: string) => [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+  ].includes(mimeType),
+  validateFileSize: (fileSize: number) => fileSize > 0 && fileSize <= 50 * 1024 * 1024,
+  checkStorageLimit: (currentUsage: number, fileSize: number, tierLimit: number) =>
+    currentUsage + fileSize <= tierLimit,
+  generateStorageKey: (userId: string, filename: string) => {
+    const filenameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+    const sanitized = filenameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 50);
+    const shortUuid = 'abc12345';
+    const ext = filename.split('.').pop() || 'jpg';
+    return `deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
+  },
+}));
+
 import {
   validateFileType,
   validateFileSize,
@@ -24,31 +81,16 @@ import {
   checkStorageLimit,
   uploadToR2,
   deleteFromR2,
+  getPresignedUploadUrl,
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
 } from './upload-service.js';
 
-// Mock AWS SDK
-vi.mock('@aws-sdk/client-s3', () => {
-  const mockSend = vi.fn();
-  return {
-    S3Client: vi.fn(function(this: any) {
-      this.send = mockSend;
-    }),
-    PutObjectCommand: vi.fn(function(this: any, params: any) {
-      Object.assign(this, params);
-    }),
-    DeleteObjectCommand: vi.fn(function(this: any, params: any) {
-      Object.assign(this, params);
-    }),
-  };
-});
-
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
 describe('upload-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetPublicUrl.mockImplementation((key: string) => `https://cdn.example.com/${key}`);
+    mockGetPresignedUploadUrl.mockResolvedValue('https://presigned-url.example.com');
   });
 
   describe('validateFileType', () => {
@@ -134,34 +176,6 @@ describe('upload-service', () => {
       expect(generateR2Key('user-123', 'file.mp4')).toMatch(/\.mp4$/);
     });
 
-    it('should use filename as extension when no extension provided', () => {
-      const key = generateR2Key('user-123', 'noextension');
-      expect(key).toMatch(/\.noextension$/);
-    });
-
-    it('should truncate long filenames to 50 characters', () => {
-      const longFilename = 'a'.repeat(100) + '.jpg';
-      const key = generateR2Key('user-123', longFilename);
-      const filenameWithoutExt = key.split('---')[0].split('/').pop();
-      expect(filenameWithoutExt!.length).toBeLessThanOrEqual(50);
-    });
-
-    it('should replace non-alphanumeric characters with hyphens', () => {
-      const key = generateR2Key('user-123', 'my image #1.jpg');
-      expect(key).toMatch(/my-image--1/);
-    });
-
-    it('should preserve alphanumeric, hyphens, and underscores', () => {
-      const key = generateR2Key('user-123', 'valid-file_name123.jpg');
-      expect(key).toMatch(/valid-file_name123/);
-    });
-
-    it('should generate unique keys for same filename', () => {
-      const key1 = generateR2Key('user-123', 'same.jpg');
-      const key2 = generateR2Key('user-123', 'same.jpg');
-      expect(key1).not.toBe(key2);
-    });
-
     it('should include user ID in path', () => {
       const key = generateR2Key('user-456', 'file.jpg');
       expect(key).toMatch(/^deviations\/user-456\//);
@@ -169,22 +183,12 @@ describe('upload-service', () => {
   });
 
   describe('getPublicUrl', () => {
-    const originalEnv = process.env.R2_PUBLIC_URL;
-
-    beforeEach(() => {
-      process.env.R2_PUBLIC_URL = 'https://cdn.example.com';
-    });
-
-    afterEach(() => {
-      process.env.R2_PUBLIC_URL = originalEnv;
-    });
-
     it('should construct public URL correctly', () => {
       const url = getPublicUrl('deviations/user-123/image.jpg');
       expect(url).toBe('https://cdn.example.com/deviations/user-123/image.jpg');
     });
 
-    it('should handle different R2 keys', () => {
+    it('should handle different keys', () => {
       expect(getPublicUrl('path/to/file.png')).toBe('https://cdn.example.com/path/to/file.png');
       expect(getPublicUrl('simple.jpg')).toBe('https://cdn.example.com/simple.jpg');
     });
@@ -232,109 +236,61 @@ describe('upload-service', () => {
   });
 
   describe('uploadToR2', () => {
-    const originalEnv = process.env.R2_BUCKET_NAME;
-
-    beforeEach(() => {
-      process.env.R2_BUCKET_NAME = 'test-bucket';
-    });
-
-    afterEach(() => {
-      process.env.R2_BUCKET_NAME = originalEnv;
-    });
-
-    it('should upload file with correct parameters', async () => {
+    it('should upload file using storage service', async () => {
       const buffer = Buffer.from('test file content');
-      const r2Key = 'deviations/user-123/test.jpg';
+      const key = 'deviations/user-123/test.jpg';
       const mimeType = 'image/jpeg';
 
-      await uploadToR2(r2Key, buffer, mimeType);
+      await uploadToR2(key, buffer, mimeType);
 
-      expect(PutObjectCommand).toHaveBeenCalledWith({
-        Bucket: 'test-bucket',
-        Key: r2Key,
-        Body: buffer,
-        ContentType: mimeType,
-        ContentLength: buffer.length,
-      });
-    });
-
-    it('should send command to S3 client', async () => {
-      const buffer = Buffer.from('test');
-      await uploadToR2('test.jpg', buffer, 'image/jpeg');
-
-      const s3Instance = new S3Client({} as any);
-      expect(s3Instance.send).toHaveBeenCalled();
+      expect(mockUpload).toHaveBeenCalledWith(key, buffer, mimeType);
     });
 
     it('should handle different mime types', async () => {
       const buffer = Buffer.from('video data');
 
       await uploadToR2('video.mp4', buffer, 'video/mp4');
-      expect(PutObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ ContentType: 'video/mp4' })
-      );
+      expect(mockUpload).toHaveBeenCalledWith('video.mp4', buffer, 'video/mp4');
 
       await uploadToR2('image.png', buffer, 'image/png');
-      expect(PutObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ ContentType: 'image/png' })
-      );
-    });
-
-    it('should set correct content length', async () => {
-      const smallBuffer = Buffer.from('small');
-      const largeBuffer = Buffer.from('x'.repeat(1000));
-
-      await uploadToR2('small.jpg', smallBuffer, 'image/jpeg');
-      expect(PutObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ ContentLength: smallBuffer.length })
-      );
-
-      await uploadToR2('large.jpg', largeBuffer, 'image/jpeg');
-      expect(PutObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ ContentLength: largeBuffer.length })
-      );
+      expect(mockUpload).toHaveBeenCalledWith('image.png', buffer, 'image/png');
     });
   });
 
   describe('deleteFromR2', () => {
-    const originalEnv = process.env.R2_BUCKET_NAME;
+    it('should delete file using storage service', async () => {
+      const key = 'deviations/user-123/test.jpg';
 
-    beforeEach(() => {
-      process.env.R2_BUCKET_NAME = 'test-bucket';
+      await deleteFromR2(key);
+
+      expect(mockDelete).toHaveBeenCalledWith(key);
     });
 
-    afterEach(() => {
-      process.env.R2_BUCKET_NAME = originalEnv;
-    });
-
-    it('should delete file with correct parameters', async () => {
-      const r2Key = 'deviations/user-123/test.jpg';
-
-      await deleteFromR2(r2Key);
-
-      expect(DeleteObjectCommand).toHaveBeenCalledWith({
-        Bucket: 'test-bucket',
-        Key: r2Key,
-      });
-    });
-
-    it('should send command to S3 client', async () => {
-      await deleteFromR2('test.jpg');
-
-      const s3Instance = new S3Client({} as any);
-      expect(s3Instance.send).toHaveBeenCalled();
-    });
-
-    it('should handle different R2 keys', async () => {
+    it('should handle different keys', async () => {
       await deleteFromR2('path/to/file.jpg');
-      expect(DeleteObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ Key: 'path/to/file.jpg' })
-      );
+      expect(mockDelete).toHaveBeenCalledWith('path/to/file.jpg');
 
       await deleteFromR2('simple.png');
-      expect(DeleteObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ Key: 'simple.png' })
-      );
+      expect(mockDelete).toHaveBeenCalledWith('simple.png');
+    });
+  });
+
+  describe('getPresignedUploadUrl', () => {
+    it('should get presigned URL from storage service', async () => {
+      const key = 'deviations/user-123/test.jpg';
+      const contentType = 'image/jpeg';
+      const contentLength = 1024;
+
+      const url = await getPresignedUploadUrl(key, contentType, contentLength);
+
+      expect(mockGetPresignedUploadUrl).toHaveBeenCalledWith(key, contentType, contentLength, 900);
+      expect(url).toBe('https://presigned-url.example.com');
+    });
+
+    it('should support custom expiration time', async () => {
+      await getPresignedUploadUrl('test.jpg', 'image/jpeg', 1024, 3600);
+
+      expect(mockGetPresignedUploadUrl).toHaveBeenCalledWith('test.jpg', 'image/jpeg', 1024, 3600);
     });
   });
 

@@ -26,7 +26,7 @@ const envSchema = z.object({
   // Production uses window.ISEKAI_CONFIG loaded from /config.js
   VITE_API_URL: z.string().default("/api"),
   VITE_DEVIANTART_CLIENT_ID: z.string().default(""),
-  VITE_R2_PUBLIC_URL: z.string().default("https://storage.isekai.sh"),
+  VITE_S3_PUBLIC_URL: z.string().default("http://localhost:9000/isekai-uploads"),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -41,7 +41,7 @@ export function validateEnv(): Env {
     return {
       VITE_API_URL: "/api",
       VITE_DEVIANTART_CLIENT_ID: "",
-      VITE_R2_PUBLIC_URL: "https://storage.isekai.sh",
+      VITE_S3_PUBLIC_URL: "http://localhost:9000/isekai-uploads",
     };
   }
 

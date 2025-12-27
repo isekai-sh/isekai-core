@@ -16,18 +16,16 @@
  */
 
 import { Router } from "express";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 import { prisma } from "../db/index.js";
 import { AppError } from "../middleware/error.js";
 import {
-  s3Client,
   validateFileType,
   validateFileSize,
   generateR2Key,
   getPublicUrl,
-  checkStorageLimit,
+  deleteFromR2,
+  getPresignedUploadUrl,
 } from "../lib/upload-service.js";
 
 const router = Router();
@@ -57,14 +55,7 @@ router.post("/presigned", async (req, res) => {
   const fileId = randomUUID();
   const r2Key = generateR2Key(user.id, filename);
 
-  const command = new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME!,
-    Key: r2Key,
-    ContentType: contentType,
-    ContentLength: fileSize,
-  });
-
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 }); // 15 min
+  const uploadUrl = await getPresignedUploadUrl(r2Key, contentType, fileSize);
 
   res.json({
     uploadUrl,
@@ -146,16 +137,12 @@ router.delete("/:fileId", async (req, res) => {
     throw new AppError(404, "File not found");
   }
 
-  // Delete from R2
+  // Delete from storage
   try {
-    const deleteCommand = new DeleteObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME!,
-      Key: file.r2Key,
-    });
-    await s3Client.send(deleteCommand);
+    await deleteFromR2(file.r2Key);
   } catch (error) {
-    console.error("Failed to delete from R2:", error);
-    // Continue with DB deletion even if R2 fails
+    console.error("Failed to delete from storage:", error);
+    // Continue with DB deletion even if storage fails
   }
 
   await prisma.deviationFile.delete({ where: { id: fileId } });
@@ -192,17 +179,8 @@ router.post("/batch-delete", async (req, res) => {
     throw new AppError(403, "Unauthorized");
   }
 
-  // Delete from R2 (parallel, ignore failures)
-  await Promise.allSettled(
-    files.map((file) =>
-      s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME!,
-          Key: file.r2Key,
-        })
-      )
-    )
-  );
+  // Delete from storage (parallel, ignore failures)
+  await Promise.allSettled(files.map((file) => deleteFromR2(file.r2Key)));
 
   // Delete from DB
   await prisma.deviationFile.deleteMany({

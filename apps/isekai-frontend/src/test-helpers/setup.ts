@@ -44,7 +44,7 @@ beforeAll(() => {
     env: {
       VITE_API_URL: 'http://localhost:4000/api',
       VITE_DEVIANTART_CLIENT_ID: 'test-client-id',
-      VITE_R2_PUBLIC_URL: 'https://storage.isekai.sh',
+      VITE_S3_PUBLIC_URL: 'http://localhost:9000/isekai-uploads',
     },
   });
 

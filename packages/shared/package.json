@@ -14,6 +14,10 @@
     "./db": {
       "types": "./dist/db/index.d.ts",
       "import": "./dist/db/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage/index.d.ts",
+      "import": "./dist/storage/index.js"
     }
   },
   "scripts": {
@@ -27,6 +31,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.693.0",
+    "@aws-sdk/s3-request-presigner": "^3.693.0",
     "bullmq": "^5.35.0",
     "ioredis": "^5.4.2",
     "@prisma/client": "^7.1.0",

@@ -27,11 +27,13 @@ const validEnv = {
   DEVIANTART_CLIENT_ID: 'test_client_id',
   DEVIANTART_CLIENT_SECRET: 'test_client_secret',
   DEVIANTART_REDIRECT_URI: 'https://example.com/callback',
-  R2_ACCOUNT_ID: 'test_account',
-  R2_ACCESS_KEY_ID: 'test_key',
-  R2_SECRET_ACCESS_KEY: 'test_secret',
-  R2_BUCKET_NAME: 'test_bucket',
-  R2_PUBLIC_URL: 'https://example.com/uploads',
+  S3_ENDPOINT: 'http://localhost:9000',
+  S3_REGION: 'us-east-1',
+  S3_ACCESS_KEY_ID: 'test_key',
+  S3_SECRET_ACCESS_KEY: 'test_secret',
+  S3_BUCKET_NAME: 'test_bucket',
+  S3_PUBLIC_URL: 'http://localhost:9000/test_bucket',
+  S3_FORCE_PATH_STYLE: 'true',
   SESSION_SECRET: 'test_session_secret',
   FRONTEND_URL: 'https://example.com',
 };
@@ -130,17 +132,17 @@ describe('validateEnv', () => {
       expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should accept valid R2_PUBLIC_URL', async () => {
-      process.env.R2_PUBLIC_URL = 'https://cdn.example.com';
+    it('should accept valid S3_PUBLIC_URL', async () => {
+      process.env.S3_PUBLIC_URL = 'https://cdn.example.com';
 
       const { validateEnv } = await import('./env.js');
       const result = validateEnv();
 
-      expect(result.R2_PUBLIC_URL).toBe('https://cdn.example.com');
+      expect(result.S3_PUBLIC_URL).toBe('https://cdn.example.com');
     });
 
-    it('should reject invalid R2_PUBLIC_URL', async () => {
-      process.env.R2_PUBLIC_URL = 'invalid-url';
+    it('should reject invalid S3_PUBLIC_URL', async () => {
+      process.env.S3_PUBLIC_URL = 'invalid-url';
 
       const { validateEnv } = await import('./env.js');
       validateEnv();

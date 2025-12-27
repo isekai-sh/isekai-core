@@ -16,33 +16,19 @@
  */
 
 import { prisma } from "../db/index.js";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import type { User, Deviation, DeviationFile } from "../db/index.js";
 import type { UploadMode } from "@isekai/shared";
-import { NodeHttpHandler } from "@smithy/node-http-handler";
-import https from "https";
+import { getS3Client, getStorageConfig } from "@isekai/shared/storage";
 import { logger } from "./logger.js";
 import { env } from "./env.js";
 
 const DEVIANTART_TOKEN_URL = "https://www.deviantart.com/oauth2/token";
 const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
 
-// Create HTTPS agent with TLS configured to accept self-signed certificates
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
-
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-  requestHandler: new NodeHttpHandler({
-    httpsAgent,
-  }),
-});
+// Get S3 client and config from shared storage module
+const s3Client = getS3Client();
+const storageConfig = getStorageConfig();
 
 export async function refreshTokenIfNeeded(user: User): Promise<string> {
   const now = new Date();
@@ -153,21 +139,21 @@ export interface PublishResult {
   url: string;
 }
 
-// Helper function to fetch file from R2
-async function fetchFileFromR2(r2Key: string): Promise<Buffer> {
+// Helper function to fetch file from S3 storage
+async function fetchFileFromStorage(r2Key: string): Promise<Buffer> {
   const getCommand = new GetObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME!,
+    Bucket: storageConfig.bucketName,
     Key: r2Key,
   });
 
-  const r2Response = await s3Client.send(getCommand);
-  if (!r2Response.Body) {
-    throw new Error("Failed to fetch file from R2");
+  const response = await s3Client.send(getCommand);
+  if (!response.Body) {
+    throw new Error("Failed to fetch file from storage");
   }
 
   // Convert stream to buffer
   const chunks: Uint8Array[] = [];
-  for await (const chunk of r2Response.Body as any) {
+  for await (const chunk of response.Body as any) {
     chunks.push(chunk);
   }
   return Buffer.concat(chunks);
@@ -191,8 +177,8 @@ async function uploadSingleFileToDeviantArt(
     itemId = deviation.stashItemId;
   } else {
     // Upload to sta.sh
-    // Fetch file from R2
-    const fileBuffer = await fetchFileFromR2(file.r2Key);
+    // Fetch file from S3 storage
+    const fileBuffer = await fetchFileFromStorage(file.r2Key);
 
     // Create form data for DeviantArt upload
     const formData = new FormData();

@@ -41,8 +41,9 @@ describe('validateEnv', () => {
     const result = validateEnv();
 
     expect(result.VITE_API_URL).toBeTruthy();
-    expect(result.VITE_DEVIANTART_CLIENT_ID).toBeTruthy();
-    expect(result.VITE_R2_PUBLIC_URL).toBeTruthy();
+    // VITE_DEVIANTART_CLIENT_ID defaults to empty string - it's optional for test environments
+    expect(typeof result.VITE_DEVIANTART_CLIENT_ID).toBe('string');
+    expect(result.VITE_S3_PUBLIC_URL).toBeTruthy();
   });
 
   it('should return expected types', () => {
@@ -50,7 +51,7 @@ describe('validateEnv', () => {
 
     expect(typeof result.VITE_API_URL).toBe('string');
     expect(typeof result.VITE_DEVIANTART_CLIENT_ID).toBe('string');
-    expect(typeof result.VITE_R2_PUBLIC_URL).toBe('string');
+    expect(typeof result.VITE_S3_PUBLIC_URL).toBe('string');
   });
 
   it('should not throw with valid environment', () => {
@@ -63,7 +64,7 @@ describe('validateEnv', () => {
     const result = validateEnv();
     expect(result).toHaveProperty('VITE_API_URL');
     expect(result).toHaveProperty('VITE_DEVIANTART_CLIENT_ID');
-    expect(result).toHaveProperty('VITE_R2_PUBLIC_URL');
+    expect(result).toHaveProperty('VITE_S3_PUBLIC_URL');
   });
 
   it('should use zod schema for validation', () => {

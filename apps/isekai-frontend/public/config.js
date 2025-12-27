@@ -9,5 +9,5 @@
 window.ISEKAI_CONFIG = {
   API_URL: "/api",  // Default: relative path (works with reverse proxy)
   DEVIANTART_CLIENT_ID: "",  // Must be set for OAuth to work
-  R2_PUBLIC_URL: "https://storage.isekai.sh"  // Cloudflare R2 public URL
+  S3_PUBLIC_URL: "http://localhost:9000/isekai-uploads"  // S3-compatible storage public URL
 };

@@ -35,19 +35,11 @@ vi.mock('../db/index.js', () => ({
 }));
 
 vi.mock('../lib/upload-service.js', () => ({
-  s3Client: {
-    send: vi.fn(),
-  },
-}));
-
-vi.mock('@aws-sdk/client-s3', () => ({
-  DeleteObjectCommand: vi.fn(function(this: any, params: any) {
-    Object.assign(this, params);
-  }),
+  deleteFromR2: vi.fn(),
 }));
 
 import { prisma } from '../db/index.js';
-import { s3Client } from '../lib/upload-service.js';
+import { deleteFromR2 } from '../lib/upload-service.js';
 
 describe('review routes', () => {
   const mockUser = {
@@ -365,7 +357,7 @@ describe('review routes', () => {
         ...mockDeviation,
         files: [mockDeviationFile],
       });
-      (s3Client.send as any).mockResolvedValue({});
+      (deleteFromR2 as any).mockResolvedValue(undefined);
       (prisma.deviation.delete as any).mockResolvedValue(mockDeviation);
 
       await callRoute('POST', '/:id/reject', req, res);
@@ -378,12 +370,7 @@ describe('review routes', () => {
         },
         include: { files: true },
       });
-      expect(s3Client.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: 'deviations/user-123/test---abc123.jpg',
-        })
-      );
+      expect(deleteFromR2).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
       expect(prisma.deviation.delete).toHaveBeenCalledWith({
         where: { id: 'deviation-123' },
       });
@@ -406,7 +393,7 @@ describe('review routes', () => {
 
       await callRoute('POST', '/:id/reject', req, res);
 
-      expect(s3Client.send).not.toHaveBeenCalled();
+      expect(deleteFromR2).not.toHaveBeenCalled();
       expect(prisma.deviation.delete).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(204);
     });
@@ -441,14 +428,14 @@ describe('review routes', () => {
         ...mockDeviation,
         files,
       });
-      (s3Client.send as any)
-        .mockResolvedValueOnce({})
+      (deleteFromR2 as any)
+        .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviation.delete as any).mockResolvedValue(mockDeviation);
 
       await callRoute('POST', '/:id/reject', req, res);
 
-      expect(s3Client.send).toHaveBeenCalledTimes(2);
+      expect(deleteFromR2).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.delete).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(204);
     });
@@ -559,7 +546,7 @@ describe('review routes', () => {
       ];
 
       (prisma.deviation.findMany as any).mockResolvedValue(reviewDeviations);
-      (s3Client.send as any).mockResolvedValue({});
+      (deleteFromR2 as any).mockResolvedValue(undefined);
       (prisma.deviation.deleteMany as any).mockResolvedValue({ count: 2 });
 
       await callRoute('POST', '/batch-reject', req, res);
@@ -572,7 +559,7 @@ describe('review routes', () => {
         },
         include: { files: true },
       });
-      expect(s3Client.send).toHaveBeenCalledTimes(2);
+      expect(deleteFromR2).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: deviationIds } },
       });
@@ -643,14 +630,14 @@ describe('review routes', () => {
       ];
 
       (prisma.deviation.findMany as any).mockResolvedValue(reviewDeviations);
-      (s3Client.send as any)
-        .mockResolvedValueOnce({})
+      (deleteFromR2 as any)
+        .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviation.deleteMany as any).mockResolvedValue({ count: 1 });
 
       await callRoute('POST', '/batch-reject', req, res);
 
-      expect(s3Client.send).toHaveBeenCalledTimes(2);
+      expect(deleteFromR2).toHaveBeenCalledTimes(2);
       expect(prisma.deviation.deleteMany).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith({
         success: true,

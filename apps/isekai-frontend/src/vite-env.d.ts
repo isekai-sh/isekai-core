@@ -5,7 +5,7 @@
 interface IsekaiConfig {
   API_URL: string;
   DEVIANTART_CLIENT_ID: string;
-  R2_PUBLIC_URL: string;
+  S3_PUBLIC_URL: string;
 }
 
 interface Window {

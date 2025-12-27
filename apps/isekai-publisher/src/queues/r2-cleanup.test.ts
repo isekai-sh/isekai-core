@@ -19,6 +19,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Set environment before imports
 process.env.REDIS_URL = 'redis://localhost:6379';
+process.env.S3_ACCESS_KEY_ID = 'test-key';
+process.env.S3_SECRET_ACCESS_KEY = 'test-secret';
+process.env.S3_BUCKET_NAME = 'test-bucket';
+process.env.S3_PUBLIC_URL = 'https://cdn.example.com';
 
 // Mock BullMQ
 const mockQueueAdd = vi.fn();
@@ -43,10 +47,25 @@ vi.mock('ioredis', async () => {
   return { Redis: RedisMock };
 });
 
-// Mock deleteFromR2
-const mockDeleteFromR2 = vi.fn();
-vi.mock('../lib/upload-service.js', () => ({
-  deleteFromR2: (...args: any[]) => mockDeleteFromR2(...args),
+// Mock shared storage module
+const mockDelete = vi.fn();
+vi.mock('@isekai/shared/storage', () => ({
+  createStorageService: vi.fn(() => ({
+    delete: mockDelete,
+    upload: vi.fn(),
+    getPresignedUploadUrl: vi.fn(),
+    getPublicUrl: vi.fn(),
+    getClient: vi.fn(),
+    getBucket: vi.fn().mockReturnValue('test-bucket'),
+  })),
+  getS3ConfigFromEnv: vi.fn(() => ({
+    endpoint: 'https://test.s3.amazonaws.com',
+    region: 'auto',
+    accessKeyId: 'test-key',
+    secretAccessKey: 'test-secret',
+    bucket: 'test-bucket',
+    publicUrl: 'https://cdn.example.com',
+  })),
 }));
 
 // Mock StructuredLogger
@@ -91,6 +110,10 @@ describe('r2-cleanup', () => {
     process.env = {
       ...originalEnv,
       REDIS_URL: 'redis://localhost:6379',
+      S3_ACCESS_KEY_ID: 'test-key',
+      S3_SECRET_ACCESS_KEY: 'test-secret',
+      S3_BUCKET_NAME: 'test-bucket',
+      S3_PUBLIC_URL: 'https://cdn.example.com',
     };
 
     // Import mocked prisma
@@ -119,7 +142,7 @@ describe('r2-cleanup', () => {
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
-      mockDeleteFromR2.mockResolvedValue(undefined);
+      mockDelete.mockResolvedValue(undefined);
       prisma.deviationFile.deleteMany.mockResolvedValueOnce({ count: 2 });
 
       const result = await workerProcessor(mockJob);
@@ -129,9 +152,9 @@ describe('r2-cleanup', () => {
         bytesFreed: 3000,
       });
 
-      expect(mockDeleteFromR2).toHaveBeenCalledTimes(2);
-      expect(mockDeleteFromR2).toHaveBeenCalledWith('key-1');
-      expect(mockDeleteFromR2).toHaveBeenCalledWith('key-2');
+      expect(mockDelete).toHaveBeenCalledTimes(2);
+      expect(mockDelete).toHaveBeenCalledWith('key-1');
+      expect(mockDelete).toHaveBeenCalledWith('key-2');
 
       expect(prisma.deviationFile.deleteMany).toHaveBeenCalledWith({
         where: { deviationId: 'dev-1' },
@@ -156,7 +179,7 @@ describe('r2-cleanup', () => {
         bytesFreed: 0,
       });
 
-      expect(mockDeleteFromR2).not.toHaveBeenCalled();
+      expect(mockDelete).not.toHaveBeenCalled();
       expect(prisma.deviationFile.deleteMany).not.toHaveBeenCalled();
 
       expect(mockLoggerInfo).toHaveBeenCalledWith(
@@ -176,19 +199,19 @@ describe('r2-cleanup', () => {
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
-      mockDeleteFromR2.mockRejectedValueOnce(new Error('S3 error'));
+      mockDelete.mockRejectedValueOnce(new Error('S3 error'));
 
       await expect(workerProcessor(mockJob)).rejects.toThrow(
-        'Failed to delete 1 of 1 files from R2'
+        'Failed to delete 1 of 1 files from storage'
       );
 
       expect(mockLoggerError).toHaveBeenCalledWith(
-        'Failed to delete file from R2',
+        'Failed to delete file from storage',
         expect.any(Error),
         expect.any(Object)
       );
 
-      // Should not delete DB records if R2 deletion fails
+      // Should not delete DB records if storage deletion fails
       expect(prisma.deviationFile.deleteMany).not.toHaveBeenCalled();
     });
 
@@ -207,16 +230,16 @@ describe('r2-cleanup', () => {
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
 
       // First and third succeed, second fails
-      mockDeleteFromR2
+      mockDelete
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('S3 error'))
         .mockResolvedValueOnce(undefined);
 
       await expect(workerProcessor(mockJob)).rejects.toThrow(
-        'Failed to delete 1 of 3 files from R2'
+        'Failed to delete 1 of 3 files from storage'
       );
 
-      expect(mockDeleteFromR2).toHaveBeenCalledTimes(3);
+      expect(mockDelete).toHaveBeenCalledTimes(3);
       expect(prisma.deviationFile.deleteMany).not.toHaveBeenCalled();
     });
 
@@ -249,7 +272,7 @@ describe('r2-cleanup', () => {
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
-      mockDeleteFromR2.mockResolvedValue(undefined);
+      mockDelete.mockResolvedValue(undefined);
       prisma.deviationFile.deleteMany.mockResolvedValueOnce({ count: 2 });
 
       await workerProcessor(mockJob);
@@ -271,12 +294,12 @@ describe('r2-cleanup', () => {
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
-      mockDeleteFromR2.mockResolvedValue(undefined);
+      mockDelete.mockResolvedValue(undefined);
       prisma.deviationFile.deleteMany.mockResolvedValueOnce({ count: 1 });
 
       await workerProcessor(mockJob);
 
-      expect(mockLoggerDebug).toHaveBeenCalledWith('Deleted file from R2', {
+      expect(mockLoggerDebug).toHaveBeenCalledWith('Deleted file from storage', {
         r2Key: 'key-1',
         fileName: 'test.jpg',
       });

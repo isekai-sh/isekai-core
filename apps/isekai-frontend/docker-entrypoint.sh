@@ -13,7 +13,7 @@ cat > ${CONFIG_FILE} << EOF
 window.ISEKAI_CONFIG = {
   API_URL: "${VITE_API_URL:-/api}",
   DEVIANTART_CLIENT_ID: "${VITE_DEVIANTART_CLIENT_ID:-}",
-  R2_PUBLIC_URL: "${VITE_R2_PUBLIC_URL:-https://storage.isekai.sh}"
+  S3_PUBLIC_URL: "${VITE_S3_PUBLIC_URL:-http://localhost:9000/isekai-uploads}"
 };
 EOF
 

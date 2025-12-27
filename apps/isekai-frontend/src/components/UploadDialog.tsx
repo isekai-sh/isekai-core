@@ -187,7 +187,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       fileData.fileId = fileId;
       fileData.r2Key = r2Key;
       fileData.r2Url = `${
-        (window as any).ISEKAI_CONFIG?.R2_PUBLIC_URL || "https://storage.isekai.sh"
+        (window as any).ISEKAI_CONFIG?.S3_PUBLIC_URL || "http://localhost:9000/isekai-uploads"
       }/${r2Key}`;
       fileData.uploadProgress = 100;
 

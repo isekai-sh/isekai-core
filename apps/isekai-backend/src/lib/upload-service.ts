@@ -16,90 +16,104 @@
  */
 
 import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { randomUUID } from "crypto";
+  createStorageService,
+  getS3ConfigFromEnv,
+  // Re-export validation utilities for backward compatibility
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+  validateFileType,
+  validateFileSize,
+  checkStorageLimit,
+  generateStorageKey,
+  type StorageService,
+} from "@isekai/shared/storage";
 
-// Initialize S3 client for Cloudflare R2
-export const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
+// Re-export for backward compatibility
+export {
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+  validateFileType,
+  validateFileSize,
+  checkStorageLimit,
+};
 
-// File validation constants
-export const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-];
+// Create storage service singleton
+let storageService: StorageService | null = null;
 
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-
-// Validation functions
-export function validateFileType(mimeType: string): boolean {
-  return ALLOWED_MIME_TYPES.includes(mimeType);
+function getStorageService(): StorageService {
+  if (!storageService) {
+    const config = getS3ConfigFromEnv();
+    storageService = createStorageService(config);
+  }
+  return storageService;
 }
 
-export function validateFileSize(fileSize: number): boolean {
-  return fileSize > 0 && fileSize <= MAX_FILE_SIZE;
+/**
+ * Get the S3 client for direct operations (presigned URLs, etc.)
+ * @deprecated Use storageService methods instead where possible
+ */
+export function getS3Client() {
+  return getStorageService().getClient();
 }
 
-// Generate R2 key with sanitized filename
+/**
+ * Get the bucket name
+ */
+export function getBucket(): string {
+  return getStorageService().getBucket();
+}
+
+/**
+ * Generate storage key with sanitized filename.
+ * Alias for generateStorageKey for backward compatibility.
+ */
 export function generateR2Key(userId: string, filename: string): string {
-  const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "");
-  const sanitized = filenameWithoutExt
-    .replace(/[^a-zA-Z0-9-_]/g, "-")
-    .slice(0, 50);
-  const shortUuid = randomUUID().split("-")[0]; // 8 chars
-  const ext = filename.split(".").pop() || "jpg";
-  return `deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
+  return generateStorageKey(userId, filename);
 }
 
-// Upload file directly to R2
+/**
+ * Upload file directly to storage.
+ */
 export async function uploadToR2(
-  r2Key: string,
+  key: string,
   buffer: Buffer,
   mimeType: string
 ): Promise<void> {
-  const command = new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME!,
-    Key: r2Key,
-    Body: buffer,
-    ContentType: mimeType,
-    ContentLength: buffer.length,
-  });
-  await s3Client.send(command);
+  return getStorageService().upload(key, buffer, mimeType);
 }
 
-// Delete from R2
-export async function deleteFromR2(r2Key: string): Promise<void> {
-  const command = new DeleteObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME!,
-    Key: r2Key,
-  });
-  await s3Client.send(command);
+/**
+ * Delete file from storage.
+ */
+export async function deleteFromR2(key: string): Promise<void> {
+  return getStorageService().delete(key);
 }
 
-// Get public URL for R2 object
-export function getPublicUrl(r2Key: string): string {
-  return `${process.env.R2_PUBLIC_URL}/${r2Key}`;
+/**
+ * Get public URL for uploaded file.
+ */
+export function getPublicUrl(key: string): string {
+  return getStorageService().getPublicUrl(key);
 }
 
-// Check if user has enough storage for file
-export function checkStorageLimit(
-  currentUsage: number,
-  fileSize: number,
-  tierLimit: number
-): boolean {
-  return currentUsage + fileSize <= tierLimit;
+/**
+ * Get presigned URL for direct browser upload.
+ */
+export async function getPresignedUploadUrl(
+  key: string,
+  contentType: string,
+  contentLength: number,
+  expiresIn: number = 900
+): Promise<string> {
+  return getStorageService().getPresignedUploadUrl(
+    key,
+    contentType,
+    contentLength,
+    expiresIn
+  );
 }
+
+/**
+ * Get the storage service instance for advanced operations.
+ */
+export { getStorageService };

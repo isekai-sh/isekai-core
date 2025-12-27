@@ -383,6 +383,12 @@ export interface AdminStatsResponse {
 export * from "./publisher/index.js";
 
 // ============================================
+// Storage Module
+// ============================================
+
+export * from "./storage/index.js";
+
+// ============================================
 // Database Types
 // ============================================
 

@@ -1,8 +1,15 @@
 import { Queue, Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import { prisma } from '../db/index.js';
-import { deleteFromR2 } from '../lib/upload-service.js';
+import { createStorageService, getS3ConfigFromEnv } from '@isekai/shared/storage';
 import { StructuredLogger } from '../lib/structured-logger.js';
+
+// Create storage service singleton for cleanup operations
+const storageService = createStorageService(getS3ConfigFromEnv());
+
+async function deleteFromStorage(key: string): Promise<void> {
+  return storageService.delete(key);
+}
 
 const redisUrl = process.env.REDIS_URL!;
 
@@ -75,18 +82,18 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
       totalSizeBytes: totalSize,
     });
 
-    // Delete files from R2 (parallel deletion with individual error handling)
+    // Delete files from storage (parallel deletion with individual error handling)
     const deletionResults = await Promise.allSettled(
       files.map(async (file) => {
         try {
-          await deleteFromR2(file.r2Key);
-          logger.debug('Deleted file from R2', {
+          await deleteFromStorage(file.r2Key);
+          logger.debug('Deleted file from storage', {
             r2Key: file.r2Key,
             fileName: file.originalFilename,
           });
           return { success: true, key: file.r2Key };
         } catch (error) {
-          logger.error('Failed to delete file from R2', error, {
+          logger.error('Failed to delete file from storage', error, {
             r2Key: file.r2Key,
             fileName: file.originalFilename,
           });
@@ -99,7 +106,7 @@ export const r2CleanupWorker = new Worker<R2CleanupJobData>(
     const failedDeletions = deletionResults.filter((r) => r.status === 'rejected');
     if (failedDeletions.length > 0) {
       throw new Error(
-        `Failed to delete ${failedDeletions.length} of ${files.length} files from R2`
+        `Failed to delete ${failedDeletions.length} of ${files.length} files from storage`
       );
     }
 

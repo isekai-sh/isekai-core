@@ -16,10 +16,9 @@
  */
 
 import { Router } from "express";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { prisma } from "../db/index.js";
 import { AppError } from "../middleware/error.js";
-import { s3Client } from "../lib/upload-service.js";
+import { deleteFromR2 } from "../lib/upload-service.js";
 
 const router = Router();
 
@@ -121,17 +120,10 @@ router.post("/:id/reject", async (req, res) => {
     throw new AppError(404, "Review deviation not found");
   }
 
-  // Delete files from R2
+  // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
     await Promise.allSettled(
-      deviation.files.map((file) =>
-        s3Client.send(
-          new DeleteObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME!,
-            Key: file.r2Key,
-          })
-        )
-      )
+      deviation.files.map((file) => deleteFromR2(file.r2Key))
     );
   }
 
@@ -198,18 +190,9 @@ router.post("/batch-reject", async (req, res) => {
     throw new AppError(400, "Can only reject review deviations you own");
   }
 
-  // Delete files from R2
+  // Delete files from storage
   const allFiles = reviewDeviations.flatMap((d) => d.files);
-  await Promise.allSettled(
-    allFiles.map((file) =>
-      s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME!,
-          Key: file.r2Key,
-        })
-      )
-    )
-  );
+  await Promise.allSettled(allFiles.map((file) => deleteFromR2(file.r2Key)));
 
   // Delete deviations
   await prisma.deviation.deleteMany({

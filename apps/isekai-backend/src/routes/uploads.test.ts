@@ -33,28 +33,15 @@ vi.mock('../db/index.js', () => ({
 }));
 
 vi.mock('../lib/upload-service.js', () => ({
-  s3Client: {
-    send: vi.fn(),
-  },
   validateFileType: vi.fn(),
   validateFileSize: vi.fn(),
   generateR2Key: vi.fn(),
   getPublicUrl: vi.fn(),
   checkStorageLimit: vi.fn(),
+  deleteFromR2: vi.fn(),
+  getPresignedUploadUrl: vi.fn(),
 }));
 
-vi.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: vi.fn(),
-}));
-
-vi.mock('@aws-sdk/client-s3', () => ({
-  PutObjectCommand: vi.fn(function(this: any, params: any) {
-    Object.assign(this, params);
-  }),
-  DeleteObjectCommand: vi.fn(function(this: any, params: any) {
-    Object.assign(this, params);
-  }),
-}));
 
 vi.mock('crypto', () => ({
   randomUUID: vi.fn(),
@@ -62,13 +49,13 @@ vi.mock('crypto', () => ({
 
 import { prisma } from '../db/index.js';
 import {
-  s3Client,
   validateFileType,
   validateFileSize,
   generateR2Key,
   getPublicUrl,
+  deleteFromR2,
+  getPresignedUploadUrl,
 } from '../lib/upload-service.js';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 
 describe('uploads routes', () => {
@@ -125,22 +112,17 @@ describe('uploads routes', () => {
       (validateFileSize as any).mockReturnValue(true);
       (randomUUID as any).mockReturnValue('file-uuid-123');
       (generateR2Key as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
-      (getSignedUrl as any).mockResolvedValue('https://presigned-url.com');
+      (getPresignedUploadUrl as any).mockResolvedValue('https://presigned-url.com');
 
       await callRoute('POST', '/presigned', req, res);
 
       expect(validateFileType).toHaveBeenCalledWith('image/jpeg');
       expect(validateFileSize).toHaveBeenCalledWith(1024);
       expect(generateR2Key).toHaveBeenCalledWith('user-123', 'test.jpg');
-      expect(getSignedUrl).toHaveBeenCalledWith(
-        s3Client,
-        expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: 'deviations/user-123/test---abc123.jpg',
-          ContentType: 'image/jpeg',
-          ContentLength: 1024,
-        }),
-        { expiresIn: 900 }
+      expect(getPresignedUploadUrl).toHaveBeenCalledWith(
+        'deviations/user-123/test---abc123.jpg',
+        'image/jpeg',
+        1024
       );
       expect(res.json).toHaveBeenCalledWith({
         uploadUrl: 'https://presigned-url.com',
@@ -366,7 +348,7 @@ describe('uploads routes', () => {
         ...mockDeviationFile,
         deviation: { userId: 'user-123' },
       });
-      (s3Client.send as any).mockResolvedValue({});
+      (deleteFromR2 as any).mockResolvedValue(undefined);
       (prisma.deviationFile.delete as any).mockResolvedValue(mockDeviationFile);
 
       await callRoute('DELETE', '/:fileId', req, res);
@@ -375,12 +357,7 @@ describe('uploads routes', () => {
         where: { id: 'file-123' },
         include: { deviation: true },
       });
-      expect(s3Client.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: 'deviations/user-123/test---abc123.jpg',
-        })
-      );
+      expect(deleteFromR2).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
       expect(prisma.deviationFile.delete).toHaveBeenCalledWith({
         where: { id: 'file-123' },
       });
@@ -415,7 +392,7 @@ describe('uploads routes', () => {
       await expect(callRoute('DELETE', '/:fileId', req, res)).rejects.toThrow('File not found');
     });
 
-    it('should continue DB deletion even when R2 deletion fails', async () => {
+    it('should continue DB deletion even when storage deletion fails', async () => {
       const req = createMockRequest({
         user: mockUser,
         params: { fileId: 'file-123' },
@@ -426,7 +403,7 @@ describe('uploads routes', () => {
         ...mockDeviationFile,
         deviation: { userId: 'user-123' },
       });
-      (s3Client.send as any).mockRejectedValue(new Error('R2 error'));
+      (deleteFromR2 as any).mockRejectedValue(new Error('Storage error'));
       (prisma.deviationFile.delete as any).mockResolvedValue(mockDeviationFile);
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -434,7 +411,7 @@ describe('uploads routes', () => {
       await callRoute('DELETE', '/:fileId', req, res);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to delete from R2:',
+        'Failed to delete from storage:',
         expect.any(Error)
       );
       expect(prisma.deviationFile.delete).toHaveBeenCalledWith({
@@ -462,7 +439,7 @@ describe('uploads routes', () => {
       }));
 
       (prisma.deviationFile.findMany as any).mockResolvedValue(files);
-      (s3Client.send as any).mockResolvedValue({});
+      (deleteFromR2 as any).mockResolvedValue(undefined);
       (prisma.deviationFile.deleteMany as any).mockResolvedValue({ count: 3 });
 
       await callRoute('POST', '/batch-delete', req, res);
@@ -471,7 +448,7 @@ describe('uploads routes', () => {
         where: { id: { in: fileIds } },
         include: { deviation: true },
       });
-      expect(s3Client.send).toHaveBeenCalledTimes(3);
+      expect(deleteFromR2).toHaveBeenCalledTimes(3);
       expect(prisma.deviationFile.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: fileIds } },
       });
@@ -539,8 +516,8 @@ describe('uploads routes', () => {
       }));
 
       (prisma.deviationFile.findMany as any).mockResolvedValue(files);
-      (s3Client.send as any)
-        .mockResolvedValueOnce({})
+      (deleteFromR2 as any)
+        .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('R2 error'));
       (prisma.deviationFile.deleteMany as any).mockResolvedValue({ count: 2 });
 

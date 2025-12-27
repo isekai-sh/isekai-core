@@ -16,12 +16,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  refreshTokenIfNeeded,
-  getRefreshTokenStatus,
-  publishToDeviantArt,
-} from './deviantart.js';
 import type { User, Deviation, DeviationFile } from '../db/index.js';
+
+// Mock fetch globally
+global.fetch = vi.fn();
+
+// Create mock at hoisted scope
+const { mockSend } = vi.hoisted(() => ({
+  mockSend: vi.fn(),
+}));
 
 // Mock dependencies
 vi.mock('../db/index.js', () => ({
@@ -52,38 +55,38 @@ vi.mock('./env.js', () => ({
 
 // Mock @aws-sdk/client-s3
 vi.mock('@aws-sdk/client-s3', () => {
-  const mockSend = vi.fn();
-
-  class MockS3Client {
-    send = mockSend;
-  }
-
   return {
-    S3Client: MockS3Client,
+    S3Client: vi.fn().mockImplementation(() => ({
+      send: mockSend,
+    })),
     GetObjectCommand: vi.fn(),
-    __mockSend: mockSend, // Export for test access
   };
 });
 
-// Mock fetch
-global.fetch = vi.fn();
+// Mock shared storage module - must be before importing deviantart
+vi.mock('@isekai/shared/storage', () => ({
+  getS3Client: vi.fn(() => ({
+    send: mockSend,
+  })),
+  getStorageConfig: vi.fn(() => ({
+    bucketName: 'test-bucket',
+    publicUrl: 'https://cdn.example.com',
+  })),
+}));
 
+// Import deviantart functions AFTER mocks are set up
+import {
+  refreshTokenIfNeeded,
+  getRefreshTokenStatus,
+  publishToDeviantArt,
+} from './deviantart.js';
 import { prisma } from '../db/index.js';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 
 const mockPrisma = vi.mocked(prisma);
 const mockFetch = vi.mocked(global.fetch);
-const mockS3Client = vi.mocked(S3Client);
-
-// Access the mockSend from the mock module
-let mockSend: any;
 
 describe('deviantart', () => {
-  beforeAll(async () => {
-    const s3Module = await import('@aws-sdk/client-s3');
-    mockSend = (s3Module as any).__mockSend;
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -1102,7 +1105,7 @@ describe('deviantart', () => {
       });
     });
 
-    it('should fetch file from R2 before uploading', async () => {
+    it('should fetch file from storage before uploading', async () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
@@ -1123,26 +1126,26 @@ describe('deviantart', () => {
       // S3 send method should have been called to fetch file
       expect(mockSend).toHaveBeenCalled();
       expect(GetObjectCommand).toHaveBeenCalledWith({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: 'test-bucket',
         Key: 'uploads/user-1/test-image.jpg',
       });
     });
 
-    it('should handle R2 fetch error', async () => {
+    it('should handle storage fetch error', async () => {
       // Override mockSend to throw error
-      mockSend.mockRejectedValueOnce(new Error('R2 connection failed'));
+      mockSend.mockRejectedValueOnce(new Error('S3 connection failed'));
 
       await expect(publishToDeviantArt(mockDeviation, mockUser, 'single')).rejects.toThrow(
-        'R2 connection failed'
+        'S3 connection failed'
       );
     });
 
-    it('should handle R2 response with no Body', async () => {
+    it('should handle storage response with no Body', async () => {
       // Override mockSend to return no Body
       mockSend.mockResolvedValueOnce({ Body: null });
 
       await expect(publishToDeviantArt(mockDeviation, mockUser, 'single')).rejects.toThrow(
-        'Failed to fetch file from R2'
+        'Failed to fetch file from storage'
       );
     });
   });

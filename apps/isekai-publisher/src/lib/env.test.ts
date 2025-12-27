@@ -42,10 +42,9 @@ describe('env validation', () => {
     REDIS_URL: 'redis://localhost:6379',
     DEVIANTART_CLIENT_ID: 'test-client-id',
     DEVIANTART_CLIENT_SECRET: 'test-client-secret',
-    R2_ACCOUNT_ID: 'test-account-id',
-    R2_ACCESS_KEY_ID: 'test-access-key',
-    R2_SECRET_ACCESS_KEY: 'test-secret-key',
-    R2_BUCKET_NAME: 'test-bucket',
+    S3_ACCESS_KEY_ID: 'test-access-key',
+    S3_SECRET_ACCESS_KEY: 'test-secret-key',
+    S3_BUCKET_NAME: 'test-bucket',
   });
 
   describe('Required Fields', () => {
@@ -59,10 +58,9 @@ describe('env validation', () => {
       expect(result.REDIS_URL).toBe('redis://localhost:6379');
       expect(result.DEVIANTART_CLIENT_ID).toBe('test-client-id');
       expect(result.DEVIANTART_CLIENT_SECRET).toBe('test-client-secret');
-      expect(result.R2_ACCOUNT_ID).toBe('test-account-id');
-      expect(result.R2_ACCESS_KEY_ID).toBe('test-access-key');
-      expect(result.R2_SECRET_ACCESS_KEY).toBe('test-secret-key');
-      expect(result.R2_BUCKET_NAME).toBe('test-bucket');
+      expect(result.S3_ACCESS_KEY_ID).toBe('test-access-key');
+      expect(result.S3_SECRET_ACCESS_KEY).toBe('test-secret-key');
+      expect(result.S3_BUCKET_NAME).toBe('test-bucket');
     });
 
     it('should fail when DATABASE_URL is missing', async () => {
@@ -108,9 +106,9 @@ describe('env validation', () => {
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
-    it('should fail when R2 credentials are missing', async () => {
+    it('should fail when S3 credentials are missing', async () => {
       const env = createValidEnv();
-      delete (env as any).R2_ACCOUNT_ID;
+      delete (env as any).S3_ACCESS_KEY_ID;
       process.env = env;
 
       const { validateEnv } = await import('./env.js');
