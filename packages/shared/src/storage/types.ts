@@ -67,6 +67,17 @@ export interface S3Config {
    * - Some S3-compatible providers may require true
    */
   forcePathStyle?: boolean;
+
+  /**
+   * External endpoint URL for presigned URLs (browser uploads).
+   * Use this when the internal endpoint (endpoint) differs from what browsers can access.
+   *
+   * Example: In Docker, backend uses http://minio:9000 internally,
+   * but browsers need http://localhost:9000 for presigned URLs.
+   *
+   * If not set, uses the main endpoint.
+   */
+  presignedEndpoint?: string;
 }
 
 /**

@@ -54,6 +54,7 @@ export function getS3ConfigFromEnv(): S3Config {
     bucket,
     publicUrl: process.env.S3_PUBLIC_URL || undefined,
     forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+    presignedEndpoint: process.env.S3_PRESIGNED_ENDPOINT || undefined,
   };
 }
 

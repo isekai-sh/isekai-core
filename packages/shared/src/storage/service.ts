@@ -31,6 +31,7 @@ import type { S3Config, StorageService } from "./types.js";
  */
 export class S3StorageService implements StorageService {
   private client: S3Client;
+  private presignedClient: S3Client;
   private bucket: string;
   private publicUrl?: string;
 
@@ -44,6 +45,21 @@ export class S3StorageService implements StorageService {
       },
       forcePathStyle: config.forcePathStyle ?? false,
     });
+
+    // Create a separate client for presigned URLs if a different endpoint is configured.
+    // This is needed in Docker environments where the backend uses an internal hostname
+    // (e.g., http://minio:9000) but browsers need an external URL (e.g., http://localhost:9000).
+    const presignedEndpoint = config.presignedEndpoint || config.endpoint;
+    this.presignedClient = new S3Client({
+      region: config.region,
+      endpoint: presignedEndpoint,
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+      },
+      forcePathStyle: config.forcePathStyle ?? false,
+    });
+
     this.bucket = config.bucket;
     this.publicUrl = config.publicUrl;
   }
@@ -79,7 +95,8 @@ export class S3StorageService implements StorageService {
       ContentType: contentType,
       ContentLength: contentLength,
     });
-    return getSignedUrl(this.client, command, { expiresIn });
+    // Use presignedClient which may have a browser-accessible endpoint
+    return getSignedUrl(this.presignedClient, command, { expiresIn });
   }
 
   getPublicUrl(key: string): string {
