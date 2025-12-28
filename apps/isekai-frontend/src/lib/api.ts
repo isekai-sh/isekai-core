@@ -836,4 +836,79 @@ export const automationDefaultValues = {
     request<void>(`/automation-default-values/${id}`, { method: "DELETE" }),
 };
 
+// Admin API
+export interface InstanceUser {
+  id: string;
+  daUserId: string;
+  daUsername: string;
+  daAvatar: string | null;
+  role: "admin" | "member";
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface InstanceInfo {
+  instanceId: string | null;
+  tier: "pro" | "agency" | "self-hosted";
+  limits: {
+    maxDaAccounts: number;
+    currentDaAccounts: number;
+    unlimited: boolean;
+  };
+  stats: {
+    teamMembers: number;
+    deviations: number;
+    storageUsedBytes: number;
+  };
+  settings: {
+    teamInvitesEnabled: boolean;
+    whitelabelEnabled: boolean;
+  };
+}
+
+export interface InstanceSettings {
+  teamInvitesEnabled: boolean;
+}
+
+export const admin = {
+  getTeam: () => request<{ users: InstanceUser[] }>("/admin/team"),
+  removeTeamMember: (id: string) =>
+    request<{
+      success: boolean;
+      message: string;
+      cleanup: { jobsCancelled: number; filesQueued: number; cacheKeysDeleted: number } | null;
+    }>(`/admin/team/${id}`, { method: "DELETE" }),
+  getInstance: () => request<InstanceInfo>("/admin/instance"),
+  getSettings: () => request<InstanceSettings>("/admin/settings"),
+  updateSettings: (data: Partial<InstanceSettings>) =>
+    request<InstanceSettings>("/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+};
+
+// Config API (public)
+export interface WhitelabelConfig {
+  enabled: boolean;
+  productName: string;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  footerText: string | null;
+  supportEmail: string | null;
+}
+
+export interface LimitsConfig {
+  maxAccounts: number;
+  currentAccounts: number;
+  unlimited: boolean;
+  teamInvitesEnabled: boolean;
+}
+
+export const config = {
+  getWhitelabel: () => request<WhitelabelConfig>("/config/whitelabel"),
+  getLimits: () => request<LimitsConfig>("/config/limits"),
+  getInstance: () =>
+    request<{ tier: string; productName: string }>("/config/instance"),
+};
+
 export { ApiError };

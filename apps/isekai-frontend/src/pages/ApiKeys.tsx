@@ -45,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,21 +135,24 @@ export function ApiKeys() {
   const activeKeys = keys.filter((k) => !k.revokedAt);
 
   return (
-    <div className="flex flex-col gap-6 h-full">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">API Keys</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage API keys for ComfyUI integration ({activeKeys.length} active)
-          </p>
+    <PageWrapper className="gap-6">
+      <PageHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">API Keys</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage API keys for ComfyUI integration ({activeKeys.length} active)
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create API Key
+          </Button>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create API Key
-        </Button>
-      </div>
+      </PageHeader>
 
-      <Card className="flex-1">
+      <PageContent>
+        <Card className="flex-1">
         <CardHeader>
           <CardTitle>Your API Keys</CardTitle>
           <CardDescription>
@@ -325,6 +329,7 @@ export function ApiKeys() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </PageContent>
+    </PageWrapper>
   );
 }

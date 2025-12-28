@@ -81,6 +81,25 @@ async function recoverStuckJobs(): Promise<void> {
 
     for (const deviation of stuckDeviations as DeviationWithUser[]) {
       try {
+        // Check if user still exists (may have been deleted)
+        const userExists = await prisma.user.findUnique({
+          where: { id: deviation.userId },
+          select: { id: true },
+        });
+
+        if (!userExists) {
+          // User was deleted - clean up orphaned deviation
+          console.log(`[Stuck Job Recovery] Skipping stuck job for deleted user: ${deviation.id} (userId: ${deviation.userId})`);
+
+          // Delete orphaned deviation (files already queued for cleanup when user was deleted)
+          await prisma.deviation.delete({
+            where: { id: deviation.id },
+          });
+          console.log(`[Stuck Job Recovery] Deleted orphaned deviation: ${deviation.id}`);
+          recovered++;
+          continue;
+        }
+
         // FIRST: Always release stale lock before recovery
         await releaseStaleLocksForRecovery(deviation);
 

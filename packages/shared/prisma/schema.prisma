@@ -56,6 +56,11 @@ enum SaleQueueStatus {
   skipped
 }
 
+enum InstanceUserRole {
+  admin
+  member
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -324,6 +329,39 @@ model AdminRole {
   @@unique([userId, role])
   @@index([userId])
   @@map("admin_roles")
+}
+
+// SaaS: Instance-level user management (who can access this instance)
+model InstanceUser {
+  id String @id @default(cuid())
+
+  // DeviantArt identity (links to User model by deviantartId)
+  daUserId   String @unique @map("da_user_id")
+  daUsername String @map("da_username")
+  daAvatar   String? @map("da_avatar")
+
+  // Role within this instance
+  role InstanceUserRole @default(member)
+
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  @@map("instance_users")
+}
+
+/// Instance-wide settings that can be configured by admins at runtime.
+/// These override environment variable defaults when set.
+model InstanceSettings {
+  id String @id @default("singleton") // Only one row ever exists
+
+  // Team settings
+  teamInvitesEnabled Boolean? @map("team_invites_enabled")
+
+  // Timestamps
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("instance_settings")
 }
 
 model PricePreset {

@@ -22,6 +22,7 @@ import type { User } from "../db/index.js";
 declare module "express-session" {
   interface SessionData {
     userId?: string;
+    instanceUserRole?: string;
   }
 }
 
@@ -63,6 +64,49 @@ export async function authMiddleware(
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+/**
+ * Middleware that requires admin role.
+ * Must be used after authMiddleware.
+ */
+export async function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  // First check session for cached role
+  if (req.session.instanceUserRole === "admin") {
+    return next();
+  }
+
+  // Fallback: check database (handles session migration)
+  if (!req.user) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Authentication required",
+    });
+  }
+
+  try {
+    const instanceUser = await prisma.instanceUser.findUnique({
+      where: { daUserId: req.user.deviantartId },
+    });
+
+    if (!instanceUser || instanceUser.role !== "admin") {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Admin access required",
+      });
+    }
+
+    // Update session cache
+    req.session.instanceUserRole = instanceUser.role;
+    next();
+  } catch (error) {
+    console.error("requireAdmin middleware error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }

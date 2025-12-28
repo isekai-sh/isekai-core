@@ -56,6 +56,7 @@ import type {
   DescriptionContent,
   CommentContent,
 } from "@isekai/shared";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 
 export function Templates() {
   const [activeTab, setActiveTab] = useState<TemplateType>("tag");
@@ -63,17 +64,20 @@ export function Templates() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Templates</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage reusable metadata templates for your deviations
-          </p>
+    <PageWrapper className="gap-6">
+      <PageHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Templates</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage reusable metadata templates for your deviations
+            </p>
+          </div>
         </div>
-      </div>
+      </PageHeader>
 
-      <Tabs
+      <PageContent>
+        <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as TemplateType)}
       >
@@ -118,16 +122,17 @@ export function Templates() {
       </Tabs>
 
       {/* Create/Edit Dialog */}
-      <TemplateDialog
-        type={activeTab}
-        open={isCreateDialogOpen || !!editingTemplate}
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) setEditingTemplate(null);
-        }}
-        template={editingTemplate}
-      />
-    </div>
+        <TemplateDialog
+          type={activeTab}
+          open={isCreateDialogOpen || !!editingTemplate}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setEditingTemplate(null);
+          }}
+          template={editingTemplate}
+        />
+      </PageContent>
+    </PageWrapper>
   );
 }
 

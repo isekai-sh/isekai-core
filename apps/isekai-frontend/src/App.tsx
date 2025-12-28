@@ -18,6 +18,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuthStore } from "@/stores/auth";
+// Import whitelabel store to initialize on app load
+import "@/stores/whitelabel";
 
 // Layouts
 import { AppLayout } from "@/components/layouts/AppLayout";

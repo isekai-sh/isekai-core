@@ -86,6 +86,7 @@ import {
   formatScheduleDateTimeShort,
   getTimezoneAbbreviation,
 } from "@/lib/timezone";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 import type { Deviation } from "@isekai/shared";
 
 type ViewMode = "table" | "calendar";
@@ -536,17 +537,20 @@ export function Scheduled() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 overflow-hidden">
-      <div className="flex items-center justify-between">
+    <PageWrapper className="gap-4 md:gap-6">
+      <PageHeader>
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Scheduled</h1>
           <p className="text-muted-foreground mt-1">
             Manage your scheduled deviations ({scheduledDeviations.length})
           </p>
         </div>
-      </div>
+        </div>
+      </PageHeader>
 
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+      <PageContent>
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
         <TabsList>
           <TabsTrigger value="table">Table View</TabsTrigger>
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
@@ -918,6 +922,7 @@ export function Scheduled() {
           </Card>
         </TabsContent>
       </Tabs>
+      </PageContent>
 
       {/* Publish Now Confirmation Dialog */}
       <AlertDialog
@@ -1109,7 +1114,7 @@ export function Scheduled() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </PageWrapper>
   );
 }
 

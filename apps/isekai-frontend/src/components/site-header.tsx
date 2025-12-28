@@ -25,6 +25,7 @@ import {
   type TagAutocompleteRef,
 } from "@/components/browse/TagAutocomplete";
 import { Kbd } from "@/components/ui/kbd";
+import { useWhitelabelStore } from "@/stores/whitelabel";
 
 export function SiteHeader() {
   const location = useLocation();
@@ -32,6 +33,10 @@ export function SiteHeader() {
   const searchRef = useRef<TagAutocompleteRef>(null);
   const [searchValue, setSearchValue] = useState("");
   const [isMac, setIsMac] = useState(false);
+  const { config: whitelabelConfig } = useWhitelabelStore();
+
+  const productName = whitelabelConfig?.productName || "Isekai";
+  const logoUrl = whitelabelConfig?.logoUrl || "/isekai-logo.svg";
 
   // Detect OS for keyboard shortcut display
   useEffect(() => {
@@ -70,7 +75,7 @@ export function SiteHeader() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4" />
           <Link to="/browse" className="flex items-center">
-            <img src="/isekai-logo.svg" alt="Isekai" className="h-5 w-auto" />
+            <img src={logoUrl} alt={productName} className="h-5 w-auto" />
           </Link>
         </div>
 

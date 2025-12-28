@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { galleries, type BrowseDeviation } from "@/lib/api";
 import { JustifiedGallery } from "@/components/browse/JustifiedGallery";
 import type { ViewMode } from "@/lib/utils";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 
 const VIEW_MODE_KEY = "isekai-gallery-detail-view-mode";
 
@@ -154,40 +155,47 @@ export function GalleryDetail() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-lg" />
-          ))}
-        </div>
-      </div>
+      <PageWrapper className="gap-6">
+        <PageContent className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        </PageContent>
+      </PageWrapper>
     );
   }
 
   if (isError || (!isLoading && !currentFolder)) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">
-          {isError
-            ? `Error loading gallery: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`
-            : "Gallery not found"}
-        </p>
-        <Button onClick={() => navigate("/galleries")}>
-          Back to Galleries
-        </Button>
-      </div>
+      <PageWrapper>
+        <PageContent>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">
+              {isError
+                ? `Error loading gallery: ${
+                    error instanceof Error ? error.message : "Unknown error"
+                  }`
+                : "Gallery not found"}
+            </p>
+            <Button onClick={() => navigate("/galleries")}>
+              Back to Galleries
+            </Button>
+          </div>
+        </PageContent>
+      </PageWrapper>
     );
   }
 
   const folderName = currentFolder?.name || "Gallery";
 
   return (
-    <div className="space-y-6">
+    <PageWrapper className="gap-6">
       {/* Header with breadcrumb and view mode toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <PageHeader>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link to="/galleries">
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -225,8 +233,10 @@ export function GalleryDetail() {
             <Rows3 className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+        </div>
+      </PageHeader>
 
+      <PageContent>
       {/* Gallery Items */}
       {processedDeviations.length > 0 ? (
         <>
@@ -282,6 +292,7 @@ export function GalleryDetail() {
           </p>
         </div>
       )}
-    </div>
+      </PageContent>
+    </PageWrapper>
   );
 }

@@ -19,29 +19,42 @@ import { create } from "zustand";
 import type { User } from "@isekai/shared";
 import { auth } from "@/lib/api";
 
+// Extended user type with instance role
+interface ExtendedUser extends User {
+  instanceRole?: "admin" | "member";
+  isAdmin?: boolean;
+}
+
 interface AuthState {
-  user: User | null;
+  user: ExtendedUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   error: string | null;
   fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
-  setUser: (user: User | null) => void;
+  setUser: (user: ExtendedUser | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isAdmin: false,
   error: null,
 
   fetchUser: async () => {
     try {
       set({ isLoading: true, error: null });
-      const user = await auth.getMe();
-      set({ user, isAuthenticated: true, isLoading: false });
+      const user = await auth.getMe() as ExtendedUser;
+      set({
+        user,
+        isAuthenticated: true,
+        isAdmin: user.isAdmin === true,
+        isLoading: false,
+      });
     } catch {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isAdmin: false, isLoading: false });
     }
   },
 
@@ -49,12 +62,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await auth.logout();
     } finally {
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, isAdmin: false });
     }
   },
 
   setUser: (user) => {
-    set({ user, isAuthenticated: !!user, isLoading: false });
+    set({
+      user,
+      isAuthenticated: !!user,
+      isAdmin: user?.isAdmin === true,
+      isLoading: false,
+    });
   },
 }));
 

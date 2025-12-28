@@ -596,7 +596,8 @@ describe('token-maintenance', () => {
       it('should handle user with multiple actions triggered', async () => {
         // User expires in 10 days, qualifies for warning
         // Has scheduled posts
-        const futureDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+        // Add 0.5 day buffer to ensure Math.floor gives exactly 10 despite timing drift
+        const futureDate = new Date(Date.now() + 10.5 * 24 * 60 * 60 * 1000);
         const mockUser = createMockUser({
           refreshTokenExpiresAt: futureDate,
           refreshTokenWarningEmailSent: false,

@@ -72,6 +72,7 @@ import {
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { PageWrapper, PageHeader, PageContent } from '@/components/ui/page-wrapper';
 
 type StatusFilter = 'all' | 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -286,20 +287,23 @@ export function ExclusivesQueue() {
   );
 
   return (
-    <div className="h-full flex flex-col gap-6 overflow-hidden">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Sparkles className="h-8 w-8" />
-            Exclusives Queue
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage exclusive sales automation and pricing presets
-          </p>
+    <PageWrapper className="gap-6">
+      <PageHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Sparkles className="h-8 w-8" />
+              Exclusives Queue
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage exclusive sales automation and pricing presets
+            </p>
+          </div>
         </div>
-      </div>
+      </PageHeader>
 
-      <Tabs defaultValue="queue" className="flex-1 flex flex-col overflow-hidden">
+      <PageContent>
+        <Tabs defaultValue="queue" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="queue">Queue ({queueTotal})</TabsTrigger>
           <TabsTrigger value="presets">Price Presets ({presetsList.length})</TabsTrigger>
@@ -551,6 +555,7 @@ export function ExclusivesQueue() {
           </Card>
         </TabsContent>
       </Tabs>
+      </PageContent>
 
       {/* Price Preset Create/Edit Dialog */}
       <Dialog open={showPresetDialog} onOpenChange={setShowPresetDialog}>
@@ -780,6 +785,6 @@ export function ExclusivesQueue() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageWrapper>
   );
 }

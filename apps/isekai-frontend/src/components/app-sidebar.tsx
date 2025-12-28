@@ -38,6 +38,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useReviewCount } from "@/hooks/useReviewCount";
+import { useWhitelabelStore } from "@/stores/whitelabel";
 
 const navGroup1 = [
   {
@@ -101,6 +102,11 @@ const navGroup3 = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const { count: reviewCount } = useReviewCount();
+  const { config: whitelabelConfig } = useWhitelabelStore();
+
+  const productName = whitelabelConfig?.productName || "Isekai";
+  const logoUrl = whitelabelConfig?.logoUrl || "/isekai-logo.svg";
+  const footerText = whitelabelConfig?.footerText || `© ${new Date().getFullYear()} isekai.sh`;
 
   const addActiveState = (items: typeof navGroup1) =>
     items.map((item) => ({
@@ -119,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader className="border-b px-4 py-3 lg:hidden">
         <Link to="/browse" className="flex items-center">
-          <img src="/isekai-logo.svg" alt="Isekai" className="h-6 w-auto" />
+          <img src={logoUrl} alt={productName} className="h-6 w-auto" />
         </Link>
       </SidebarHeader>
       <SidebarContent className="pt-2">
@@ -131,7 +137,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter className="px-4 py-3">
         <div className="text-xs text-muted-foreground/60">
-          © {new Date().getFullYear()} isekai.sh
+          {footerText}
         </div>
       </SidebarFooter>
     </Sidebar>

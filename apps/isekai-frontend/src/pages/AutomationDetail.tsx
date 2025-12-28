@@ -79,6 +79,7 @@ import {
   TrendingUp,
   Info,
 } from "lucide-react";
+import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 
 export function AutomationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -451,8 +452,9 @@ export function AutomationDetail() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Header Skeleton */}
+      <PageWrapper>
+        <PageContent className="space-y-6">
+          {/* Header Skeleton */}
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <div className="flex-1 space-y-2">
@@ -503,14 +505,16 @@ export function AutomationDetail() {
             </Card>
           </div>
         </div>
-      </div>
+        </PageContent>
+      </PageWrapper>
     );
   }
 
   if (!automation) {
     return (
-      <div className="space-y-6">
-        <Link
+      <PageWrapper>
+        <PageContent className="space-y-6">
+          <Link
           to="/automation"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
@@ -531,13 +535,15 @@ export function AutomationDetail() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+        </PageContent>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="h-full flex flex-col space-y-4">
-      {/* Breadcrumb */}
+    <PageWrapper className="gap-4">
+      <PageContent className="space-y-4">
+        {/* Breadcrumb */}
       <Link
         to="/automation"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
@@ -1202,6 +1208,7 @@ export function AutomationDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </PageContent>
+    </PageWrapper>
   );
 }

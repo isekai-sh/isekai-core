@@ -113,11 +113,57 @@ router.get("/deviantart/callback", async (req, res) => {
       Date.now() + env.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
     );
 
-    // Upsert user
+    // Check if this is a new or existing user
     const existingUser = await prisma.user.findUnique({
       where: { deviantartId: userData.userid },
     });
 
+    // Check instance user for admin system
+    const existingInstanceUser = await prisma.instanceUser.findUnique({
+      where: { daUserId: userData.userid },
+    });
+
+    // For new users: check account limits and team invite settings
+    if (!existingUser) {
+      // Check account limit (0 = unlimited)
+      if (env.MAX_DA_ACCOUNTS > 0) {
+        const currentAccountCount = await prisma.user.count();
+        if (currentAccountCount >= env.MAX_DA_ACCOUNTS) {
+          logger.warn("Account limit reached", {
+            limit: env.MAX_DA_ACCOUNTS,
+            current: currentAccountCount,
+            attemptedUser: userData.username,
+          });
+          return res.redirect(
+            `${env.FRONTEND_URL}/callback?error=account_limit_reached`
+          );
+        }
+      }
+    }
+
+    // For new instance users: check team invite settings
+    if (!existingInstanceUser) {
+      const [instanceUserCount, instanceSettings] = await Promise.all([
+        prisma.instanceUser.count(),
+        prisma.instanceSettings.findUnique({ where: { id: "singleton" } }),
+      ]);
+      const isFirstUser = instanceUserCount === 0;
+
+      // DB setting overrides env var when set
+      const teamInvitesEnabled = instanceSettings?.teamInvitesEnabled ?? env.TEAM_INVITES_ENABLED;
+
+      // Only allow new users if team invites enabled or this is the first user
+      if (!isFirstUser && !teamInvitesEnabled) {
+        logger.warn("Team invites disabled, rejecting new user", {
+          username: userData.username,
+        });
+        return res.redirect(
+          `${env.FRONTEND_URL}/callback?error=team_invites_disabled`
+        );
+      }
+    }
+
+    // Upsert user (DA account)
     let userId: string;
 
     if (existingUser) {
@@ -147,14 +193,47 @@ router.get("/deviantart/callback", async (req, res) => {
           refreshToken: refresh_token,
           tokenExpiresAt,
           refreshTokenExpiresAt,
-          // Note: usageResetAt tracking removed - add to schema in v0.2.0 if needed
         },
       });
       userId = newUser.id;
     }
 
+    // Upsert instance user (for admin system)
+    let instanceUserRole: string;
+
+    if (existingInstanceUser) {
+      // Update last login
+      await prisma.instanceUser.update({
+        where: { id: existingInstanceUser.id },
+        data: { lastLoginAt: new Date() },
+      });
+      instanceUserRole = existingInstanceUser.role;
+    } else {
+      // Create new instance user
+      const instanceUserCount = await prisma.instanceUser.count();
+      const isFirstUser = instanceUserCount === 0;
+
+      const newInstanceUser = await prisma.instanceUser.create({
+        data: {
+          daUserId: userData.userid,
+          daUsername: userData.username,
+          daAvatar: userData.usericon,
+          role: isFirstUser ? "admin" : "member",
+          lastLoginAt: new Date(),
+        },
+      });
+      instanceUserRole = newInstanceUser.role;
+
+      logger.info("New instance user created", {
+        username: userData.username,
+        role: instanceUserRole,
+        isFirstUser,
+      });
+    }
+
     // Set session
     req.session.userId = userId;
+    req.session.instanceUserRole = instanceUserRole;
 
     // Save session before redirecting (critical for preventing race conditions)
     req.session.save((err) => {
@@ -179,13 +258,18 @@ router.get("/deviantart/callback", async (req, res) => {
 });
 
 // Get current user
-router.get("/me", authMiddleware, (req, res) => {
+router.get("/me", authMiddleware, async (req, res) => {
   const user = req.user!;
   const now = new Date();
   const daysUntilTokenExpiry = Math.floor(
     (user.refreshTokenExpiresAt.getTime() - now.getTime()) /
       (1000 * 60 * 60 * 24)
   );
+
+  // Get instance user role
+  const instanceUser = await prisma.instanceUser.findUnique({
+    where: { daUserId: user.deviantartId },
+  });
 
   res.json({
     id: user.id,
@@ -194,6 +278,9 @@ router.get("/me", authMiddleware, (req, res) => {
     avatarUrl: user.avatarUrl,
     email: user.email,
     createdAt: user.createdAt.toISOString(),
+    // Instance role
+    instanceRole: instanceUser?.role || "member",
+    isAdmin: instanceUser?.role === "admin",
     // Token status
     tokenStatus: {
       isValid: user.refreshTokenExpiresAt > now,

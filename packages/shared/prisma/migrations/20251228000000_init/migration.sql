@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "DeviationStatus" AS ENUM ('review', 'draft', 'scheduled', 'uploading', 'publishing', 'published', 'failed');
 
@@ -15,6 +18,9 @@ CREATE TYPE "NoteFolderType" AS ENUM ('inbox', 'unread', 'starred', 'spam', 'sen
 
 -- CreateEnum
 CREATE TYPE "SaleQueueStatus" AS ENUM ('pending', 'processing', 'completed', 'failed', 'skipped');
+
+-- CreateEnum
+CREATE TYPE "InstanceUserRole" AS ENUM ('admin', 'member');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -214,6 +220,28 @@ CREATE TABLE "admin_roles" (
 );
 
 -- CreateTable
+CREATE TABLE "instance_users" (
+    "id" TEXT NOT NULL,
+    "da_user_id" TEXT NOT NULL,
+    "da_username" TEXT NOT NULL,
+    "da_avatar" TEXT,
+    "role" "InstanceUserRole" NOT NULL DEFAULT 'member',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_login_at" TIMESTAMP(3),
+
+    CONSTRAINT "instance_users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "instance_settings" (
+    "id" TEXT NOT NULL DEFAULT 'singleton',
+    "team_invites_enabled" BOOLEAN,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "instance_settings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "price_presets" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
@@ -351,6 +379,9 @@ CREATE INDEX "admin_roles_user_id_idx" ON "admin_roles"("user_id");
 CREATE UNIQUE INDEX "admin_roles_user_id_role_key" ON "admin_roles"("user_id", "role");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "instance_users_da_user_id_key" ON "instance_users"("da_user_id");
+
+-- CreateIndex
 CREATE INDEX "price_presets_user_id_idx" ON "price_presets"("user_id");
 
 -- CreateIndex
@@ -445,3 +476,4 @@ ALTER TABLE "automation_default_values" ADD CONSTRAINT "automation_default_value
 
 -- AddForeignKey
 ALTER TABLE "automation_execution_logs" ADD CONSTRAINT "automation_execution_logs_automation_id_fkey" FOREIGN KEY ("automation_id") REFERENCES "automations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

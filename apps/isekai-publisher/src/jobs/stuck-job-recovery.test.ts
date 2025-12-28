@@ -48,9 +48,13 @@ vi.mock('../db/index.js', async () => {
         findMany: vi.fn(),
         update: vi.fn(),
         updateMany: vi.fn(),
+        delete: vi.fn(),
       },
       deviationFile: {
         count: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
       },
       $transaction: vi.fn(),
     },
@@ -69,6 +73,9 @@ describe('stuck-job-recovery', () => {
 
     const db = await import('../db/index.js');
     prisma = db.prisma;
+
+    // By default, mock user exists for most tests
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1' });
   });
 
   afterEach(() => {
@@ -286,6 +293,10 @@ describe('stuck-job-recovery', () => {
       }));
 
       prisma.deviation.findMany.mockResolvedValueOnce(mockDeviations);
+      // Mock all users exist
+      for (let i = 0; i < 10; i++) {
+        prisma.user.findUnique.mockResolvedValueOnce({ id: `user-${i}` });
+      }
       // First 7 succeed, last 3 fail
       prisma.deviation.update
         .mockResolvedValueOnce({})
@@ -364,6 +375,10 @@ describe('stuck-job-recovery', () => {
       ];
 
       prisma.deviation.findMany.mockResolvedValueOnce(mockDeviations);
+      // Mock both users exist
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1' })
+        .mockResolvedValueOnce({ id: 'user-2' });
 
       // Mock transaction for ghost publish
       const mockTx = {
@@ -386,6 +401,38 @@ describe('stuck-job-recovery', () => {
 
       expect(console.log).toHaveBeenCalledWith(
         '[Stuck Job Recovery] Recovery complete: 2 recovered, 0 failed'
+      );
+    });
+
+    it('should delete orphaned deviation when user is deleted', async () => {
+      const mockDeviation = {
+        id: 'dev-1',
+        userId: 'deleted-user',
+        uploadMode: 'single',
+        deviationId: null,
+        stashItemId: null,
+        executionLockId: null,
+        user: { id: 'deleted-user' },
+      };
+
+      prisma.deviation.findMany.mockResolvedValueOnce([mockDeviation]);
+      // Mock user does NOT exist
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      prisma.deviation.delete.mockResolvedValue({});
+
+      startStuckJobRecovery();
+      await vi.advanceTimersByTimeAsync(5000); // Trigger initial recovery
+
+      // Should delete the orphaned deviation
+      expect(prisma.deviation.delete).toHaveBeenCalledWith({
+        where: { id: 'dev-1' },
+      });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Skipping stuck job for deleted user')
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Deleted orphaned deviation')
       );
     });
   });

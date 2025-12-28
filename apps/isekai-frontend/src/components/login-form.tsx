@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,20 +23,64 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { auth } from "@/lib/api";
+
+const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+  account_limit_reached: {
+    title: "Account Limit Reached",
+    description: "This instance has reached its maximum number of DeviantArt accounts. Please contact the administrator.",
+  },
+  team_invites_disabled: {
+    title: "Team Invites Disabled",
+    description: "New team members are not currently being accepted. Please contact the administrator for access.",
+  },
+  oauth_failed: {
+    title: "Authentication Failed",
+    description: "Failed to connect with DeviantArt. Please try again.",
+  },
+  session_failed: {
+    title: "Session Error",
+    description: "Failed to create a session. Please try again.",
+  },
+  missing_code: {
+    title: "Authentication Error",
+    description: "Missing authorization code from DeviantArt. Please try again.",
+  },
+};
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const [searchParams] = useSearchParams();
+  const error = searchParams.get("error");
+  const errorInfo = error ? ERROR_MESSAGES[error] : null;
+
   const handleLogin = () => {
     window.location.href = auth.getDeviantArtAuthUrl();
   };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {errorInfo && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{errorInfo.title}</AlertTitle>
+          <AlertDescription>{errorInfo.description}</AlertDescription>
+        </Alert>
+      )}
+      {error && !errorInfo && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            An unexpected error occurred: {error}
+          </AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader className="text-center">
           <CardDescription>

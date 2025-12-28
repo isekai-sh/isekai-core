@@ -52,6 +52,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 
 export function EditDeviation() {
   const { id } = useParams<{ id: string }>();
@@ -240,8 +241,10 @@ export function EditDeviation() {
     deviation.files.length > 0;
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <PageWrapper>
+      <PageContent>
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -483,6 +486,8 @@ export function EditDeviation() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </PageContent>
+    </PageWrapper>
   );
 }

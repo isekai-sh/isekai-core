@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { galleries } from "@/lib/api";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 import { GalleryCard } from "@/components/galleries/GalleryCard";
 import { GalleryListItem } from "@/components/galleries/GalleryListItem";
 import { SortableGalleryCard } from "@/components/galleries/SortableGalleryCard";
@@ -378,9 +379,10 @@ export function Galleries() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <div className="h-full flex flex-col gap-6 overflow-hidden">
+    <PageWrapper className="gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <PageHeader>
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Galleries</h1>
           <p className="text-muted-foreground mt-1">
@@ -456,9 +458,10 @@ export function Galleries() {
           </Button>
         </div>
       </div>
+      </PageHeader>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <PageContent>
         {isLoading ? (
           <div
             className={cn(
@@ -582,7 +585,7 @@ export function Galleries() {
             )}
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* Mutation Loading Indicator */}
       {reorderMutation.isPending && (
@@ -597,6 +600,6 @@ export function Galleries() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       />
-    </div>
+    </PageWrapper>
   );
 }

@@ -93,7 +93,7 @@ describe('storage-cleanup', () => {
     await import('./storage-cleanup.js');
   });
 
-  describe('r2CleanupWorker processor', () => {
+  describe('storageCleanupWorker processor', () => {
     it('should handle deviation with no files', async () => {
       mockPrismaDeviationFileFindMany.mockResolvedValue([]);
 

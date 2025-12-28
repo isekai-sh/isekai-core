@@ -42,6 +42,7 @@ import { MoreLikeThisPanel } from "@/components/browse/MoreLikeThisPanel";
 import { BrowseHeader } from "@/components/browse/BrowseHeader";
 import { DeviationDetailModal } from "@/components/browse/DeviationDetailModal";
 import { JustifiedGallery } from "@/components/browse/JustifiedGallery";
+import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 
 // Browse mode tabs configuration
 // Only modes available in DeviantArt API v1.20240701
@@ -273,7 +274,7 @@ export function Browse() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 -mt-4 md:-mt-6 overflow-hidden">
+    <PageWrapper className="gap-4 -mt-4 md:-mt-6">
       {/* Unified header row: mode tabs + trending topics + mature switch */}
       <div className="sticky top-0 z-40 bg-background py-3 -mx-4 lg:-mx-6 px-4 lg:px-6 border-b border-border/50">
         <BrowseHeader
@@ -291,7 +292,7 @@ export function Browse() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-auto">
+      <PageContent>
         {/* Current filter badge */}
         {((mode === "tags" && tag) || (mode === "topic" && topic)) && (
           <div className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 rounded-md text-sm w-fit">
@@ -488,7 +489,7 @@ export function Browse() {
             <ChevronUp className="h-5 w-5" />
           </Button>
         )}
-      </div>
+      </PageContent>
 
       {/* More Like This panel */}
       <MoreLikeThisPanel
@@ -504,6 +505,6 @@ export function Browse() {
         onOpenChange={(open) => !open && setSelectedDeviation(null)}
         onTagClick={handleTagClickFromModal}
       />
-    </div>
+    </PageWrapper>
   );
 }

@@ -116,6 +116,25 @@ const envSchema = z.object({
   DISABLE_RATE_LIMIT: z.coerce.boolean().optional(),
   ALERT_WEBHOOK_URL: z.string().url().optional(),
   ENABLE_ALERTS: z.coerce.boolean().optional(),
+
+  // SaaS: Account Limits (0 = unlimited, for self-hosted)
+  MAX_DA_ACCOUNTS: z.coerce.number().int().min(0).default(0),
+
+  // SaaS: Team Access Control
+  TEAM_INVITES_ENABLED: z.coerce.boolean().default(false),
+
+  // SaaS: Whitelabeling
+  WHITELABEL_ENABLED: z.coerce.boolean().default(false),
+  WHITELABEL_PRODUCT_NAME: z.string().default("Isekai"),
+  WHITELABEL_LOGO_URL: z.string().url().optional(),
+  WHITELABEL_FAVICON_URL: z.string().url().optional(),
+  WHITELABEL_FOOTER_TEXT: z.string().optional(),
+  WHITELABEL_SUPPORT_EMAIL: z.string().email().optional(),
+
+  // SaaS: Control Plane Integration (for managed instances)
+  CONTROL_PLANE_URL: z.string().url().optional(),
+  CONTROL_PLANE_API_KEY: z.string().optional(),
+  INSTANCE_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

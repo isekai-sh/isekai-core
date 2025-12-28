@@ -24,6 +24,16 @@ vi.mock('../db/index.js', () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
+    },
+    instanceUser: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
+    instanceSettings: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -35,6 +45,7 @@ vi.mock('../middleware/auth.js', () => ({
 vi.mock('../lib/logger.js', () => ({
   logger: {
     debug: vi.fn(),
+    info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
   },
@@ -43,6 +54,9 @@ vi.mock('../lib/logger.js', () => ({
 vi.mock('../lib/env.js', () => ({
   env: {
     REFRESH_TOKEN_EXPIRY_DAYS: 60,
+    FRONTEND_URL: 'http://localhost:5173',
+    MAX_DA_ACCOUNTS: 0, // Unlimited for tests
+    TEAM_INVITES_ENABLED: true,
   },
 }));
 
@@ -188,11 +202,25 @@ describe('Auth Routes', () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(mockNewUser as any);
+      mockPrisma.instanceUser.findUnique.mockResolvedValue(null);
+      // count is called twice: once for team invites check, once for admin role assignment
+      mockPrisma.instanceUser.count
+        .mockResolvedValueOnce(0) // First call: for team invites check
+        .mockResolvedValueOnce(0); // Second call: for admin role assignment
+      // Mock instanceSettings for team invites check
+      (mockPrisma as any).instanceSettings.findUnique.mockResolvedValue(null);
+      mockPrisma.instanceUser.create.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        daUsername: 'testuser',
+        role: 'admin',
+      } as any);
 
       const req = {
         query: { code: mockCode },
         session: {
           userId: undefined,
+          instanceUserRole: undefined,
           save: vi.fn((cb: any) => cb(null)),
         },
       };
@@ -270,11 +298,24 @@ describe('Auth Routes', () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(mockExistingUser as any);
       mockPrisma.user.update.mockResolvedValue({ ...mockExistingUser, username: 'updateduser' } as any);
+      mockPrisma.instanceUser.findUnique.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        daUsername: 'olduser',
+        role: 'admin',
+      } as any);
+      mockPrisma.instanceUser.update.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        daUsername: 'olduser',
+        role: 'admin',
+      } as any);
 
       const req = {
         query: { code: mockCode },
         session: {
           userId: undefined,
+          instanceUserRole: undefined,
           save: vi.fn((cb: any) => cb(null)),
         },
       };
@@ -299,6 +340,7 @@ describe('Auth Routes', () => {
       });
 
       expect(req.session.userId).toBe('user-123');
+      expect(req.session.instanceUserRole).toBe('admin');
       expect(res.redirect).toHaveBeenCalledWith('http://localhost:5173/callback');
     });
 
@@ -443,12 +485,25 @@ describe('Auth Routes', () => {
         id: 'user-123',
         deviantartId: 'da-user-123',
       } as any);
+      mockPrisma.instanceUser.findUnique.mockResolvedValue(null);
+      // count is called twice: once for team invites check, once for admin role assignment
+      mockPrisma.instanceUser.count
+        .mockResolvedValueOnce(0) // First call: for team invites check
+        .mockResolvedValueOnce(0); // Second call: for admin role assignment
+      // Mock instanceSettings for team invites check
+      (mockPrisma as any).instanceSettings.findUnique.mockResolvedValue(null);
+      mockPrisma.instanceUser.create.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        role: 'admin',
+      } as any);
 
       const sessionError = new Error('Session save failed');
       const req = {
         query: { code: 'test-code' },
         session: {
           userId: undefined,
+          instanceUserRole: undefined,
           save: vi.fn((cb: any) => cb(sessionError)),
         },
       };
@@ -479,6 +534,12 @@ describe('Auth Routes', () => {
         refreshTokenExpiresAt: expiresAt,
       };
 
+      mockPrisma.instanceUser.findUnique.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        role: 'admin',
+      } as any);
+
       const req = {
         user: mockUser,
       };
@@ -495,6 +556,8 @@ describe('Auth Routes', () => {
         avatarUrl: 'https://example.com/avatar.jpg',
         email: 'test@example.com',
         createdAt: '2025-01-01T00:00:00.000Z',
+        instanceRole: 'admin',
+        isAdmin: true,
         tokenStatus: {
           isValid: true,
           expiresAt: expiresAt.toISOString(),
@@ -518,6 +581,12 @@ describe('Auth Routes', () => {
         refreshTokenExpiresAt: expiresAt,
       };
 
+      mockPrisma.instanceUser.findUnique.mockResolvedValue({
+        id: 'instance-user-123',
+        daUserId: 'da-user-123',
+        role: 'member',
+      } as any);
+
       const req = {
         user: mockUser,
       };
@@ -529,6 +598,8 @@ describe('Auth Routes', () => {
 
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
+          instanceRole: 'member',
+          isAdmin: false,
           tokenStatus: expect.objectContaining({
             isValid: false,
             daysUntilExpiry: 0,

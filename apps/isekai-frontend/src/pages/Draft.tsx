@@ -73,6 +73,7 @@ import {
   DescriptionTemplateSelector,
 } from "@/components/TemplateSelector";
 import type { Deviation } from "@isekai/shared";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 
 export function Draft() {
   const queryClient = useQueryClient();
@@ -492,21 +493,24 @@ export function Draft() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 overflow-hidden">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Draft</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your deviation drafts ({drafts.length})
-          </p>
+    <PageWrapper className="gap-4 md:gap-6">
+      <PageHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Draft</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your deviation drafts ({drafts.length})
+            </p>
+          </div>
+          <Button onClick={() => setShowModeDialog(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Media
+          </Button>
         </div>
-        <Button onClick={() => setShowModeDialog(true)}>
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Media
-        </Button>
-      </div>
+      </PageHeader>
 
-      <Card className="flex-1 flex flex-col h-full">
+      <PageContent>
+        <Card className="flex-1 flex flex-col h-full">
         <CardContent className="pt-6 flex-1 flex flex-col h-full">
           <div className="mb-4 p-4 border rounded-lg bg-background">
             <div className="flex items-center justify-between gap-4">
@@ -776,6 +780,7 @@ export function Draft() {
           )}
         </CardContent>
       </Card>
+      </PageContent>
 
       <UploadModeDialog
         open={showModeDialog}
@@ -812,6 +817,6 @@ export function Draft() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageWrapper>
   );
 }

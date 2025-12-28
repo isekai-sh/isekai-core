@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReviewHeader } from "@/components/ReviewHeader";
 import { ReviewGridPanel } from "@/components/ReviewGridPanel";
 import { ReviewDetailPanel } from "@/components/ReviewDetailPanel";
+import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 import type { Deviation } from "@isekai/shared";
 
 export function Review() {
@@ -331,7 +332,7 @@ export function Review() {
   const totalCount = data?.pages[0]?.total || 0;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <PageWrapper>
       {/* Bulk actions bar - only show when items selected */}
       {selectedIds.size > 0 && (
         <div className="flex-shrink-0 pb-3 flex items-center justify-between">
@@ -350,8 +351,9 @@ export function Review() {
       )}
 
       {/* Main content */}
-      {allDeviations.length === 0 ? (
-        <Card className="flex-1 flex items-center justify-center min-h-0">
+      <PageContent>
+        {allDeviations.length === 0 ? (
+          <Card className="flex-1 flex items-center justify-center min-h-0">
           <CardContent className="text-center py-12">
             <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium mb-2">No deviations to review</p>
@@ -395,7 +397,8 @@ export function Review() {
             onUpdate={handleUpdate}
           />
         </div>
-      )}
-    </div>
+        )}
+      </PageContent>
+    </PageWrapper>
   );
 }

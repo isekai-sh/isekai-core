@@ -40,11 +40,14 @@ import { saleQueueRouter } from "./routes/sale-queue.js";
 import { automationsRouter } from "./routes/automations.js";
 import { automationScheduleRulesRouter } from "./routes/automation-schedule-rules.js";
 import { automationDefaultValuesRouter } from "./routes/automation-default-values.js";
+import { adminRouter } from "./routes/admin.js";
+import { configRouter } from "./routes/config.js";
 import { errorHandler } from "./middleware/error.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { hybridAuthMiddleware } from "./middleware/hybrid-auth.js";
 import { createSessionStore, closeSessionStore } from "./lib/session-store.js";
 import { RedisClientManager } from "./lib/redis-client.js";
+import { startHealthReporter } from "./lib/health-reporter.js";
 import { env } from "./lib/env.js";
 
 const PORT = env.PORT;
@@ -129,6 +132,7 @@ async function startServer() {
   // Public routes
   app.use("/api/health", healthRouter); // Health check with cache stats
   app.use("/api/auth", authRouter);
+  app.use("/api/config", configRouter); // Whitelabel and instance config (public)
 
   // Protected routes
   app.use("/api/deviations", authMiddleware, deviationsRouter);
@@ -154,6 +158,7 @@ async function startServer() {
     automationDefaultValuesRouter
   ); // Automation default values
   app.use("/api/comfyui", comfyuiRouter); // ComfyUI integration (uses apiKeyAuthMiddleware internally)
+  app.use("/api/admin", adminRouter); // Admin routes (auth + admin role required internally)
 
   // Error handling
   app.use(errorHandler);
@@ -164,6 +169,9 @@ async function startServer() {
   // Start server
   const server = app.listen(PORT, () => {
     console.log(`Backend ready on :${PORT} (${env.NODE_ENV})`);
+
+    // Start health reporter for control plane integration
+    startHealthReporter();
   });
 
   // Graceful shutdown

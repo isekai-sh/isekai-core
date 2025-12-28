@@ -39,6 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 
 export function AutomationList() {
   const { toast } = useToast();
@@ -142,30 +143,36 @@ export function AutomationList() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <PageWrapper>
+        <PageContent>
+          <div className="flex h-full items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </PageContent>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <PageWrapper className="gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Automation Workflows</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your publishing schedules
-          </p>
+      <PageHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Automation Workflows</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage your publishing schedules
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Workflow
+          </Button>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Workflow
-        </Button>
-      </div>
+      </PageHeader>
 
       {/* Automation Cards Grid */}
-      <div className="flex-1 overflow-y-auto pr-2">
+      <PageContent>
         {automationList.length === 0 ? (
           <Card>
             <CardHeader>
@@ -208,7 +215,7 @@ export function AutomationList() {
             </Card>
           </div>
         )}
-      </div>
+      </PageContent>
 
       {/* Create Dialog */}
       <CreateAutomationDialog
@@ -242,6 +249,6 @@ export function AutomationList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageWrapper>
   );
 }
