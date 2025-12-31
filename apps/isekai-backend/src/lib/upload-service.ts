@@ -24,29 +24,39 @@ import {
   validateFileType,
   validateFileSize,
   checkStorageLimit,
-  generateStorageKey,
+  generateStorageKey as generateStorageKeyBase,
   type StorageService,
 } from "@isekai/shared/storage";
 
-// Re-export utilities and storage key generator
+// Re-export utilities (but NOT generateStorageKey - we wrap it below)
 export {
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
   validateFileType,
   validateFileSize,
   checkStorageLimit,
-  generateStorageKey,
 };
 
 // Create storage service singleton
 let storageService: StorageService | null = null;
+let pathPrefix: string = "";
 
 function getStorageService(): StorageService {
   if (!storageService) {
     const config = getS3ConfigFromEnv();
     storageService = createStorageService(config);
+    pathPrefix = config.pathPrefix || "";
   }
   return storageService;
+}
+
+/**
+ * Generate storage key with configured path prefix.
+ * Wraps the base function to automatically include the prefix from environment.
+ */
+export function generateStorageKey(userId: string, filename: string): string {
+  getStorageService(); // ensure pathPrefix is initialized
+  return generateStorageKeyBase(userId, filename, pathPrefix);
 }
 
 /**

@@ -20,13 +20,18 @@ import { randomUUID } from "crypto";
 /**
  * Generate a storage key for a deviation file.
  *
- * Format: deviations/{userId}/{sanitized-filename}---{shortUuid}.{ext}
+ * Format: {pathPrefix}deviations/{userId}/{sanitized-filename}---{shortUuid}.{ext}
  *
  * @param userId - User ID who owns the file
  * @param filename - Original filename
+ * @param pathPrefix - Optional path prefix for multi-tenant storage (default: "")
  * @returns Storage key path
  */
-export function generateStorageKey(userId: string, filename: string): string {
+export function generateStorageKey(
+  userId: string,
+  filename: string,
+  pathPrefix: string = ""
+): string {
   // Extract filename without extension
   const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "");
 
@@ -41,5 +46,5 @@ export function generateStorageKey(userId: string, filename: string): string {
   // Get extension (default to jpg if none)
   const ext = filename.split(".").pop() || "jpg";
 
-  return `deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
+  return `${pathPrefix}deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
 }

@@ -17,6 +17,7 @@ const envSchema = z.object({
   S3_BUCKET_NAME: z.string().min(1, 'S3_BUCKET_NAME is required'),
   S3_PUBLIC_URL: z.string().optional(),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
+  S3_PATH_PREFIX: z.string().optional(), // Optional path prefix for multi-tenant storage
 
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

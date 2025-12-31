@@ -78,6 +78,13 @@ export interface S3Config {
    * If not set, uses the main endpoint.
    */
   presignedEndpoint?: string;
+
+  /**
+   * Optional path prefix for all storage keys.
+   * Used for multi-tenant buckets (e.g., "vault-customer123/").
+   * Normalized: no leading slash, trailing slash added if missing.
+   */
+  pathPrefix?: string;
 }
 
 /**
@@ -123,4 +130,7 @@ export interface StorageService {
 
   /** Get the bucket name */
   getBucket(): string;
+
+  /** Get the configured path prefix */
+  getPathPrefix(): string;
 }

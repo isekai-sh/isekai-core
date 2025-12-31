@@ -38,6 +38,8 @@ describe("config", () => {
     delete process.env.S3_BUCKET_NAME;
     delete process.env.S3_PUBLIC_URL;
     delete process.env.S3_FORCE_PATH_STYLE;
+    delete process.env.S3_PATH_PREFIX;
+    delete process.env.S3_PRESIGNED_ENDPOINT;
   });
 
   afterEach(() => {
@@ -82,6 +84,8 @@ describe("config", () => {
         bucket: "bucket",
         publicUrl: "https://cdn.example.com",
         forcePathStyle: true,
+        presignedEndpoint: undefined,
+        pathPrefix: "",
       });
     });
 
@@ -109,6 +113,60 @@ describe("config", () => {
       const config = getS3ConfigFromEnv();
 
       expect(config.forcePathStyle).toBe(false);
+    });
+
+    it("should return empty string when S3_PATH_PREFIX is not set", () => {
+      process.env.S3_ACCESS_KEY_ID = "key";
+      process.env.S3_SECRET_ACCESS_KEY = "secret";
+      process.env.S3_BUCKET_NAME = "bucket";
+
+      const config = getS3ConfigFromEnv();
+
+      expect(config.pathPrefix).toBe("");
+    });
+
+    it("should add trailing slash to S3_PATH_PREFIX if missing", () => {
+      process.env.S3_ACCESS_KEY_ID = "key";
+      process.env.S3_SECRET_ACCESS_KEY = "secret";
+      process.env.S3_BUCKET_NAME = "bucket";
+      process.env.S3_PATH_PREFIX = "tenant-123";
+
+      const config = getS3ConfigFromEnv();
+
+      expect(config.pathPrefix).toBe("tenant-123/");
+    });
+
+    it("should preserve trailing slash in S3_PATH_PREFIX", () => {
+      process.env.S3_ACCESS_KEY_ID = "key";
+      process.env.S3_SECRET_ACCESS_KEY = "secret";
+      process.env.S3_BUCKET_NAME = "bucket";
+      process.env.S3_PATH_PREFIX = "production/";
+
+      const config = getS3ConfigFromEnv();
+
+      expect(config.pathPrefix).toBe("production/");
+    });
+
+    it("should strip leading slash from S3_PATH_PREFIX", () => {
+      process.env.S3_ACCESS_KEY_ID = "key";
+      process.env.S3_SECRET_ACCESS_KEY = "secret";
+      process.env.S3_BUCKET_NAME = "bucket";
+      process.env.S3_PATH_PREFIX = "/invalid/prefix";
+
+      const config = getS3ConfigFromEnv();
+
+      expect(config.pathPrefix).toBe("invalid/prefix/");
+    });
+
+    it("should handle nested path prefixes", () => {
+      process.env.S3_ACCESS_KEY_ID = "key";
+      process.env.S3_SECRET_ACCESS_KEY = "secret";
+      process.env.S3_BUCKET_NAME = "bucket";
+      process.env.S3_PATH_PREFIX = "prod/customer-123";
+
+      const config = getS3ConfigFromEnv();
+
+      expect(config.pathPrefix).toBe("prod/customer-123/");
     });
   });
 

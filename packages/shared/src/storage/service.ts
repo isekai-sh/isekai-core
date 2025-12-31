@@ -34,6 +34,7 @@ export class S3StorageService implements StorageService {
   private presignedClient: S3Client;
   private bucket: string;
   private publicUrl?: string;
+  private pathPrefix: string;
 
   constructor(config: S3Config) {
     this.client = new S3Client({
@@ -62,6 +63,7 @@ export class S3StorageService implements StorageService {
 
     this.bucket = config.bucket;
     this.publicUrl = config.publicUrl;
+    this.pathPrefix = config.pathPrefix || "";
   }
 
   async upload(key: string, buffer: Buffer, contentType: string): Promise<void> {
@@ -117,6 +119,10 @@ export class S3StorageService implements StorageService {
   getBucket(): string {
     return this.bucket;
   }
+
+  getPathPrefix(): string {
+    return this.pathPrefix;
+  }
 }
 
 /**
@@ -133,7 +139,7 @@ export function createStorageService(config: S3Config): StorageService {
 import { getS3ConfigFromEnv } from "./config.js";
 
 let _s3Client: S3Client | null = null;
-let _storageConfig: { bucketName: string; publicUrl?: string } | null = null;
+let _storageConfig: { bucketName: string; publicUrl?: string; pathPrefix: string } | null = null;
 
 /**
  * Get a shared S3 client instance.
@@ -158,12 +164,13 @@ export function getS3Client(): S3Client {
 /**
  * Get storage configuration for direct bucket access.
  */
-export function getStorageConfig(): { bucketName: string; publicUrl?: string } {
+export function getStorageConfig(): { bucketName: string; publicUrl?: string; pathPrefix: string } {
   if (!_storageConfig) {
     const config = getS3ConfigFromEnv();
     _storageConfig = {
       bucketName: config.bucket,
       publicUrl: config.publicUrl,
+      pathPrefix: config.pathPrefix || "",
     };
   }
   return _storageConfig;

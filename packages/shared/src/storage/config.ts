@@ -46,6 +46,15 @@ export function getS3ConfigFromEnv(): S3Config {
     );
   }
 
+  // Normalize path prefix: strip leading slash, ensure trailing slash
+  let pathPrefix = process.env.S3_PATH_PREFIX || "";
+  if (pathPrefix) {
+    pathPrefix = pathPrefix.replace(/^\/+/, ""); // strip leading slash
+    if (!pathPrefix.endsWith("/")) {
+      pathPrefix += "/"; // ensure trailing slash
+    }
+  }
+
   return {
     endpoint: process.env.S3_ENDPOINT || undefined,
     region,
@@ -55,6 +64,7 @@ export function getS3ConfigFromEnv(): S3Config {
     publicUrl: process.env.S3_PUBLIC_URL || undefined,
     forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
     presignedEndpoint: process.env.S3_PRESIGNED_ENDPOINT || undefined,
+    pathPrefix,
   };
 }
 
