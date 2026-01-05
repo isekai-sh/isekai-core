@@ -1,5 +1,19 @@
 # Linting & Formatting Standards
 
+> **⚠️ DEPRECATED:** This file is deprecated as of v0.1.0-alpha.5.
+>
+> **Please see [`.context/ai-rules.md`](.context/ai-rules.md) for complete code style guidelines.**
+>
+> The `.context/` directory contains comprehensive documentation including:
+> - Code style and linting rules
+> - Commit message format (Conventional Commits)
+> - Security requirements
+> - Testing requirements
+> - File organization patterns
+> - AGPL-3.0 license compliance
+
+---
+
 This project uses ESLint and Prettier to maintain code quality and consistency.
 
 ## Tools

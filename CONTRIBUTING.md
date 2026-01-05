@@ -1,18 +1,34 @@
 # Contributing to Isekai
 
-Thank you for your interest in contributing to Isekai! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Isekai! This document provides basic guidelines for contributions.
+
+---
+
+## 📚 Complete Guidelines
+
+**For comprehensive contribution guidelines, see [`.context/guidelines.md`](.context/guidelines.md)**
+
+Documentation includes:
+- **[Pull Request Process](.context/guidelines.md)** - Complete PR workflow and checklist
+- **[Code Review Checklist](.context/guidelines.md)** - What reviewers look for
+- **[Development Workflow](.context/workflows.md)** - Local setup and testing
+- **[Code Style](.context/ai-rules.md)** - Conventions and patterns
+- **[Testing Strategy](.context/testing.md)** - Test requirements (30% coverage)
+
+---
 
 ## Code of Conduct
 
 By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors.
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 Before you begin, make sure you have:
 
 - Read the [README.md](README.md)
+- Read [`.context/substrate.md`](.context/substrate.md) for project overview
 - Familiarized yourself with the codebase structure
 
 ### Development Setup

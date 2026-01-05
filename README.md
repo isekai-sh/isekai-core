@@ -13,6 +13,24 @@
 
 Isekai is a modern web application that helps artists manage their DeviantArt posting workflow with features like scheduled publishing, draft organization, and AI image generation integration through ComfyUI.
 
+---
+
+## 📚 Documentation
+
+**For comprehensive documentation, see [`.context/substrate.md`](.context/substrate.md)**
+
+The `.context/` directory contains complete documentation following the [Substrate Methodology](https://github.com/andrefigueira/.context):
+- **[Architecture](.context/architecture/overview.md)** - System design and patterns
+- **[API Reference](.context/api/endpoints.md)** - All 19 route groups documented
+- **[Database Schema](.context/database/schema.md)** - Complete Prisma schema
+- **[Features](.context/features/)** - Automation, publishing, browse, sales
+- **[Development](.context/workflows.md)** - Setup, testing, and contribution workflow
+- **[Code Style](.context/ai-rules.md)** - Conventions and patterns
+
+AI tools: See [CLAUDE.md](CLAUDE.md) for entry point.
+
+---
+
 ## Features
 
 - **DeviantArt Integration**: OAuth authentication and seamless posting
