@@ -11,6 +11,21 @@ services:
       POSTGRES_USER: isekai
       POSTGRES_PASSWORD: isekai
       POSTGRES_DB: isekai
+      # Memory tuning (optional, for 1GB VPS use: 64MB, 20, 2MB)
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-128MB}
+      POSTGRES_MAX_CONNECTIONS: ${POSTGRES_MAX_CONNECTIONS:-100}
+      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-4MB}
+    command: >
+      postgres
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-128MB}
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
+      -c work_mem=${POSTGRES_WORK_MEM:-4MB}
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT_POSTGRES:-512M}
+        reservations:
+          memory: ${MEMORY_RESERVE_POSTGRES:-128M}
     ports:
       - '5433:5432'
     volumes:
@@ -57,7 +72,16 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes --appendfsync everysec
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory ${REDIS_MAX_MEMORY:-100mb}
+      --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT_REDIS:-128M}
     ports:
       - '6379:6379'
     volumes:
@@ -73,6 +97,10 @@ services:
     build:
       context: .
       dockerfile: apps/isekai-backend/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT_BACKEND:-384M}
     ports:
       - '4000:4000'
     environment:
@@ -84,6 +112,12 @@ services:
       FRONTEND_URL: http://localhost:3000
       PORT: 4000
       NODE_ENV: production
+
+      # Node.js Memory (optional, for 1GB VPS use: --max-old-space-size=256)
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=256}
+
+      # Database Connection Pool (optional, for 1GB VPS use: 4)
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
 
       # Security (CHANGE THESE!)
       SESSION_SECRET: ${SESSION_SECRET}
@@ -117,6 +151,10 @@ services:
     build:
       context: .
       dockerfile: apps/isekai-publisher/Dockerfile
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT_PUBLISHER:-256M}
     ports:
       - '8000:8000' # Health check endpoint
     environment:
@@ -124,6 +162,12 @@ services:
       DATABASE_URL: postgresql://isekai:isekai@postgres:5432/isekai
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
+
+      # Node.js Memory (optional, for 1GB VPS use: --max-old-space-size=192)
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=192}
+
+      # Database Connection Pool (optional, for 1GB VPS use: 4)
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
 
       # DeviantArt OAuth (same credentials as backend)
       DEVIANTART_CLIENT_ID: ${DEVIANTART_CLIENT_ID}
@@ -138,8 +182,8 @@ services:
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:9000/isekai-uploads}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
 
-      # Publisher Configuration
-      PUBLISHER_CONCURRENCY: 5
+      # Publisher Configuration (optional, for 1GB VPS use: 2)
+      PUBLISHER_CONCURRENCY: ${PUBLISHER_CONCURRENCY:-5}
       PUBLISHER_MAX_ATTEMPTS: 7
       PUBLISHER_JOB_TIMEOUT_MS: 600000
       PUBLISHER_STALE_CHECK_INTERVAL_MS: 60000
@@ -190,6 +234,10 @@ services:
       context: .
       dockerfile: apps/isekai-frontend/Dockerfile
       # No build args needed - config is injected at runtime
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT_FRONTEND:-64M}
     ports:
       - '3000:80'  # Map host 3000 to container 80 (nginx)
     environment:

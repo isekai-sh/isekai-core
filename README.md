@@ -189,6 +189,76 @@ docker-compose down
 docker-compose down -v
 ```
 
+## Running on Low-RAM VPS (1GB)
+
+Isekai can run on budget VPS with 1GB RAM using memory optimization. This requires:
+
+### Memory Configuration
+
+Create a `.env` file with these optimized values:
+
+```bash
+# PostgreSQL Memory (total: ~180MB)
+MEMORY_LIMIT_POSTGRES=180M
+MEMORY_RESERVE_POSTGRES=64M
+POSTGRES_SHARED_BUFFERS=64MB
+POSTGRES_MAX_CONNECTIONS=20
+POSTGRES_WORK_MEM=2MB
+
+# Redis Memory (total: ~50MB)
+MEMORY_LIMIT_REDIS=50M
+REDIS_MAX_MEMORY=32mb
+
+# Backend Node.js (total: ~256MB)
+MEMORY_LIMIT_BACKEND=256M
+NODE_OPTIONS=--max-old-space-size=256
+DB_POOL_SIZE=4
+
+# Publisher Worker (total: ~192MB)
+MEMORY_LIMIT_PUBLISHER=192M
+PUBLISHER_CONCURRENCY=2
+
+# Frontend nginx (total: ~50MB)
+MEMORY_LIMIT_FRONTEND=50M
+```
+
+**Total memory usage**: ~730MB + OS overhead = **~850-900MB peak usage**
+
+### System Requirements for 1GB VPS
+
+1. **Add swap file** (critical to prevent OOM kills):
+```bash
+# Create 2GB swap file
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# Reduce swappiness (prefer RAM, use swap as safety net)
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
+2. **Use lightweight OS**: Ubuntu Server 22.04 minimal or Alpine Linux
+
+3. **Disable unnecessary services**: Remove snapd, unattended-upgrades if not needed
+
+### Expected Performance
+
+- **Memory**: 700-850MB used, 150-300MB free (+ 2GB swap)
+- **CPU**: Low usage (~5-15% idle, peaks during publishing)
+- **Publishing**: 2 concurrent jobs (slower than 2GB+ VPS)
+- **Response time**: Acceptable for 1-3 users
+
+### When to Upgrade
+
+Upgrade to 2GB+ VPS if you experience:
+- Frequent OOM kills (check `dmesg | grep oom`)
+- Swap usage consistently >500MB (`free -h`)
+- Slow response times (>2s for API calls)
+- Publishing job failures due to timeouts
+
 ## Documentation
 
 Complete documentation can be accessed at [Isekai Official Website](https://isekai.sh)
