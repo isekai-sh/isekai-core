@@ -206,18 +206,19 @@ export function DateTimePicker({
   return (
     <div className={label ? "space-y-2" : ""}>
       {label && <Label>{label}</Label>}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
+              size="sm"
               className={cn(
-                "flex-1 justify-start text-left font-normal",
+                "h-8 justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : <span>Pick a date</span>}
+              {date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : <span>Pick date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -231,7 +232,7 @@ export function DateTimePicker({
           </PopoverContent>
         </Popover>
         <Select value={hourValue} onValueChange={handleHourChange} disabled={!date}>
-          <SelectTrigger className="w-20">
+          <SelectTrigger className="w-16 h-8">
             <SelectValue placeholder="Hour" />
           </SelectTrigger>
           <SelectContent>
@@ -242,9 +243,9 @@ export function DateTimePicker({
             ))}
           </SelectContent>
         </Select>
-        <span className="flex items-center text-muted-foreground">:</span>
+        <span className="text-muted-foreground text-sm">:</span>
         <Select value={minuteValue} onValueChange={handleMinuteChange} disabled={!date}>
-          <SelectTrigger className="w-20">
+          <SelectTrigger className="w-16 h-8">
             <SelectValue placeholder="Min" />
           </SelectTrigger>
           <SelectContent>
@@ -255,12 +256,12 @@ export function DateTimePicker({
             ))}
           </SelectContent>
         </Select>
+        {date && (
+          <span className="text-xs text-muted-foreground">
+            {timezone}
+          </span>
+        )}
       </div>
-      {date && (
-        <p className="text-xs text-muted-foreground mt-1">
-          Timezone: {timezone}
-        </p>
-      )}
     </div>
   )
 }

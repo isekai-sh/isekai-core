@@ -16,8 +16,9 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, FileImage, Calendar, Check, Send } from "lucide-react";
+import { FileImage, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -64,6 +65,7 @@ export function DraftTableRow({
   );
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Deviation>) => deviations.update(draft.id, data),
@@ -95,21 +97,6 @@ export function DraftTableRow({
       toast({
         title: "Error",
         description: error.message || "Failed to schedule draft",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => deviations.delete(draft.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
-      toast({ title: "Deleted", description: "Draft deleted successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete draft",
         variant: "destructive",
       });
     },
@@ -194,16 +181,60 @@ export function DraftTableRow({
     );
   }, [draft.tags, draft.description, draft.galleryIds, draft.scheduledAt]);
 
+  // Handle ESC key to close lightbox and prevent body scroll
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && lightboxOpen) {
+        setLightboxOpen(false);
+      }
+    };
+
+    if (lightboxOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [lightboxOpen]);
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't select if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    const interactiveElements = ['BUTTON', 'INPUT', 'TEXTAREA', 'A', 'LABEL'];
+    const isInteractive =
+      interactiveElements.includes(target.tagName) ||
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('a') ||
+      target.closest('[role="checkbox"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[data-radix-popper-content-wrapper]') ||
+      target.contentEditable === 'true' ||
+      target.closest('[contenteditable="true"]');
+
+    if (!isInteractive) {
+      onSelect();
+    }
+  };
+
   return (
-    <TableRow className="h-[68px]">
+    <TableRow className="h-[68px] cursor-pointer" onClick={handleRowClick}>
       {/* Checkbox */}
-      <TableCell className="py-1">
+      <TableCell className="py-1 pl-4 text-center">
         <Checkbox checked={isSelected} onCheckedChange={onSelect} />
       </TableCell>
 
       {/* Preview */}
       <TableCell className="py-1">
-        <div className="w-14 h-14 rounded overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+        <div
+          className="w-14 h-14 rounded overflow-hidden bg-muted flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => draft.files?.[0]?.storageUrl && setLightboxOpen(true)}
+        >
           {draft.files && draft.files.length > 0 && draft.files[0].storageUrl ? (
             <img
               src={draft.files[0].storageUrl}
@@ -383,33 +414,49 @@ export function DraftTableRow({
         </Popover>
       </TableCell>
 
-      {/* Actions */}
-      <TableCell className="py-1">
-        <div className="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="default"
-            className="h-7 w-7 p-0"
-            onClick={() => {
-              if (scheduledDate) {
-                scheduleMutation.mutate(scheduledDate.toISOString());
-              }
-            }}
-            disabled={!scheduledDate || scheduleMutation.isPending}
-          >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            className="h-7 w-7 p-0"
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+      {/* Action */}
+      <TableCell className="py-1 pr-4 text-center">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7"
+          onClick={() => {
+            if (scheduledDate) {
+              scheduleMutation.mutate(scheduledDate.toISOString());
+            }
+          }}
+          disabled={!scheduledDate || scheduleMutation.isPending}
+        >
+          <Send className="h-3.5 w-3.5 mr-1.5" />
+          Schedule
+        </Button>
       </TableCell>
+
+      {/* Lightbox overlay - rendered via portal */}
+      {lightboxOpen &&
+        draft.files?.[0]?.storageUrl &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <div className="relative max-w-full max-h-full">
+              <img
+                src={draft.files[0].storageUrl}
+                alt={draft.title}
+                className="max-w-full max-h-[95vh] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors"
+                onClick={() => setLightboxOpen(false)}
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </TableRow>
   );
 }
