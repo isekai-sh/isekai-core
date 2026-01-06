@@ -174,7 +174,7 @@ export function AutomationList() {
       {/* Automation Cards Grid */}
       <PageContent>
         {automationList.length === 0 ? (
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle>Get Started with Automation</CardTitle>
               <CardDescription>
@@ -202,7 +202,7 @@ export function AutomationList() {
 
             {/* Create New Card */}
             <Card
-              className="border-dashed hover:border-primary transition-colors cursor-pointer"
+              className="border-dashed hover:border-primary transition-colors cursor-pointer rounded-lg"
               onClick={() => setShowCreateDialog(true)}
             >
               <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] p-6">

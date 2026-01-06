@@ -42,7 +42,7 @@ export function ReviewGridItem({
     return (
       <div
         className={cn(
-          "relative flex items-center gap-3 rounded-lg overflow-hidden cursor-pointer transition-all p-2",
+          "relative flex items-center gap-3 rounded overflow-hidden cursor-pointer transition-all p-2",
           isSelected && "bg-primary text-primary-foreground",
           !isSelected && isFocused && "bg-primary/20",
           !isSelected && !isFocused && "hover:bg-muted/50"
@@ -57,7 +57,10 @@ export function ReviewGridItem({
             onToggleSelect();
           }}
         >
-          <Checkbox checked={isSelected} />
+          <Checkbox
+            checked={isSelected}
+            className={cn(!isSelected && "border-muted-foreground/50 data-[state=unchecked]:bg-muted")}
+          />
         </div>
 
         {/* Thumbnail */}
@@ -100,7 +103,7 @@ export function ReviewGridItem({
   return (
     <div
       className={cn(
-        "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all"
+        "relative aspect-square rounded overflow-hidden cursor-pointer transition-all"
       )}
       onClick={onFocus}
     >
@@ -136,7 +139,13 @@ export function ReviewGridItem({
           onToggleSelect();
         }}
       >
-        <Checkbox checked={isSelected} className="bg-background" />
+        <Checkbox
+          checked={isSelected}
+          className={cn(
+            "bg-background",
+            !isSelected && "border-muted-foreground/50"
+          )}
+        />
       </div>
 
       {/* Tag indicator */}

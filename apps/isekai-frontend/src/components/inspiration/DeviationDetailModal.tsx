@@ -96,7 +96,7 @@ export function DeviationDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 gap-0 rounded-lg">
         <VisuallyHidden>
           <DialogTitle>
             {details?.title || deviation?.title || "Deviation Details"}

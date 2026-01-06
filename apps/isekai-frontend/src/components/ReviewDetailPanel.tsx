@@ -134,7 +134,7 @@ export function ReviewDetailPanel({
 
   if (!deviation) {
     return (
-      <Card className="w-[60%] flex items-center justify-center min-h-0 overflow-hidden">
+      <Card className="w-full xl:w-[60%] flex items-center justify-center min-h-0 rounded-lg">
         <CardContent className="text-center py-12">
           <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-muted-foreground">No items to review</p>
@@ -145,41 +145,36 @@ export function ReviewDetailPanel({
 
   return (
     <>
-      <Card className="w-[70%] flex flex-col min-h-0 overflow-hidden">
+      <Card className="w-full xl:w-[70%] flex flex-col min-h-0 rounded-lg">
         <CardContent className="p-3 flex flex-col h-full min-h-0">
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 space-y-2">
-            {/* Large image preview with metadata overlay */}
-            <div
-              className="relative rounded-lg bg-muted overflow-hidden cursor-pointer hover:opacity-90 transition-opacity group"
-              onClick={() => setLightboxOpen(true)}
-            >
-              {deviation.files?.[0]?.storageUrl && (
-                <img
-                  src={deviation.files[0].storageUrl}
-                  alt={deviation.title}
-                  className="w-full h-auto"
-                />
-              )}
+          {/* Fixed height image preview area */}
+          <div
+            className="flex-1 min-h-0 relative rounded-lg bg-[#0a0f0d] overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+            onClick={() => setLightboxOpen(true)}
+          >
+            {deviation.files?.[0]?.storageUrl ? (
+              <img
+                src={deviation.files[0].storageUrl}
+                alt={deviation.title}
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : (
+              <FileImage className="h-12 w-12 text-muted-foreground" />
+            )}
 
-              {/* Metadata overlay on hover */}
-              {deviation.files?.[0] && (
-                <div className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-xs p-2 space-y-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <p>{new Date(deviation.createdAt).toLocaleString()}</p>
-                  <p>{deviation.files[0].originalFilename}</p>
-                  <p>
-                    {(deviation.files[0].fileSize / 1024 / 1024).toFixed(2)} MB
-                    {deviation.files[0].width && deviation.files[0].height && (
-                      <>
-                        {" "}
-                        · {deviation.files[0].width} ×{" "}
-                        {deviation.files[0].height}
-                      </>
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Image metadata overlay - bottom right */}
+            {deviation.files?.[0] && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded space-x-2 pointer-events-none">
+                {deviation.files[0].width && deviation.files[0].height && (
+                  <span>{deviation.files[0].width}×{deviation.files[0].height}</span>
+                )}
+                <span>{(deviation.files[0].fileSize / 1024 / 1024).toFixed(1)}MB</span>
+              </div>
+            )}
+          </div>
+
+          {/* Fixed bottom area - actions */}
+          <div className="flex-shrink-0 mt-3 pt-3 border-t space-y-2">
 
             {/* Title and Tags side by side */}
             <div className="flex gap-2">
@@ -297,27 +292,27 @@ export function ReviewDetailPanel({
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
 
-          {/* Action footer - always visible */}
-          <div className="flex gap-2 mt-3 pt-3 border-t flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onReject(deviation.id)}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Reject
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1"
-              onClick={() => onApprove(deviation.id)}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Approve
-            </Button>
+            {/* Action buttons */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => onReject(deviation.id)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => onApprove(deviation.id)}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Approve
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

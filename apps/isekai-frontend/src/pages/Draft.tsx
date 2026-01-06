@@ -23,16 +23,10 @@ import {
   Calendar,
   Trash2,
   Folder,
-  Check,
   Tags,
+  Search,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -73,7 +67,6 @@ import {
   DescriptionTemplateSelector,
 } from "@/components/TemplateSelector";
 import type { Deviation } from "@isekai/shared";
-import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 
 export function Draft() {
   const queryClient = useQueryClient();
@@ -90,12 +83,13 @@ export function Draft() {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch drafts (status = draft)
   const { data, isLoading } = useQuery({
     queryKey: ["deviations", "draft"],
     queryFn: async () => {
-      const result = await deviations.list({ status: "draft", limit: 1000 }); // Fetch up to 1000 drafts
+      const result = await deviations.list({ status: "draft", limit: 1000 });
       return result;
     },
   });
@@ -403,7 +397,15 @@ export function Draft() {
     },
   });
 
-  const drafts = data?.deviations || [];
+  const allDrafts = data?.deviations || [];
+
+  // Filter drafts based on search query
+  const drafts = searchQuery
+    ? allDrafts.filter((d) =>
+        d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : allDrafts;
 
   const toggleSelectAll = () => {
     if (selectedIds.size === drafts.length) {
@@ -493,232 +495,208 @@ export function Draft() {
   };
 
   return (
-    <PageWrapper className="gap-4 md:gap-6">
-      <PageHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Draft</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your deviation drafts ({drafts.length})
-            </p>
-          </div>
-          <Button onClick={() => setShowModeDialog(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Media
-          </Button>
-        </div>
-      </PageHeader>
-
-      <PageContent>
-        <Card className="flex-1 flex flex-col h-full">
-        <CardContent className="pt-6 flex-1 flex flex-col h-full">
-          <div className="mb-4 p-4 border rounded-lg bg-background">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex items-center ${
-                    selectedIds.size === 0
-                      ? "opacity-50 pointer-events-none"
-                      : ""
-                  }`}
-                >
-                  <DateTimePicker
-                    date={bulkScheduleDate}
-                    setDate={(date) => {
-                      console.log("DateTimePicker setDate called:", {
-                        date,
-                        iso: date?.toISOString(),
-                        selectedCount: selectedIds.size,
-                      });
-                      setBulkScheduleDate(date);
-                      if (date && selectedIds.size > 0) {
-                        batchUpdateScheduleDateMutation.mutate({
-                          deviationIds: Array.from(selectedIds),
-                          scheduledAt: date.toISOString(),
-                        });
-                      }
-                    }}
-                    label=""
-                  />
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <GallerySelector
-                  selectedGalleryIds={bulkGalleryIds}
-                  onSelect={(galleryIds) => {
-                    setBulkGalleryIds(galleryIds);
-                    if (selectedIds.size > 0) {
-                      batchAssignGalleryMutation.mutate({
-                        deviationIds: Array.from(selectedIds),
-                        galleryIds,
-                      });
-                    }
-                  }}
-                  triggerButton={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={selectedIds.size === 0}
-                      className="h-8"
-                    >
-                      <Folder className="h-4 w-4 mr-2" />
-                      {bulkGalleryIds.length > 0
-                        ? `${bulkGalleryIds.length} folder${
-                            bulkGalleryIds.length > 1 ? "s" : ""
-                          }`
-                        : "Assign to Folder"}
-                    </Button>
-                  }
+    <div className="flex flex-col h-full overflow-hidden">
+      <Card className="flex-1 flex flex-col min-h-0 rounded-lg">
+        <CardContent className="p-3 flex-1 flex flex-col min-h-0">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 w-48 pl-8 text-sm"
                 />
-                <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={selectedIds.size === 0}
-                      className="h-8"
-                    >
-                      <Tags className="h-4 w-4 mr-2" />
-                      {bulkTags.length > 0
-                        ? `${bulkTags.length} tag${
-                            bulkTags.length > 1 ? "s" : ""
-                          }`
-                        : "Add Tags"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" align="start">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>Tags</Label>
-                        <TagTemplateSelector
-                          onSelect={(templateTags) => setBulkTags(templateTags)}
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {bulkTags.map((tag, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {tag}
-                            <button
-                              onClick={() => removeBulkTag(idx)}
-                              className="ml-1 hover:bg-muted rounded-full p-0.5"
-                            >
-                              ×
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <Input
-                        placeholder="Add tag and press Enter..."
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addBulkTag(e.currentTarget.value);
-                            e.currentTarget.value = "";
-                          }
-                        }}
+              </div>
+              <div className="h-4 w-px bg-border" />
+              <DateTimePicker
+                date={bulkScheduleDate}
+                setDate={(date) => {
+                  setBulkScheduleDate(date);
+                  if (date && selectedIds.size > 0) {
+                    batchUpdateScheduleDateMutation.mutate({
+                      deviationIds: Array.from(selectedIds),
+                      scheduledAt: date.toISOString(),
+                    });
+                  }
+                }}
+                label=""
+                disabled={selectedIds.size === 0}
+              />
+              <GallerySelector
+                selectedGalleryIds={bulkGalleryIds}
+                onSelect={(galleryIds) => {
+                  setBulkGalleryIds(galleryIds);
+                  if (selectedIds.size > 0) {
+                    batchAssignGalleryMutation.mutate({
+                      deviationIds: Array.from(selectedIds),
+                      galleryIds,
+                    });
+                  }
+                }}
+                triggerButton={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedIds.size === 0}
+                    className="h-8"
+                  >
+                    <Folder className="h-4 w-4 mr-2" />
+                    Folder
+                  </Button>
+                }
+              />
+              <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedIds.size === 0}
+                    className="h-8"
+                  >
+                    <Tags className="h-4 w-4 mr-2" />
+                    Tags
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="start">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Tags</Label>
+                      <TagTemplateSelector
+                        onSelect={(templateTags) => setBulkTags(templateTags)}
                       />
-                      <div className="flex justify-between gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleBulkClearTags}
-                          disabled={selectedIds.size === 0}
-                        >
-                          Clear Tags
-                        </Button>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setTagsOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button size="sm" onClick={handleBulkAssignTags}>
-                            Apply
-                          </Button>
-                        </div>
-                      </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
-                <Popover
-                  open={descriptionOpen}
-                  onOpenChange={setDescriptionOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={selectedIds.size === 0}
-                      className="h-8"
-                    >
-                      <FileImage className="h-4 w-4 mr-2" />
-                      {bulkDescription ? "Description set" : "Add Description"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-96" align="start">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>Description</Label>
-                        <DescriptionTemplateSelector
-                          onSelect={(text) => setBulkDescription(text)}
-                        />
-                      </div>
-                      <Textarea
-                        value={bulkDescription}
-                        onChange={(e) => setBulkDescription(e.target.value)}
-                        placeholder="Enter description..."
-                        rows={6}
-                      />
-                      <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap gap-1">
+                      {bulkTags.map((tag, idx) => (
+                        <Badge key={idx} variant="secondary">
+                          {tag}
+                          <button
+                            onClick={() => removeBulkTag(idx)}
+                            className="ml-1 hover:bg-muted rounded-full p-0.5"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <Input
+                      placeholder="Add tag and press Enter..."
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addBulkTag(e.currentTarget.value);
+                          e.currentTarget.value = "";
+                        }
+                      }}
+                    />
+                    <div className="flex justify-between gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBulkClearTags}
+                        disabled={selectedIds.size === 0}
+                      >
+                        Clear Tags
+                      </Button>
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDescriptionOpen(false)}
+                          onClick={() => setTagsOpen(false)}
                         >
                           Cancel
                         </Button>
-                        <Button size="sm" onClick={handleBulkAssignDescription}>
+                        <Button size="sm" onClick={handleBulkAssignTags}>
                           Apply
                         </Button>
                       </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="flex items-center gap-2 h-8">
-                {selectedIds.size > 0 && (
-                  <>
-                    <Button
-                      onClick={() => setSelectedIds(new Set())}
-                      variant="outline"
-                      size="sm"
-                      className="h-full"
-                    >
-                      Clear Selection
-                    </Button>
-                    <Button
-                      onClick={handleBulkDelete}
-                      variant="outline"
-                      size="sm"
-                      className="h-full"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete ({selectedIds.size})
-                    </Button>
-                  </>
-                )}
-                <Button
-                  onClick={() => handleBulkSchedule()}
-                  disabled={!bulkScheduleDate || selectedIds.size === 0}
-                  size="sm"
-                  variant="default"
-                  className="h-full"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule {selectedIds.size > 0 && `(${selectedIds.size})`}
-                </Button>
-              </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Popover open={descriptionOpen} onOpenChange={setDescriptionOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedIds.size === 0}
+                    className="h-8"
+                  >
+                    <FileImage className="h-4 w-4 mr-2" />
+                    Description
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96" align="start">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Description</Label>
+                      <DescriptionTemplateSelector
+                        onSelect={(text) => setBulkDescription(text)}
+                      />
+                    </div>
+                    <Textarea
+                      value={bulkDescription}
+                      onChange={(e) => setBulkDescription(e.target.value)}
+                      placeholder="Enter description..."
+                      rows={6}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleBulkAssignDescription}>
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {selectedIds.size > 0 && (
+                <>
+                  <div className="h-4 w-px bg-border" />
+                  <Button
+                    onClick={handleBulkDelete}
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedIds(new Set())}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                  >
+                    Clear Selection
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedIds.size} selected
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleBulkSchedule()}
+                disabled={!bulkScheduleDate || selectedIds.size === 0}
+                size="sm"
+                className="h-8"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule
+              </Button>
+              <Button onClick={() => setShowModeDialog(true)} size="sm" className="h-8">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
             </div>
           </div>
           {isLoading ? (
@@ -742,7 +720,7 @@ export function Draft() {
           ) : (
             <div className="flex-1 overflow-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-card z-10">
                   <TableRow>
                     <TableHead className="w-12">
                       <Checkbox
@@ -753,23 +731,20 @@ export function Draft() {
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
-                    <TableHead className="w-16">#</TableHead>
-                    <TableHead className="w-24">Preview</TableHead>
+                    <TableHead className="w-16">Preview</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Tags</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Folders</TableHead>
-                    <TableHead>Schedule Date & Time</TableHead>
-                    <TableHead className="w-24">Sta.sh Only</TableHead>
-                    <TableHead className="w-32">Actions</TableHead>
+                    <TableHead>Schedule</TableHead>
+                    <TableHead className="w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {drafts.map((draft, index) => (
+                  {drafts.map((draft) => (
                     <DraftTableRow
                       key={draft.id}
                       draft={draft}
-                      index={index + 1}
                       isSelected={selectedIds.has(draft.id)}
                       onSelect={() => toggleSelect(draft.id)}
                     />
@@ -780,7 +755,6 @@ export function Draft() {
           )}
         </CardContent>
       </Card>
-      </PageContent>
 
       <UploadModeDialog
         open={showModeDialog}
@@ -817,6 +791,6 @@ export function Draft() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </PageWrapper>
+    </div>
   );
 }

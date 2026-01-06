@@ -568,11 +568,11 @@ export function AutomationDetail() {
       </div>
 
       {/* Multi-column Layout */}
-      <div className="flex-1 grid grid-cols-3 gap-3 overflow-y-auto pr-2">
+      <div className="flex-1 grid grid-cols-3 gap-3 min-h-0 overflow-y-auto pr-2">
         {/* Column 1: Controls + Settings */}
         <div className="space-y-3">
           {/* Controls */}
-          <Card>
+          <Card className="rounded-lg">
             <CardContent className="pt-6 space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Enable</Label>
@@ -596,7 +596,7 @@ export function AutomationDetail() {
           </Card>
 
           {/* Settings */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Settings</CardTitle>
             </CardHeader>
@@ -715,7 +715,7 @@ export function AutomationDetail() {
 
         {/* Column 2: Schedule Rules */}
         <div className="space-y-3">
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">When to Post</CardTitle>
@@ -786,7 +786,7 @@ export function AutomationDetail() {
         {/* Column 3: Default Values + Activity */}
         <div className="space-y-3">
           {/* Default Values */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Default Values</CardTitle>
@@ -806,7 +806,7 @@ export function AutomationDetail() {
           </Card>
 
           {/* Sale Queue Settings */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -927,7 +927,7 @@ export function AutomationDetail() {
           </Card>
 
           {/* Recent Activity */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Recent Activity</CardTitle>
             </CardHeader>

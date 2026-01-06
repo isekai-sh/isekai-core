@@ -17,15 +17,15 @@
 
 import { Link } from "react-router-dom";
 import {
-  CreditCardIcon,
   ExternalLinkIcon,
   LogOutIcon,
   SettingsIcon,
   KeyIcon,
+  FolderOpenIcon,
+  FileTextIcon,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,33 +60,30 @@ export function NavUserDropdown() {
       .slice(0, 2) || "U";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-4">
       {user?.username && (
         <a
           href={`https://www.deviantart.com/${user.username}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 h-8 rounded-md hover:bg-accent transition-colors text-sm text-muted-foreground hover:text-accent-foreground"
+          className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors font-mono"
         >
           <img src="/deviantart.svg" alt="DeviantArt" className="h-4 w-4" />
-          <span>Open DeviantArt</span>
-          <ExternalLinkIcon className="h-3 w-3" />
+          DeviantArt
+          <ExternalLinkIcon className="h-3.5 w-3.5" />
         </a>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Avatar className="h-7 w-7 rounded-md">
-              <AvatarImage
-                src={userData.avatar}
-                alt={userData.name}
-                className="rounded-md"
-              />
-              <AvatarFallback className="text-xs rounded-md">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
+        <DropdownMenuTrigger className="focus:outline-none">
+          <Avatar className="h-8 w-8 cursor-pointer rounded-md border-2 border-transparent hover:border-primary/30 transition-all">
+            <AvatarImage
+              src={userData.avatar}
+              alt={userData.name}
+            />
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-56 rounded-lg"
@@ -97,13 +94,13 @@ export function NavUserDropdown() {
             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={userData.avatar} alt={userData.name} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-lg bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userData.name}</span>
-                <span className="truncate text-xs text-muted-foreground capitalize">
+                <span className="truncate text-xs text-muted-foreground">
                   {userData.email}
                 </span>
               </div>
@@ -112,21 +109,36 @@ export function NavUserDropdown() {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
-              <Link to="/settings">
-                <SettingsIcon />
-                Settings
+              <Link to="/galleries">
+                <FolderOpenIcon className="mr-2 h-4 w-4" />
+                Galleries
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/api-keys">
-                <KeyIcon />
-                API Keys
+              <Link to="/templates">
+                <FileTextIcon className="mr-2 h-4 w-4" />
+                Templates
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOutIcon />
+          <DropdownMenuGroup>
+            <DropdownMenuItem asChild>
+              <Link to="/api-keys">
+                <KeyIcon className="mr-2 h-4 w-4" />
+                API Keys
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings">
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+            <LogOutIcon className="mr-2 h-4 w-4" />
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

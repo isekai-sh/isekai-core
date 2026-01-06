@@ -152,7 +152,7 @@ export function ApiKeys() {
       </PageHeader>
 
       <PageContent>
-        <Card className="flex-1">
+        <Card className="flex-1 rounded-lg">
         <CardHeader>
           <CardTitle>Your API Keys</CardTitle>
           <CardDescription>

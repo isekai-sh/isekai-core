@@ -303,13 +303,13 @@ export function ExclusivesQueue() {
       </PageHeader>
 
       <PageContent>
-        <Tabs defaultValue="queue" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="queue" className="flex-1 flex flex-col min-h-0">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="queue">Queue ({queueTotal})</TabsTrigger>
           <TabsTrigger value="presets">Price Presets ({presetsList.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="queue" className="flex-1 flex flex-col overflow-hidden mt-6 space-y-6">
+        <TabsContent value="queue" className="flex-1 flex flex-col min-h-0 mt-6 space-y-6">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               Monitor deviations queued for exclusive sale automation
@@ -339,7 +339,7 @@ export function ExclusivesQueue() {
               const count = statusCounts[status] || 0;
 
               return (
-                <Card key={status}>
+                <Card key={status} className="rounded-lg">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -355,13 +355,13 @@ export function ExclusivesQueue() {
           </div>
 
           {/* Queue Items List */}
-          <Card className="flex-1 flex flex-col overflow-hidden">
+          <Card className="flex-1 flex flex-col min-h-0 rounded-lg">
             <CardHeader>
               <CardTitle>Queue Items</CardTitle>
               <CardDescription>Items are automatically processed by the extension</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-auto">
+            <CardContent className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto">
                 {isLoadingQueue ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -460,7 +460,7 @@ export function ExclusivesQueue() {
 
         <TabsContent
           value="presets"
-          className="flex-1 flex flex-col overflow-hidden mt-6 space-y-6"
+          className="flex-1 flex flex-col min-h-0 mt-6 space-y-6"
         >
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
@@ -472,7 +472,7 @@ export function ExclusivesQueue() {
             </Button>
           </div>
 
-          <Card className="flex-1 flex flex-col overflow-hidden">
+          <Card className="flex-1 flex flex-col min-h-0 rounded-lg">
             <CardHeader>
               <CardTitle>Your Price Presets</CardTitle>
               <CardDescription>

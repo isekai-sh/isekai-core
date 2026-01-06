@@ -15,20 +15,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
 import { FileImage } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { review, deviations } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewHeader } from "@/components/ReviewHeader";
 import { ReviewGridPanel } from "@/components/ReviewGridPanel";
 import { ReviewDetailPanel } from "@/components/ReviewDetailPanel";
-import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 import type { Deviation } from "@isekai/shared";
 
 export function Review() {
@@ -40,7 +40,7 @@ export function Review() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
   // Grid controls
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title">("newest");
   const [filterBy, setFilterBy] = useState<"all" | "has-tags" | "no-tags">(
     "all"
@@ -52,7 +52,7 @@ export function Review() {
   // Fetch review deviations with infinite scroll
   const {
     data,
-    isLoading,
+    isLoading: queryLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -72,6 +72,8 @@ export function Review() {
     },
     initialPageParam: 1,
   });
+
+  const isLoading = queryLoading;
 
   // Poll for new entries every 1 minute and auto-refresh
   useEffect(() => {
@@ -332,12 +334,30 @@ export function Review() {
   const totalCount = data?.pages[0]?.total || 0;
 
   return (
-    <PageWrapper>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Bulk actions bar - only show when items selected */}
       {selectedIds.size > 0 && (
-        <div className="flex-shrink-0 pb-3 flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {selectedIds.size} selected
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+              className="h-8 text-xs"
+            >
+              Select All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeselectAll}
+              className="h-8 text-xs"
+            >
+              Clear Selection
+            </Button>
+            <span className="text-sm text-muted-foreground ml-2">
+              {selectedIds.size} selected
+            </span>
           </div>
           <ReviewHeader
             count={allDeviations.length}
@@ -351,54 +371,55 @@ export function Review() {
       )}
 
       {/* Main content */}
-      <PageContent>
+      <div className="flex-1 min-h-0">
         {allDeviations.length === 0 ? (
-          <Card className="flex-1 flex items-center justify-center min-h-0">
-          <CardContent className="text-center py-12">
-            <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">No deviations to review</p>
-            <p className="text-sm text-muted-foreground">
-              Upload from ComfyUI to see them here
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
-          {/* Grid Panel */}
-          <ReviewGridPanel
-            deviations={processedDeviations}
-            selectedIds={selectedIds}
-            focusedId={focusedId}
-            viewMode={viewMode}
-            sortBy={sortBy}
-            filterBy={filterBy}
-            totalCount={totalCount}
-            onToggleSelect={toggleSelect}
-            onFocus={setFocusedId}
-            onViewModeChange={setViewMode}
-            onSortChange={setSortBy as any}
-            onFilterChange={setFilterBy as any}
-            onSelectAll={handleSelectAll}
-            onDeselectAll={handleDeselectAll}
-            onLoadMore={() => {
-              if (hasNextPage && !isFetchingNextPage) {
-                fetchNextPage();
-              }
-            }}
-            hasMore={hasNextPage || false}
-            isLoadingMore={isFetchingNextPage}
-          />
+          <Card className="flex items-center justify-center h-full border-border/50 bg-card/50">
+            <CardContent className="text-center py-12">
+              <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">No deviations to review</p>
+              <p className="text-sm text-muted-foreground">
+                Upload from ComfyUI to see them here
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex gap-4 h-full">
+            {/* Grid Panel - hidden on mobile/tablet */}
+            <ReviewGridPanel
+              className="hidden xl:flex"
+              deviations={processedDeviations}
+              selectedIds={selectedIds}
+              focusedId={focusedId}
+              viewMode={viewMode}
+              sortBy={sortBy}
+              filterBy={filterBy}
+              totalCount={totalCount}
+              onToggleSelect={toggleSelect}
+              onFocus={setFocusedId}
+              onViewModeChange={setViewMode}
+              onSortChange={setSortBy as any}
+              onFilterChange={setFilterBy as any}
+              onSelectAll={handleSelectAll}
+              onDeselectAll={handleDeselectAll}
+              onLoadMore={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              hasMore={hasNextPage || false}
+              isLoadingMore={isFetchingNextPage}
+            />
 
-          {/* Detail Panel */}
-          <ReviewDetailPanel
-            deviation={focusedDeviation}
-            onApprove={(id) => approveMutation.mutate(id)}
-            onReject={(id) => rejectMutation.mutate(id)}
-            onUpdate={handleUpdate}
-          />
-        </div>
+            {/* Detail Panel - full width on mobile */}
+            <ReviewDetailPanel
+              deviation={focusedDeviation}
+              onApprove={(id) => approveMutation.mutate(id)}
+              onReject={(id) => rejectMutation.mutate(id)}
+              onUpdate={handleUpdate}
+            />
+          </div>
         )}
-      </PageContent>
-    </PageWrapper>
+      </div>
+    </div>
   );
 }

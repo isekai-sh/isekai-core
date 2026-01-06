@@ -121,12 +121,12 @@ export function ReviewHeader({
 
       <Button variant="outline" size="sm" onClick={onBulkReject}>
         <X className="h-4 w-4 mr-2" />
-        Reject
+        Reject Selected
       </Button>
 
       <Button size="sm" onClick={onBulkApprove}>
         <Check className="h-4 w-4 mr-2" />
-        Approve
+        Approve Selected
       </Button>
     </div>
   );

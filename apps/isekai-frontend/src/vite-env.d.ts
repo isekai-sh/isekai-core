@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+// Build-time constants injected by Vite
+declare const __APP_VERSION__: string;
+
 // Runtime configuration interface (loaded from /config.js)
 // This enables "Build Once, Run Anywhere" by injecting config at container startup
 interface IsekaiConfig {

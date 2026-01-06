@@ -22,7 +22,7 @@ import { ChevronLeft, LayoutDashboard, Rows3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { galleries, type BrowseDeviation } from "@/lib/api";
-import { JustifiedGallery } from "@/components/browse/JustifiedGallery";
+import { JustifiedGallery } from "@/components/inspiration/JustifiedGallery";
 import type { ViewMode } from "@/lib/utils";
 import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 

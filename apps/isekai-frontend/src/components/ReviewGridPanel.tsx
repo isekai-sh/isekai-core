@@ -17,6 +17,7 @@
 
 import { useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -30,6 +31,7 @@ import { ReviewGridItem } from "./ReviewGridItem";
 import type { Deviation } from "@isekai/shared";
 
 interface ReviewGridPanelProps {
+  className?: string;
   deviations: Deviation[];
   selectedIds: Set<string>;
   focusedId: string | null;
@@ -50,6 +52,7 @@ interface ReviewGridPanelProps {
 }
 
 export function ReviewGridPanel({
+  className,
   deviations,
   selectedIds,
   focusedId,
@@ -93,12 +96,28 @@ export function ReviewGridPanel({
   }, [hasMore, isLoadingMore, onLoadMore]);
 
   return (
-    <Card className="w-[30%] flex flex-col min-h-0 overflow-hidden">
+    <Card className={cn("w-[30%] flex flex-col min-h-0 rounded-lg", className)}>
       <CardContent className="p-3 flex flex-col h-full min-h-0">
-        {/* Controls bar */}
-        <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+        {/* Controls bar - single row */}
+        <div className="flex gap-1 mb-3 flex-shrink-0 w-full">
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => onViewModeChange("list")}
+            className="h-8 w-8 p-0 shrink-0"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "grid" ? "default" : "outline"}
+            size="sm"
+            onClick={() => onViewModeChange("grid")}
+            className="h-8 w-8 p-0 shrink-0"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
           <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="w-28 h-8">
+            <SelectTrigger className="flex-1 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -107,9 +126,8 @@ export function ReviewGridPanel({
               <SelectItem value="title">Title</SelectItem>
             </SelectContent>
           </Select>
-
           <Select value={filterBy} onValueChange={onFilterChange}>
-            <SelectTrigger className="w-28 h-8">
+            <SelectTrigger className="flex-1 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -118,58 +136,7 @@ export function ReviewGridPanel({
               <SelectItem value="no-tags">No Tags</SelectItem>
             </SelectContent>
           </Select>
-
-          <div className="ml-auto flex gap-1">
-            <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onViewModeChange("grid")}
-              className="h-8 w-8 p-0"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onViewModeChange("list")}
-              className="h-8 w-8 p-0"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
-
-        {/* Selection controls */}
-        {deviations.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-            <span className="text-xs font-medium text-muted-foreground">
-              {totalCount} {totalCount === 1 ? "item" : "items"} to review
-            </span>
-            <div className="h-3 w-px bg-border" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onSelectAll}
-              className="h-7 text-xs"
-            >
-              Select All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDeselectAll}
-              className="h-7 text-xs"
-              disabled={selectedIds.size === 0}
-            >
-              Deselect All
-            </Button>
-            {selectedIds.size > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {selectedIds.size} selected
-              </span>
-            )}
-          </div>
-        )}
 
         {/* Scrollable grid */}
         <div
@@ -202,6 +169,13 @@ export function ReviewGridPanel({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           )}
+        </div>
+
+        {/* Footer with total count */}
+        <div className="pt-3 mt-auto border-t border-border/50 text-center">
+          <span className="text-xs text-muted-foreground">
+            {totalCount} {totalCount === 1 ? "item" : "items"} to review
+          </span>
         </div>
       </CardContent>
     </Card>

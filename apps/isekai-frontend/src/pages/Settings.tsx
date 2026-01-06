@@ -167,7 +167,7 @@ export function Settings() {
 
       <PageContent className="space-y-6">
       {/* Connected Account */}
-      <Card>
+      <Card className="rounded-lg">
         <CardHeader>
           <CardTitle>Connected Account</CardTitle>
           <CardDescription>Your connected DeviantArt account</CardDescription>
@@ -206,7 +206,7 @@ export function Settings() {
       {isAdmin && (
         <>
           {/* Instance Info */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Server className="h-5 w-5" />
@@ -276,7 +276,7 @@ export function Settings() {
           </Card>
 
           {/* Instance Settings */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <SettingsIcon className="h-5 w-5" />
@@ -303,7 +303,7 @@ export function Settings() {
           </Card>
 
           {/* Team Members */}
-          <Card>
+          <Card className="rounded-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />

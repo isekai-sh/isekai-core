@@ -28,7 +28,7 @@ interface PageWrapperProps {
  */
 export function PageWrapper({ children, className }: PageWrapperProps) {
   return (
-    <div className={cn("h-full flex flex-col overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-full min-h-0", className)}>
       {children}
     </div>
   );
@@ -40,7 +40,7 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
  */
 export function PageHeader({ children, className }: PageWrapperProps) {
   return (
-    <div className={cn("flex-shrink-0", className)}>
+    <div className={cn("flex-shrink-0 pb-4", className)}>
       {children}
     </div>
   );
@@ -52,7 +52,19 @@ export function PageHeader({ children, className }: PageWrapperProps) {
  */
 export function PageContent({ children, className }: PageWrapperProps) {
   return (
-    <div className={cn("flex-1 overflow-auto min-h-0", className)}>
+    <div className={cn("flex-1 min-h-0 overflow-y-auto", className)}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Split-panel content layout for side-by-side views.
+ * Use for pages like Review with twin scroll panels.
+ */
+export function PageSplitContent({ children, className }: PageWrapperProps) {
+  return (
+    <div className={cn("flex-1 min-h-0 flex gap-4", className)}>
       {children}
     </div>
   );
