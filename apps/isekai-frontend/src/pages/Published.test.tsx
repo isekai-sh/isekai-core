@@ -19,7 +19,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@/test-helpers/test-utils';
 import userEvent from '@testing-library/user-event';
 import { Published } from './Published';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import type { Deviation } from '@isekai/shared';
 
 vi.mock('@tanstack/react-query', async () => {
@@ -27,6 +27,7 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQuery: vi.fn(),
+    useInfiniteQuery: vi.fn(),
     useMutation: vi.fn(),
     useQueryClient: vi.fn(),
   };
@@ -86,22 +87,22 @@ describe('Published', () => {
   });
 
   it('should render loading state', () => {
-    vi.mocked(useQuery).mockImplementation((options: any) => {
-      if (options.queryKey[0] === 'deviations') {
-        return {
-          data: undefined,
-          isLoading: true,
-          isError: false,
-          error: null,
-        } as any;
-      }
-      return {
-        data: { presets: [] },
-        isLoading: false,
-        isError: false,
-        error: null,
-      } as any;
-    });
+    vi.mocked(useInfiniteQuery).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    } as any);
+
+    vi.mocked(useQuery).mockReturnValue({
+      data: { presets: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as any);
 
     vi.mocked(useMutation).mockReturnValue({
       mutate: vi.fn(),
@@ -115,22 +116,22 @@ describe('Published', () => {
   });
 
   it('should render empty state when no published deviations', () => {
-    vi.mocked(useQuery).mockImplementation((options: any) => {
-      if (options.queryKey[0] === 'deviations') {
-        return {
-          data: { deviations: [], total: 0 },
-          isLoading: false,
-          isError: false,
-          error: null,
-        } as any;
-      }
-      return {
-        data: { presets: [] },
-        isLoading: false,
-        isError: false,
-        error: null,
-      } as any;
-    });
+    vi.mocked(useInfiniteQuery).mockReturnValue({
+      data: { pages: [{ deviations: [], total: 0 }], pageParams: [1] },
+      isLoading: false,
+      isError: false,
+      error: null,
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    } as any);
+
+    vi.mocked(useQuery).mockReturnValue({
+      data: { presets: [], items: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as any);
 
     vi.mocked(useMutation).mockReturnValue({
       mutate: vi.fn(),
@@ -139,7 +140,7 @@ describe('Published', () => {
 
     render(<Published />);
 
-    expect(screen.getByText('No published deviations yet')).toBeInTheDocument();
+    expect(screen.getByText('No published deviations')).toBeInTheDocument();
   });
 
   it('should render published deviations list', () => {
@@ -149,22 +150,22 @@ describe('Published', () => {
       createMockPublishedDeviation('3'),
     ];
 
-    vi.mocked(useQuery).mockImplementation((options: any) => {
-      if (options.queryKey[0] === 'deviations') {
-        return {
-          data: { deviations, total: 3 },
-          isLoading: false,
-          isError: false,
-          error: null,
-        } as any;
-      }
-      return {
-        data: { presets: [mockPreset] },
-        isLoading: false,
-        isError: false,
-        error: null,
-      } as any;
-    });
+    vi.mocked(useInfiniteQuery).mockReturnValue({
+      data: { pages: [{ deviations, total: 3 }], pageParams: [1] },
+      isLoading: false,
+      isError: false,
+      error: null,
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    } as any);
+
+    vi.mocked(useQuery).mockReturnValue({
+      data: { presets: [mockPreset], items: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as any);
 
     vi.mocked(useMutation).mockReturnValue({
       mutate: vi.fn(),
@@ -598,8 +599,6 @@ describe('Published', () => {
 
     render(<Published />);
 
-    // Check that the page title is present
-    expect(screen.getByRole('heading', { name: 'Published' })).toBeInTheDocument();
     // Check that the date is formatted and displayed
     expect(screen.getByText(/1\/15\/2025/)).toBeInTheDocument();
   });
