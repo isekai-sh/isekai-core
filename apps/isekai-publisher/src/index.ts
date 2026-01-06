@@ -14,7 +14,7 @@
  * - Health check endpoint for monitoring
  */
 
-import 'dotenv/config';
+import '@isekai/shared'; // Load config from root .env (single source of truth)
 import './lib/env.js'; // Validate environment variables before anything else
 import express from 'express';
 import { deviationPublisherWorker } from './queues/deviation-publisher.js';

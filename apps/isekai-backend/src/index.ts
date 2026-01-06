@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "dotenv/config";
+import "@isekai/shared"; // Load config from root .env (single source of truth)
 import "./lib/env.js"; // Validate environment variables before anything else
 import "express-async-errors"; // Must be imported before Express
 import express from "express";
