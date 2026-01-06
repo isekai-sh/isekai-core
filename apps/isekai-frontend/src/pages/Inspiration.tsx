@@ -261,19 +261,9 @@ export function Inspiration() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">
-          <span className="text-gradient">Inspiration</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Discover trending art and find inspiration from DeviantArt
-        </p>
-      </div>
-
+    <div className="-mt-8">
       {/* Unified header row: mode tabs + trending topics + mature switch */}
-      <div className="sticky top-14 z-40 bg-background/95 backdrop-blur-md py-3 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-border/50">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md py-3 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-4">
         <BrowseHeader
           mode={mode}
           selectedTag={selectedTag}

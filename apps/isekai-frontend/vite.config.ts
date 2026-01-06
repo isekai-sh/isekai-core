@@ -37,5 +37,10 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    preview: {
+      port: 3000,
+    },
+    // Ensure SPA routing works - return index.html for all routes
+    appType: 'spa',
   };
 });

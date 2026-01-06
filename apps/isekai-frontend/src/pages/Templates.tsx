@@ -16,25 +16,19 @@
  */
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Tag,
   FileText,
-  MessageSquare,
+  DollarSign,
   Pencil,
   Trash2,
   X,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -43,108 +37,104 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { templates } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
-import type {
-  Template,
-  TemplateType,
-  TagContent,
-  DescriptionContent,
-  CommentContent,
-} from "@isekai/shared";
-import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
+import { templates, pricePresets } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import type { Template, TagContent, DescriptionContent } from "@isekai/shared";
+import type { PricePreset, CreatePricePresetRequest } from "@/lib/api";
+
+type TemplateTab = "tags" | "descriptions" | "prices";
+
+const tabs: { id: TemplateTab; label: string; icon: typeof Tag }[] = [
+  { id: "tags", label: "Tags", icon: Tag },
+  { id: "descriptions", label: "Descriptions", icon: FileText },
+  { id: "prices", label: "Price Presets", icon: DollarSign },
+];
 
 export function Templates() {
-  const [activeTab, setActiveTab] = useState<TemplateType>("tag");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get("tab") as TemplateTab) || "tags";
+
+  const setTab = (newTab: TemplateTab) => {
+    setSearchParams({ tab: newTab });
+  };
 
   return (
-    <PageWrapper className="gap-6">
-      <PageHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Templates</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage reusable metadata templates for your deviations
-            </p>
+    <div className="flex flex-col h-full gap-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-4xl font-bold mb-2">
+          <span className="text-gradient">Templates</span>
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Reusable templates for tags, descriptions, and pricing
+        </p>
+      </div>
+
+      {/* Content with sidebar */}
+      <div className="flex gap-6 flex-1 min-h-0">
+        {/* Sidebar */}
+        <nav className="w-48 flex-shrink-0">
+          <div className="space-y-1">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              const isActive = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
+        </nav>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {tab === "tags" && <TagTemplatesContent />}
+          {tab === "descriptions" && <DescriptionTemplatesContent />}
+          {tab === "prices" && <PricePresetsContent />}
         </div>
-      </PageHeader>
-
-      <PageContent>
-        <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as TemplateType)}
-      >
-        <TabsList className="mb-6">
-          <TabsTrigger value="tag" className="flex items-center gap-2">
-            <Tag className="h-4 w-4" />
-            Tags
-          </TabsTrigger>
-          <TabsTrigger value="description" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Descriptions
-          </TabsTrigger>
-          <TabsTrigger value="comment" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Comments
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tags Tab */}
-        <TabsContent value="tag">
-          <TagTemplatesList
-            onCreateNew={() => setIsCreateDialogOpen(true)}
-            onEdit={(template) => setEditingTemplate(template)}
-          />
-        </TabsContent>
-
-        {/* Descriptions Tab */}
-        <TabsContent value="description">
-          <DescriptionTemplatesList
-            onCreateNew={() => setIsCreateDialogOpen(true)}
-            onEdit={(template) => setEditingTemplate(template)}
-          />
-        </TabsContent>
-
-        {/* Comments Tab */}
-        <TabsContent value="comment">
-          <CommentTemplatesList
-            onCreateNew={() => setIsCreateDialogOpen(true)}
-            onEdit={(template) => setEditingTemplate(template)}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Create/Edit Dialog */}
-        <TemplateDialog
-          type={activeTab}
-          open={isCreateDialogOpen || !!editingTemplate}
-          onOpenChange={(open) => {
-            setIsCreateDialogOpen(open);
-            if (!open) setEditingTemplate(null);
-          }}
-          template={editingTemplate}
-        />
-      </PageContent>
-    </PageWrapper>
+      </div>
+    </div>
   );
 }
 
-// Tag Templates List Component
-function TagTemplatesList({
-  onCreateNew,
-  onEdit,
-}: {
-  onCreateNew: () => void;
-  onEdit: (template: Template) => void;
-}) {
+// ============================================================================
+// Tag Templates Content
+// ============================================================================
+
+function TagTemplatesContent() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ["templates", "tag"],
     queryFn: () => templates.list("tag"),
@@ -160,7 +150,6 @@ function TagTemplatesList({
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive",
       });
     },
   });
@@ -168,344 +157,137 @@ function TagTemplatesList({
   const templateList = data?.templates || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Tag Templates</CardTitle>
-            <CardDescription>
-              Save commonly used tag combinations for quick application
-            </CardDescription>
+    <>
+      <Card className="h-full">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Tag Templates</h2>
+              <p className="text-sm text-muted-foreground">
+                Reusable tag collections for your posts
+              </p>
+            </div>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Template
+            </Button>
           </div>
-          <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Template
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : templateList.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">No tag templates yet</p>
-            <p className="text-sm mb-4">
-              Create tag templates to quickly apply common tag combinations to
-              your deviations
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Example: "Digital Art" → ["digital", "art", "illustration", "2d"]
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {templateList.map((template) => {
-              const content = template.content as TagContent;
-              return (
-                <div
-                  key={template.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-2">{template.name}</h3>
-                    <div className="flex flex-wrap gap-1">
-                      {content.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : templateList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">No tag templates yet</p>
+              <p className="text-sm mb-4">
+                Create tag templates to quickly apply common tag combinations
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {templateList.map((template) => {
+                const content = template.content as TagContent;
+                return (
+                  <div
+                    key={template.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium mb-1.5">{template.name}</h3>
+                      <div className="flex flex-wrap gap-1">
+                        {content.tags.slice(0, 8).map((tag, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                        {content.tags.length > 8 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{content.tags.length - 8} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setEditingTemplate(template)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => deleteMutation.mutate(template.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(template)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(template.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <TagTemplateDialog
+        open={isCreateDialogOpen || !!editingTemplate}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setEditingTemplate(null);
+        }}
+        template={editingTemplate}
+      />
+    </>
   );
 }
 
-// Description Templates List Component
-function DescriptionTemplatesList({
-  onCreateNew,
-  onEdit,
-}: {
-  onCreateNew: () => void;
-  onEdit: (template: Template) => void;
-}) {
-  const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["templates", "description"],
-    queryFn: () => templates.list("description"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => templates.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Deleted", description: "Template deleted successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const templateList = data?.templates || [];
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Description Templates</CardTitle>
-            <CardDescription>
-              Save reusable descriptions with optional variable support
-            </CardDescription>
-          </div>
-          <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Template
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : templateList.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">
-              No description templates yet
-            </p>
-            <p className="text-sm mb-4">
-              Create description templates to save time when writing deviation
-              descriptions
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {templateList.map((template) => {
-              const content = template.content as DescriptionContent;
-              return (
-                <div
-                  key={template.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-2">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {content.text}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(template)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(template.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Comment Templates List Component
-function CommentTemplatesList({
-  onCreateNew,
-  onEdit,
-}: {
-  onCreateNew: () => void;
-  onEdit: (template: Template) => void;
-}) {
-  const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["templates", "comment"],
-    queryFn: () => templates.list("comment"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => templates.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Deleted", description: "Template deleted successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const templateList = data?.templates || [];
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Comment Templates</CardTitle>
-            <CardDescription>
-              Save common responses for quick replies
-            </CardDescription>
-          </div>
-          <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Template
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : templateList.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">No comment templates yet</p>
-            <p className="text-sm mb-4">
-              Create comment templates for common messages like thank you notes
-              and collaboration requests
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {templateList.map((template) => {
-              const content = template.content as CommentContent;
-              return (
-                <div
-                  key={template.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-2">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {content.text}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(template)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(template.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Template Dialog Component
-function TemplateDialog({
-  type,
+function TagTemplateDialog({
   open,
   onOpenChange,
   template,
 }: {
-  type: TemplateType;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: Template | null;
 }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [text, setText] = useState("");
 
-  // Reset form when dialog opens/closes or template changes
   useEffect(() => {
     if (template) {
       setName(template.name);
-      if (template.type === "tag") {
-        const content = template.content as TagContent;
-        setTags(content.tags);
-      } else if (
-        template.type === "description" ||
-        template.type === "comment"
-      ) {
-        const content = template.content as DescriptionContent | CommentContent;
-        setText(content.text);
-      }
+      const content = template.content as TagContent;
+      setTags(content.tags);
     } else {
       setName("");
       setTags([]);
       setTagInput("");
-      setText("");
     }
   }, [template, open]);
 
   const createMutation = useMutation({
-    mutationFn: (data: { type: TemplateType; name: string; content: any }) =>
+    mutationFn: (data: { type: "tag"; name: string; content: TagContent }) =>
       templates.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Created", description: "Template created successfully" });
       onOpenChange(false);
-      resetForm();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message });
     },
   });
 
@@ -515,29 +297,17 @@ function TemplateDialog({
       data,
     }: {
       id: string;
-      data: { name?: string; content?: any };
+      data: { name?: string; content?: TagContent };
     }) => templates.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Updated", description: "Template updated successfully" });
       onOpenChange(false);
-      resetForm();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message });
     },
   });
-
-  const resetForm = () => {
-    setName("");
-    setTags([]);
-    setTagInput("");
-    setText("");
-  };
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
@@ -553,36 +323,16 @@ function TemplateDialog({
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      toast({
-        title: "Error",
-        description: "Name is required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Name is required" });
       return;
     }
 
-    let content: any;
-    if (type === "tag") {
-      if (tags.length === 0) {
-        toast({
-          title: "Error",
-          description: "At least one tag is required",
-          variant: "destructive",
-        });
-        return;
-      }
-      content = { tags };
-    } else {
-      if (!text.trim()) {
-        toast({
-          title: "Error",
-          description: "Text is required",
-          variant: "destructive",
-        });
-        return;
-      }
-      content = { text: text.trim() };
+    if (tags.length === 0) {
+      toast({ title: "Error", description: "At least one tag is required" });
+      return;
     }
+
+    const content: TagContent = { tags };
 
     if (template) {
       updateMutation.mutate({
@@ -590,7 +340,7 @@ function TemplateDialog({
         data: { name: name.trim(), content },
       });
     } else {
-      createMutation.mutate({ type, name: name.trim(), content });
+      createMutation.mutate({ type: "tag", name: name.trim(), content });
     }
   };
 
@@ -599,19 +349,9 @@ function TemplateDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {template ? "Edit" : "Create"}{" "}
-            {type === "tag"
-              ? "Tag"
-              : type === "description"
-              ? "Description"
-              : "Comment"}{" "}
-            Template
+            {template ? "Edit" : "Create"} Tag Template
           </DialogTitle>
-          <DialogDescription>
-            {type === "tag" && "Create a reusable tag combination"}
-            {type === "description" && "Create a reusable description"}
-            {type === "comment" && "Create a reusable comment"}
-          </DialogDescription>
+          <DialogDescription>Create a reusable tag combination</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -619,66 +359,47 @@ function TemplateDialog({
             <Label htmlFor="name">Template Name</Label>
             <Input
               id="name"
-              placeholder="e.g., Digital Art, Commission Info, Thank You"
+              placeholder="e.g., Digital Art, Fantasy Characters"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
-          {type === "tag" ? (
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="tags"
-                  placeholder="Enter a tag and press Enter"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                />
-                <Button type="button" onClick={handleAddTag}>
-                  Add
-                </Button>
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {tags.map((tag, idx) => (
-                    <Badge key={idx} variant="secondary" className="pr-1">
-                      {tag}
-                      <button
-                        onClick={() => handleRemoveTag(idx)}
-                        className="ml-1 hover:bg-muted rounded-full p-0.5"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="text">
-                {type === "description" ? "Description" : "Comment"} Text
-              </Label>
-              <Textarea
-                id="text"
-                placeholder={
-                  type === "description"
-                    ? "Enter your description..."
-                    : "Enter your comment..."
-                }
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={6}
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <div className="flex gap-2">
+              <Input
+                id="tags"
+                placeholder="Enter a tag and press Enter"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
               />
+              <Button type="button" onClick={handleAddTag}>
+                Add
+              </Button>
             </div>
-          )}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.map((tag, idx) => (
+                  <Badge key={idx} variant="secondary" className="pr-1">
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveTag(idx)}
+                      className="ml-1 hover:bg-muted rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
@@ -698,5 +419,699 @@ function TemplateDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ============================================================================
+// Description Templates Content
+// ============================================================================
+
+function DescriptionTemplatesContent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["templates", "description"],
+    queryFn: () => templates.list("description"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => templates.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Deleted", description: "Template deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
+  const templateList = data?.templates || [];
+
+  return (
+    <>
+      <Card className="h-full">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Description Templates</h2>
+              <p className="text-sm text-muted-foreground">
+                Reusable descriptions and captions
+              </p>
+            </div>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Template
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : templateList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">
+                No description templates yet
+              </p>
+              <p className="text-sm mb-4">
+                Create description templates to save time when writing
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {templateList.map((template) => {
+                const content = template.content as DescriptionContent;
+                return (
+                  <div
+                    key={template.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium mb-1">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {content.text}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setEditingTemplate(template)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => deleteMutation.mutate(template.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <DescriptionTemplateDialog
+        open={isCreateDialogOpen || !!editingTemplate}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setEditingTemplate(null);
+        }}
+        template={editingTemplate}
+      />
+    </>
+  );
+}
+
+function DescriptionTemplateDialog({
+  open,
+  onOpenChange,
+  template,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  template: Template | null;
+}) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [name, setName] = useState("");
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (template) {
+      setName(template.name);
+      const content = template.content as DescriptionContent;
+      setText(content.text);
+    } else {
+      setName("");
+      setText("");
+    }
+  }, [template, open]);
+
+  const createMutation = useMutation({
+    mutationFn: (data: {
+      type: "description";
+      name: string;
+      content: DescriptionContent;
+    }) => templates.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Created", description: "Template created successfully" });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name?: string; content?: DescriptionContent };
+    }) => templates.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Updated", description: "Template updated successfully" });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message });
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!name.trim()) {
+      toast({ title: "Error", description: "Name is required" });
+      return;
+    }
+
+    if (!text.trim()) {
+      toast({ title: "Error", description: "Description text is required" });
+      return;
+    }
+
+    const content: DescriptionContent = { text: text.trim() };
+
+    if (template) {
+      updateMutation.mutate({
+        id: template.id,
+        data: { name: name.trim(), content },
+      });
+    } else {
+      createMutation.mutate({
+        type: "description",
+        name: name.trim(),
+        content,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>
+            {template ? "Edit" : "Create"} Description Template
+          </DialogTitle>
+          <DialogDescription>Create a reusable description</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Template Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g., Commission Info, Character Bio"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="text">Description Text</Label>
+            <Textarea
+              id="text"
+              placeholder="Enter your description..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={6}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
+            {createMutation.isPending || updateMutation.isPending
+              ? "Saving..."
+              : template
+              ? "Update"
+              : "Create"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================================
+// Price Presets Content
+// ============================================================================
+
+function formatPrice(cents: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+  }).format(cents / 100);
+}
+
+function PricePresetsContent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [showPresetDialog, setShowPresetDialog] = useState(false);
+  const [editingPreset, setEditingPreset] = useState<PricePreset | null>(null);
+  const [deletePresetId, setDeletePresetId] = useState<string | null>(null);
+  const [pricingMode, setPricingMode] = useState<"fixed" | "range">("fixed");
+  const [presetFormData, setPresetFormData] = useState<CreatePricePresetRequest>(
+    {
+      name: "",
+      price: 5000,
+      currency: "USD",
+      description: "",
+      isDefault: false,
+      sortOrder: 0,
+    }
+  );
+
+  const { data: presetsData, isLoading } = useQuery({
+    queryKey: ["pricePresets"],
+    queryFn: async () => await pricePresets.list(),
+  });
+
+  const presetsList = presetsData?.presets || [];
+
+  const createPresetMutation = useMutation({
+    mutationFn: (data: CreatePricePresetRequest) => pricePresets.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      handleClosePresetDialog();
+      toast({ title: "Created", description: "Price preset created successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message });
+    },
+  });
+
+  const updatePresetMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<PricePreset> }) =>
+      pricePresets.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      handleClosePresetDialog();
+      toast({ title: "Updated", description: "Price preset updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message });
+    },
+  });
+
+  const deletePresetMutation = useMutation({
+    mutationFn: (id: string) => pricePresets.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      setDeletePresetId(null);
+      toast({ title: "Deleted", description: "Price preset deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message });
+    },
+  });
+
+  const handleOpenCreatePreset = () => {
+    setEditingPreset(null);
+    setPricingMode("fixed");
+    setPresetFormData({
+      name: "",
+      price: 5000,
+      currency: "USD",
+      description: "",
+      isDefault: false,
+      sortOrder: 0,
+    });
+    setShowPresetDialog(true);
+  };
+
+  const handleOpenEditPreset = (preset: PricePreset) => {
+    setEditingPreset(preset);
+    if (preset.minPrice && preset.maxPrice) {
+      setPricingMode("range");
+      setPresetFormData({
+        name: preset.name,
+        minPrice: preset.minPrice,
+        maxPrice: preset.maxPrice,
+        currency: preset.currency,
+        description: preset.description || "",
+        isDefault: preset.isDefault,
+        sortOrder: preset.sortOrder,
+      });
+    } else {
+      setPricingMode("fixed");
+      setPresetFormData({
+        name: preset.name,
+        price: preset.price,
+        currency: preset.currency,
+        description: preset.description || "",
+        isDefault: preset.isDefault,
+        sortOrder: preset.sortOrder,
+      });
+    }
+    setShowPresetDialog(true);
+  };
+
+  const handleClosePresetDialog = () => {
+    setShowPresetDialog(false);
+    setEditingPreset(null);
+  };
+
+  const handleSubmitPreset = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const data = { ...presetFormData };
+    if (pricingMode === "fixed") {
+      data.minPrice = undefined;
+      data.maxPrice = undefined;
+    } else {
+      data.price = undefined;
+    }
+
+    if (editingPreset) {
+      updatePresetMutation.mutate({ id: editingPreset.id, data });
+    } else {
+      createPresetMutation.mutate(data);
+    }
+  };
+
+  return (
+    <>
+      <Card className="h-full">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Price Presets</h2>
+              <p className="text-sm text-muted-foreground">
+                Pricing templates for exclusive sales
+              </p>
+            </div>
+            <Button onClick={handleOpenCreatePreset}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Preset
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : presetsList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">No price presets yet</p>
+              <p className="text-sm mb-4">
+                Create price presets to use with exclusive sales
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {presetsList.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium">{preset.name}</h3>
+                      {preset.isDefault && (
+                        <Badge variant="secondary" className="text-xs">
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {preset.minPrice && preset.maxPrice ? (
+                        <span>
+                          {formatPrice(preset.minPrice, preset.currency)} -{" "}
+                          {formatPrice(preset.maxPrice, preset.currency)}
+                          <span className="text-xs ml-2">(Random)</span>
+                        </span>
+                      ) : (
+                        <span className="text-lg font-semibold text-primary">
+                          {formatPrice(preset.price, preset.currency)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleOpenEditPreset(preset)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setDeletePresetId(preset.id)}
+                      disabled={deletePresetMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Price Preset Create/Edit Dialog */}
+      <Dialog open={showPresetDialog} onOpenChange={setShowPresetDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <form onSubmit={handleSubmitPreset}>
+            <DialogHeader>
+              <DialogTitle>
+                {editingPreset ? "Edit" : "Create"} Price Preset
+              </DialogTitle>
+              <DialogDescription>
+                {editingPreset
+                  ? "Update the preset details below"
+                  : "Create a reusable price template for exclusive sales"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={presetFormData.name}
+                  onChange={(e) =>
+                    setPresetFormData({ ...presetFormData, name: e.target.value })
+                  }
+                  placeholder="e.g., Standard, Premium"
+                  required
+                  maxLength={100}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Pricing Type</Label>
+                <RadioGroup
+                  value={pricingMode}
+                  onValueChange={(v) => {
+                    setPricingMode(v as "fixed" | "range");
+                    if (v === "fixed") {
+                      setPresetFormData({
+                        ...presetFormData,
+                        price: 5000,
+                        minPrice: undefined,
+                        maxPrice: undefined,
+                      });
+                    } else {
+                      setPresetFormData({
+                        ...presetFormData,
+                        price: undefined,
+                        minPrice: 3000,
+                        maxPrice: 10000,
+                      });
+                    }
+                  }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="fixed" id="fixed" />
+                    <Label htmlFor="fixed" className="font-normal cursor-pointer">
+                      Fixed Price
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="range" id="range" />
+                    <Label htmlFor="range" className="font-normal cursor-pointer">
+                      Random Range
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {pricingMode === "fixed" ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="price">Price (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      $
+                    </span>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="1"
+                      max="10000"
+                      step="0.01"
+                      value={((presetFormData.price ?? 5000) / 100).toFixed(2)}
+                      onChange={(e) =>
+                        setPresetFormData({
+                          ...presetFormData,
+                          price: Math.round(parseFloat(e.target.value) * 100),
+                        })
+                      }
+                      className="pl-7"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Minimum $1, maximum $10,000
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="minPrice">Min Price (USD)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        id="minPrice"
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="0.01"
+                        value={((presetFormData.minPrice ?? 3000) / 100).toFixed(2)}
+                        onChange={(e) =>
+                          setPresetFormData({
+                            ...presetFormData,
+                            minPrice: Math.round(parseFloat(e.target.value) * 100),
+                          })
+                        }
+                        className="pl-7"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="maxPrice">Max Price (USD)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        id="maxPrice"
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="0.01"
+                        value={((presetFormData.maxPrice ?? 10000) / 100).toFixed(2)}
+                        onChange={(e) =>
+                          setPresetFormData({
+                            ...presetFormData,
+                            maxPrice: Math.round(parseFloat(e.target.value) * 100),
+                          })
+                        }
+                        className="pl-7"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground col-span-2">
+                    A random price between min and max will be chosen
+                  </p>
+                </div>
+              )}
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={presetFormData.description}
+                  onChange={(e) =>
+                    setPresetFormData({
+                      ...presetFormData,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Add notes about this pricing tier..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isDefault"
+                  checked={presetFormData.isDefault}
+                  onCheckedChange={(checked) =>
+                    setPresetFormData({
+                      ...presetFormData,
+                      isDefault: !!checked,
+                    })
+                  }
+                />
+                <Label htmlFor="isDefault" className="text-sm font-normal cursor-pointer">
+                  Set as default preset
+                </Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClosePresetDialog}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createPresetMutation.isPending || updatePresetMutation.isPending}
+              >
+                {editingPreset ? "Update" : "Create"} Preset
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Price Preset Dialog */}
+      <AlertDialog open={!!deletePresetId} onOpenChange={() => setDeletePresetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Price Preset?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The preset will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletePresetId && deletePresetMutation.mutate(deletePresetId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

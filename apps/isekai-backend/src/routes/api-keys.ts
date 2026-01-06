@@ -79,7 +79,7 @@ router.post("/", async (req, res) => {
   });
 });
 
-// Revoke API key
+// Revoke API key (soft delete)
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
@@ -103,6 +103,30 @@ router.delete("/:id", async (req, res) => {
   await prisma.apiKey.update({
     where: { id },
     data: { revokedAt: new Date() },
+  });
+
+  res.status(204).send();
+});
+
+// Permanently delete API key (hard delete)
+router.delete("/:id/permanent", async (req, res) => {
+  const { id } = req.params;
+  const user = req.user!;
+
+  const apiKey = await prisma.apiKey.findFirst({
+    where: {
+      id,
+      userId: user.id,
+    },
+  });
+
+  if (!apiKey) {
+    throw new AppError(404, "API key not found");
+  }
+
+  // Hard delete - permanently remove from database
+  await prisma.apiKey.delete({
+    where: { id },
   });
 
   res.status(204).send();

@@ -373,7 +373,7 @@ export function Review() {
       {/* Main content */}
       <div className="flex-1 min-h-0">
         {allDeviations.length === 0 ? (
-          <Card className="flex items-center justify-center h-full border-border/50 bg-card/50">
+          <Card className="flex items-center justify-center h-full border-border/50 bg-card">
             <CardContent className="text-center py-12">
               <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium mb-2">No deviations to review</p>

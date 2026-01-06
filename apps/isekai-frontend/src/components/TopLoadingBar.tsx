@@ -21,7 +21,10 @@ import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 
 export function TopLoadingBar() {
   const ref = useRef<LoadingBarRef>(null);
-  const isFetching = useIsFetching();
+  // Only count initial fetches, not background refetches
+  const isFetching = useIsFetching({
+    predicate: (query) => query.state.status === "pending",
+  });
   const isMutating = useIsMutating();
 
   const isLoading = isFetching > 0 || isMutating > 0;

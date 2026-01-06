@@ -27,10 +27,11 @@ import {
   Sparkles,
   Compass,
   FolderOpen,
-  FileText,
   MoreHorizontal,
   ChevronDown,
-  Layers,
+  Send,
+  Copy,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavUserDropdown } from "@/components/nav-user-dropdown";
@@ -39,6 +40,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useWhitelabelStore } from "@/stores/whitelabel";
@@ -52,42 +54,44 @@ interface NavItem {
   badge?: number;
 }
 
-// Content workflow items (grouped in dropdown)
-const contentItems: NavItem[] = [
+// Deviation workflow items (grouped in dropdown)
+const deviationItems: NavItem[] = [
   { path: "/review", label: "Review", icon: ClipboardCheck },
   { path: "/draft", label: "Draft", icon: FileImage },
   { path: "/scheduled", label: "Scheduled", icon: Clock },
   { path: "/published", label: "Published", icon: History },
 ];
 
+// Gallery item (shown after separator in Deviation dropdown)
+const galleryItem: NavItem = { path: "/galleries", label: "Gallery", icon: FolderOpen };
+
 // Automation items (grouped in dropdown)
 const automationItems: NavItem[] = [
   { path: "/automation", label: "Automations", icon: Zap },
-  { path: "/exclusives-queue", label: "Queue", icon: Sparkles },
-];
-
-// Resources items (grouped in dropdown)
-const resourceItems: NavItem[] = [
-  { path: "/galleries", label: "Galleries", icon: FolderOpen },
-  { path: "/templates", label: "Templates", icon: FileText },
+  { path: "/exclusives-queue", label: "Exclusive Queue", icon: Sparkles },
+  { path: "/templates", label: "Templates", icon: Copy },
 ];
 
 // All nav items for mobile
 const allNavItems: NavItem[] = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  ...contentItems,
+  ...deviationItems,
   ...automationItems,
   { path: "/inspiration", label: "Inspiration", icon: Compass },
 ];
 
-const mobileNavItems = allNavItems.slice(0, 4); // Dashboard, Review, Draft, Scheduled
+const mobileNavItems = allNavItems.slice(0, 4);
 const moreItems = [
-  ...allNavItems.slice(4), // Published, Automation, Queue, Inspiration
-  { path: "/galleries", label: "Galleries", icon: FolderOpen },
-  { path: "/templates", label: "Templates", icon: FileText },
+  ...allNavItems.slice(4),
+  galleryItem,
 ];
 
-export function Layout() {
+/**
+ * FixedLayout - For pages that manage their own internal scrolling
+ * Use this for: Review, Draft, Scheduled, Published, ExclusivesQueue
+ * These pages have fixed height containers with internal scroll areas.
+ */
+export function FixedLayout() {
   const location = useLocation();
   const { config: whitelabelConfig } = useWhitelabelStore();
   const { count: reviewCount } = useReviewCount();
@@ -95,28 +99,18 @@ export function Layout() {
   const productName = whitelabelConfig?.productName || "Isekai";
   const logoUrl = whitelabelConfig?.logoUrl || "/isekai-logo.svg";
 
-  // Add review count badge to content items
-  const contentItemsWithBadge = contentItems.map((item) => ({
+  const deviationItemsWithBadge = deviationItems.map((item) => ({
     ...item,
     badge: item.path === "/review" ? reviewCount : undefined,
   }));
 
-  // Check if current path is in content items
-  const isContentActive = contentItems.some(
+  const isDeviationActive = deviationItems.some(
     (item) =>
       location.pathname === item.path ||
       location.pathname.startsWith(item.path + "/")
-  );
+  ) || location.pathname === "/galleries" || location.pathname.startsWith("/galleries/");
 
-  // Check if current path is in automation items
   const isAutomationActive = automationItems.some(
-    (item) =>
-      location.pathname === item.path ||
-      location.pathname.startsWith(item.path + "/")
-  );
-
-  // Check if current path is in resource items
-  const isResourceActive = resourceItems.some(
     (item) =>
       location.pathname === item.path ||
       location.pathname.startsWith(item.path + "/")
@@ -126,9 +120,8 @@ export function Layout() {
     <div className="flex h-full flex-col overflow-hidden">
       <TopLoadingBar />
 
-      {/* Header with gradient background */}
+      {/* Header */}
       <nav className="sticky top-0 left-0 right-0 z-50 border-b border-primary/10 backdrop-blur-md">
-        {/* Background with pattern and gradient overlay */}
         <div className="absolute inset-0 -z-10">
           <div
             className="absolute inset-0 opacity-30"
@@ -142,7 +135,6 @@ export function Layout() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between">
             <div className="flex items-center gap-8">
-              {/* Logo */}
               <Link
                 to="/dashboard"
                 className="flex items-center gap-2 group shrink-0"
@@ -154,25 +146,21 @@ export function Layout() {
                 />
               </Link>
 
-              {/* Desktop Navigation */}
               <div className="hidden items-center gap-1 md:flex">
-                {/* Dashboard */}
                 <NavLink
                   item={{ path: "/dashboard", label: "Dashboard", icon: LayoutDashboard }}
                   location={location}
                 />
-
-                {/* Content Dropdown */}
                 <NavDropdown
-                  label="Content"
-                  icon={Layers}
-                  items={contentItemsWithBadge}
-                  isActive={isContentActive}
+                  label="Deviation"
+                  icon={Send}
+                  items={deviationItemsWithBadge}
+                  isActive={isDeviationActive}
                   location={location}
                   totalBadge={reviewCount}
+                  extraItem={galleryItem}
+                  separatorAfterFirst
                 />
-
-                {/* Automation Dropdown */}
                 <NavDropdown
                   label="Automation"
                   icon={Zap}
@@ -180,17 +168,10 @@ export function Layout() {
                   isActive={isAutomationActive}
                   location={location}
                 />
-
-                {/* Resources Dropdown */}
-                <NavDropdown
-                  label="Resources"
-                  icon={FolderOpen}
-                  items={resourceItems}
-                  isActive={isResourceActive}
+                <NavLink
+                  item={{ path: "/api-keys", label: "API Keys", icon: Key }}
                   location={location}
                 />
-
-                {/* Inspiration */}
                 <NavLink
                   item={{ path: "/inspiration", label: "Inspiration", icon: Compass }}
                   location={location}
@@ -198,7 +179,6 @@ export function Layout() {
               </div>
             </div>
 
-            {/* Right section: User dropdown */}
             <div className="flex items-center">
               <NavUserDropdown />
             </div>
@@ -206,7 +186,7 @@ export function Layout() {
         </div>
       </nav>
 
-      {/* Main content */}
+      {/* Main content - FIXED HEIGHT with internal scrolling */}
       <main className="flex-1 min-h-0 pb-16 md:pb-0">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 h-full">
           <Outlet />
@@ -265,6 +245,8 @@ function NavDropdown({
   isActive,
   location,
   totalBadge,
+  extraItem,
+  separatorAfterFirst,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -272,6 +254,8 @@ function NavDropdown({
   isActive: boolean;
   location: ReturnType<typeof useLocation>;
   totalBadge?: number;
+  extraItem?: NavItem;
+  separatorAfterFirst?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -293,31 +277,53 @@ function NavDropdown({
         <ChevronDown className="h-3 w-3 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
-        {items.map((item) => {
+        {items.map((item, index) => {
           const ItemIcon = item.icon;
           const itemActive =
             location.pathname === item.path ||
             location.pathname.startsWith(item.path + "/");
           return (
-            <DropdownMenuItem key={item.path} asChild>
-              <Link
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  itemActive && "text-primary"
-                )}
-              >
-                <ItemIcon className="h-4 w-4" />
-                <span className="flex-1">{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                    {item.badge > 99 ? "99+" : item.badge}
-                  </span>
-                )}
-              </Link>
-            </DropdownMenuItem>
+            <div key={item.path}>
+              <DropdownMenuItem asChild>
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer",
+                    itemActive && "text-primary"
+                  )}
+                >
+                  <ItemIcon className="h-4 w-4" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </Link>
+              </DropdownMenuItem>
+              {separatorAfterFirst && index === 0 && <DropdownMenuSeparator />}
+            </div>
           );
         })}
+        {extraItem && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link
+                to={extraItem.path}
+                className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  (location.pathname === extraItem.path ||
+                    location.pathname.startsWith(extraItem.path + "/")) &&
+                    "text-primary"
+                )}
+              >
+                <extraItem.icon className="h-4 w-4" />
+                <span className="flex-1">{extraItem.label}</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -333,7 +339,6 @@ function BottomTabBar({
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Check if current path is in moreItems
   const isMoreActive = moreItems.some(
     (item) =>
       location.pathname === item.path ||
@@ -342,7 +347,6 @@ function BottomTabBar({
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/10 bg-background/95 backdrop-blur-md md:hidden">
-      {/* Gradient border effect */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
       <div className="flex h-16 items-center justify-around px-2">
@@ -376,7 +380,6 @@ function BottomTabBar({
           );
         })}
 
-        {/* More button */}
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
           <SheetTrigger
             className={cn(

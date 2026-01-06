@@ -594,6 +594,8 @@ export const apiKeys = {
     }),
   revoke: (id: string) =>
     request<void>(`/api-keys/${id}`, { method: "DELETE" }),
+  delete: (id: string) =>
+    request<void>(`/api-keys/${id}/permanent`, { method: "DELETE" }),
 };
 
 // Review API

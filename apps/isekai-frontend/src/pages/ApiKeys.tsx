@@ -71,6 +71,7 @@ export function ApiKeys() {
   const [showKeyDialog, setShowKeyDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
 
   // Fetch API keys
   const { data, isLoading } = useQuery({
@@ -110,13 +111,32 @@ export function ApiKeys() {
       setRevokeKeyId(null);
       toast({
         title: "API Key Revoked",
-        description: "The key has been permanently revoked",
+        description: "The key has been revoked and can no longer be used",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "Failed to revoke API key",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiKeys.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["apiKeys"] });
+      setDeleteKeyId(null);
+      toast({
+        title: "API Key Deleted",
+        description: "The key has been permanently deleted",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete API key",
         variant: "destructive",
       });
     },
@@ -211,12 +231,21 @@ export function ApiKeys() {
                       })}
                     </TableCell>
                     <TableCell>
-                      {!key.revokedAt && (
+                      {!key.revokedAt ? (
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setRevokeKeyId(key.id)}
-                          aria-label="Delete API key"
+                          aria-label="Revoke API key"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteKeyId(key.id)}
+                          aria-label="Delete API key permanently"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -314,17 +343,40 @@ export function ApiKeys() {
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Any applications using this key will
-              no longer be able to authenticate.
+              This will disable the key. Applications using it will no longer be
+              able to authenticate. You can delete it permanently later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => revokeKeyId && revokeMutation.mutate(revokeKeyId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Revoke
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteKeyId}
+        onOpenChange={() => setDeleteKeyId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete API Key Permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the key from the system. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteKeyId && deleteMutation.mutate(deleteKeyId)}
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

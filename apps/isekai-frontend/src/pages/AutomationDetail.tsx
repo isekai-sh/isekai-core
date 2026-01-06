@@ -44,7 +44,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -69,17 +68,20 @@ import { DefaultValuesList } from "@/components/DefaultValuesList";
 import { AddDefaultValueDialog } from "@/components/AddDefaultValueDialog";
 import {
   ChevronLeft,
-  Zap,
   Plus,
   Trash2,
   Edit,
   Play,
-  Clock,
-  Calendar as CalendarIcon,
-  TrendingUp,
   Info,
+  Clock,
+  Calendar,
+  Repeat,
+  Target,
+  Check,
+  X,
+  Pencil,
+  ShieldCheck,
 } from "lucide-react";
-import { PageWrapper, PageContent } from "@/components/ui/page-wrapper";
 
 export function AutomationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -94,21 +96,22 @@ export function AutomationDetail() {
   const [showDefaultDialog, setShowDefaultDialog] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
 
+  // Rename state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+
   // Loading states for mutations
   const [isToggling, setIsToggling] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isSavingRule, setIsSavingRule] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
-  const [deletingDefaultId, setDeletingDefaultId] = useState<string | null>(
-    null
-  );
+  const [deletingDefaultId, setDeletingDefaultId] = useState<string | null>(null);
 
   // Confirmation dialog states
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
   const [defaultToDelete, setDefaultToDelete] = useState<string | null>(null);
-  const [ruleType, setRuleType] = useState<
-    "fixed_time" | "fixed_interval" | "daily_quota"
-  >("fixed_time");
+  const [ruleType, setRuleType] = useState<"fixed_time" | "fixed_interval" | "daily_quota">("fixed_time");
   const [ruleData, setRuleData] = useState({
     timeOfDay: "09:00",
     intervalMinutes: 360,
@@ -119,7 +122,7 @@ export function AutomationDetail() {
     enabled: true,
   });
 
-  // Local state for jitter inputs (for immediate UI feedback)
+  // Local state for jitter inputs
   const [localJitterMin, setLocalJitterMin] = useState<number | string>("");
   const [localJitterMax, setLocalJitterMax] = useState<number | string>("");
 
@@ -129,7 +132,6 @@ export function AutomationDetail() {
     }
   }, [id]);
 
-  // Sync local state when automation loads
   useEffect(() => {
     if (automation) {
       setLocalJitterMin(automation.jitterMinSeconds ?? 0);
@@ -146,15 +148,11 @@ export function AutomationDetail() {
         const logsData = await automations.getLogs(id, { limit: 10 });
         setLogs(logsData.logs);
       } catch (error) {
-        // Silently fail - don't show toast for background refresh errors
         console.error("Failed to refresh logs:", error);
       }
     };
 
-    // Set up interval for auto-refresh
-    const intervalId = setInterval(refreshLogs, 30000); // 30 seconds
-
-    // Cleanup on unmount
+    const intervalId = setInterval(refreshLogs, 30000);
     return () => clearInterval(intervalId);
   }, [id, automation]);
 
@@ -192,23 +190,17 @@ export function AutomationDetail() {
     if (!automation || isToggling) return;
 
     setIsToggling(true);
-
-    // Optimistic update
     const previousState = automation;
-    const optimisticState = { ...automation, enabled: !automation.enabled };
-    setAutomation(optimisticState);
+    setAutomation({ ...automation, enabled: !automation.enabled });
 
     try {
       const { automation: updated } = await automations.toggle(automation.id);
       setAutomation(updated);
       toast({
-        title: "Success",
-        description: updated.enabled
-          ? "Automation enabled"
-          : "Automation disabled",
+        title: updated.enabled ? "Enabled" : "Disabled",
+        description: `Workflow is now ${updated.enabled ? "active" : "inactive"}`,
       });
     } catch (error: any) {
-      // Rollback on error
       setAutomation(previousState);
       toast({
         title: "Error",
@@ -224,7 +216,6 @@ export function AutomationDetail() {
     if (!automation || isTesting) return;
 
     setIsTesting(true);
-
     try {
       const result = await automations.test(automation.id);
       toast({
@@ -245,23 +236,13 @@ export function AutomationDetail() {
   const updateSettings = async (updates: any) => {
     if (!automation) return;
 
-    // Optimistic update
     const previousState = automation;
-    const optimisticState = { ...automation, ...updates };
-    setAutomation(optimisticState);
+    setAutomation({ ...automation, ...updates });
 
     try {
-      const { automation: updated } = await automations.update(
-        automation.id,
-        updates
-      );
+      const { automation: updated } = await automations.update(automation.id, updates);
       setAutomation(updated);
-      toast({
-        title: "Success",
-        description: "Settings updated successfully",
-      });
     } catch (error: any) {
-      // Rollback on error
       setAutomation(previousState);
       toast({
         title: "Error",
@@ -271,10 +252,52 @@ export function AutomationDetail() {
     }
   };
 
-  // Debounced version for text inputs (500ms delay)
   const debouncedUpdateSettings = useDebouncedCallback((updates: any) => {
     updateSettings(updates);
   }, 500);
+
+  const startEditingName = () => {
+    setEditName(automation?.name || "");
+    setIsEditingName(true);
+  };
+
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setEditName("");
+  };
+
+  const saveNewName = async () => {
+    if (!automation || isSavingName) return;
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      toast({
+        title: "Error",
+        description: "Name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (trimmedName === automation.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const { automation: updated } = await automations.update(automation.id, { name: trimmedName });
+      setAutomation(updated);
+      setIsEditingName(false);
+      toast({ title: "Renamed", description: "Workflow renamed successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to rename workflow",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   const openRuleDialog = (rule?: any) => {
     if (rule) {
@@ -309,14 +332,12 @@ export function AutomationDetail() {
     if (!id || isSavingRule) return;
 
     setIsSavingRule(true);
-
     try {
       const payload: any = {
         type: ruleType,
         priority: ruleData.priority,
         enabled: ruleData.enabled,
-        daysOfWeek:
-          ruleData.daysOfWeek.length > 0 ? ruleData.daysOfWeek : undefined,
+        daysOfWeek: ruleData.daysOfWeek.length > 0 ? ruleData.daysOfWeek : undefined,
       };
 
       if (ruleType === "fixed_time") {
@@ -330,16 +351,10 @@ export function AutomationDetail() {
 
       if (editingRule) {
         await automationScheduleRules.update(editingRule.id, payload);
-        toast({
-          title: "Success",
-          description: "Rule updated successfully",
-        });
+        toast({ title: "Updated", description: "Rule updated successfully" });
       } else {
         await automationScheduleRules.create(id, payload);
-        toast({
-          title: "Success",
-          description: "Rule created successfully",
-        });
+        toast({ title: "Created", description: "Rule created successfully" });
       }
 
       setShowRuleDialog(false);
@@ -359,21 +374,14 @@ export function AutomationDetail() {
     if (!ruleToDelete || deletingRuleId) return;
 
     setDeletingRuleId(ruleToDelete);
-
-    // Optimistic update
     const previousRules = rules;
     setRules(rules.filter((r) => r.id !== ruleToDelete));
 
     try {
       await automationScheduleRules.delete(ruleToDelete);
-      toast({
-        title: "Success",
-        description: "Rule deleted successfully",
-      });
-      // Reload to ensure consistency
+      toast({ title: "Deleted", description: "Rule deleted successfully" });
       loadAutomation();
     } catch (error: any) {
-      // Rollback on error
       setRules(previousRules);
       toast({
         title: "Error",
@@ -404,10 +412,7 @@ export function AutomationDetail() {
 
     try {
       await automationDefaultValues.create(id, data);
-      toast({
-        title: "Success",
-        description: "Default value added successfully",
-      });
+      toast({ title: "Added", description: "Default value added successfully" });
       loadAutomation();
     } catch (error: any) {
       toast({
@@ -423,21 +428,14 @@ export function AutomationDetail() {
     if (!defaultToDelete || deletingDefaultId) return;
 
     setDeletingDefaultId(defaultToDelete);
-
-    // Optimistic update
     const previousValues = defaultValues;
     setDefaultValues(defaultValues.filter((v) => v.id !== defaultToDelete));
 
     try {
       await automationDefaultValues.delete(defaultToDelete);
-      toast({
-        title: "Success",
-        description: "Default value deleted successfully",
-      });
-      // Reload to ensure consistency
+      toast({ title: "Deleted", description: "Default value deleted successfully" });
       loadAutomation();
     } catch (error: any) {
-      // Rollback on error
       setDefaultValues(previousValues);
       toast({
         title: "Error",
@@ -450,349 +448,267 @@ export function AutomationDetail() {
     }
   };
 
+  const getRuleIcon = (type: string) => {
+    switch (type) {
+      case "fixed_time":
+        return Clock;
+      case "fixed_interval":
+        return Repeat;
+      case "daily_quota":
+        return Target;
+      default:
+        return Calendar;
+    }
+  };
+
+  const getRuleDescription = (rule: any) => {
+    switch (rule.type) {
+      case "fixed_time":
+        return `Post at ${rule.timeOfDay} daily`;
+      case "fixed_interval":
+        return `Post ${rule.deviationsPerInterval} every ${rule.intervalMinutes} minutes`;
+      case "daily_quota":
+        return `Post ${rule.dailyQuota} times per day`;
+      default:
+        return "Custom schedule";
+    }
+  };
+
   if (loading) {
     return (
-      <PageWrapper>
-        <PageContent className="space-y-6">
-          {/* Header Skeleton */}
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
-          </div>
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-32" />
         </div>
-
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column Skeleton */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Schedule Rules Card */}
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-64 mt-2" />
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-
-            {/* Default Values Card */}
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-40" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-32 w-full" />
-              </CardContent>
-            </Card>
+            <Skeleton className="h-64" />
+            <Skeleton className="h-48" />
           </div>
-
-          {/* Right Column Skeleton */}
-          <div className="space-y-3">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
+          <div className="space-y-6">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-48" />
           </div>
         </div>
-        </PageContent>
-      </PageWrapper>
+      </div>
     );
   }
 
   if (!automation) {
     return (
-      <PageWrapper>
-        <PageContent className="space-y-6">
-          <Link
+      <div className="space-y-6">
+        <Link
           to="/automation"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Workflows
+          Back to Automations
         </Link>
         <Card>
-          <CardHeader>
-            <CardTitle>Workflow Not Found</CardTitle>
-            <CardDescription>
-              The automation workflow you're looking for doesn't exist or you
-              don't have access to it.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="py-16 text-center">
+            <h3 className="text-xl font-semibold mb-2">Workflow Not Found</h3>
+            <p className="text-muted-foreground mb-4">
+              The automation workflow you're looking for doesn't exist.
+            </p>
             <Link to="/automation">
-              <Button>Go to Workflows</Button>
+              <Button>Go to Automations</Button>
             </Link>
           </CardContent>
         </Card>
-        </PageContent>
-      </PageWrapper>
+      </div>
     );
   }
 
   return (
-    <PageWrapper className="gap-4">
-      <PageContent className="space-y-4">
-        {/* Breadcrumb */}
+    <div className="space-y-6">
+      {/* Back Link */}
       <Link
         to="/automation"
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ChevronLeft className="h-4 w-4 mr-1" />
-        Back to Workflows
+        Back to Automations
       </Link>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{automation.name}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-2">
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="text-2xl font-bold h-auto py-1 px-2"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveNewName();
+                    if (e.key === "Escape") cancelEditingName();
+                  }}
+                  disabled={isSavingName}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={saveNewName}
+                  disabled={isSavingName}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={cancelEditingName}
+                  disabled={isSavingName}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <h1 className="text-4xl font-bold truncate">
+                  <span className="text-gradient">{automation.name}</span>
+                </h1>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={startEditingName}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <Badge variant={automation.enabled ? "default" : "secondary"} className="shrink-0">
+              {automation.enabled ? "Active" : "Inactive"}
+            </Badge>
+          </div>
           {automation.description && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {automation.description}
-            </p>
+            <p className="text-lg text-muted-foreground">{automation.description}</p>
           )}
         </div>
-        <Badge variant={automation.enabled ? "default" : "secondary"}>
-          {automation.enabled ? "Active" : "Inactive"}
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={testAutomation}
+            disabled={isTesting}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            {isTesting ? "Testing..." : "Test Run"}
+          </Button>
+          <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
+            <Label htmlFor="enable-toggle" className="text-sm">
+              {automation.enabled ? "Enabled" : "Disabled"}
+            </Label>
+            <Switch
+              id="enable-toggle"
+              checked={automation.enabled}
+              onCheckedChange={toggleAutomation}
+              disabled={isToggling}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Multi-column Layout */}
-      <div className="flex-1 grid grid-cols-3 gap-3 min-h-0 overflow-y-auto pr-2">
-        {/* Column 1: Controls + Settings */}
-        <div className="space-y-3">
-          {/* Controls */}
-          <Card className="rounded-lg">
-            <CardContent className="pt-6 space-y-3">
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Schedule Rules */}
+          <Card>
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <Label>Enable</Label>
-                <Switch
-                  checked={automation.enabled}
-                  onCheckedChange={toggleAutomation}
-                  disabled={isToggling}
-                />
-              </div>
-              <Button
-                onClick={testAutomation}
-                variant="outline"
-                size="sm"
-                className="w-full"
-                disabled={isTesting}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {isTesting ? "Testing..." : "Test"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Settings */}
-          <Card className="rounded-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label className="text-sm">Draft Selection</Label>
-                <Select
-                  value={automation.draftSelectionMethod}
-                  onValueChange={(value) =>
-                    updateSettings({ draftSelectionMethod: value })
-                  }
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fifo">Oldest first</SelectItem>
-                    <SelectItem value="lifo">Newest first</SelectItem>
-                    <SelectItem value="random">Random</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label className="text-sm">Sta.sh only</Label>
-                <Switch
-                  checked={automation.stashOnlyByDefault}
-                  onCheckedChange={(checked) =>
-                    updateSettings({ stashOnlyByDefault: checked })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm">Delay (sec)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    className="h-9"
-                    min={0}
-                    max={3600}
-                    value={localJitterMin}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setLocalJitterMin(value); // Update UI immediately
-
-                      const numValue = parseInt(value);
-                      if (
-                        !isNaN(numValue) &&
-                        numValue >= 0 &&
-                        numValue <= 3600
-                      ) {
-                        debouncedUpdateSettings({ jitterMinSeconds: numValue });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = parseInt(e.target.value);
-                      let clampedValue = 0;
-
-                      if (isNaN(value) || value < 0) {
-                        clampedValue = 0;
-                      } else if (value > 3600) {
-                        clampedValue = 3600;
-                      } else {
-                        clampedValue = value;
-                      }
-
-                      setLocalJitterMin(clampedValue);
-                      debouncedUpdateSettings.flush(); // Flush any pending debounced calls
-                      updateSettings({ jitterMinSeconds: clampedValue });
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    className="h-9"
-                    min={0}
-                    max={3600}
-                    value={localJitterMax}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setLocalJitterMax(value); // Update UI immediately
-
-                      const numValue = parseInt(value);
-                      if (
-                        !isNaN(numValue) &&
-                        numValue >= 0 &&
-                        numValue <= 3600
-                      ) {
-                        debouncedUpdateSettings({ jitterMaxSeconds: numValue });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = parseInt(e.target.value);
-                      let clampedValue = 0;
-
-                      if (isNaN(value) || value < 0) {
-                        clampedValue = 0;
-                      } else if (value > 3600) {
-                        clampedValue = 3600;
-                      } else {
-                        clampedValue = value;
-                      }
-
-                      setLocalJitterMax(clampedValue);
-                      debouncedUpdateSettings.flush(); // Flush any pending debounced calls
-                      updateSettings({ jitterMaxSeconds: clampedValue });
-                    }}
-                  />
+                <div>
+                  <CardTitle>Schedule Rules</CardTitle>
+                  <CardDescription>
+                    Define when your drafts should be automatically published
+                  </CardDescription>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Column 2: Schedule Rules */}
-        <div className="space-y-3">
-          <Card className="rounded-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">When to Post</CardTitle>
-                <Button onClick={() => openRuleDialog()} size="sm">
+                <Button onClick={() => openRuleDialog()}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add
+                  Add Rule
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {rules.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No rules yet</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium mb-1">No schedule rules yet</p>
+                  <p className="text-sm">Add a rule to start automating your posts</p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {rules.map((rule) => (
-                    <div
-                      key={rule.id}
-                      className="flex items-center justify-between p-3 border rounded text-sm"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">
-                            {rule.type === "fixed_time" && `${rule.timeOfDay}`}
-                            {rule.type === "fixed_interval" &&
-                              `Every ${rule.intervalMinutes}min (${rule.deviationsPerInterval}×)`}
-                            {rule.type === "daily_quota" &&
-                              `${rule.dailyQuota}/day`}
-                          </span>
-                          {!rule.enabled && (
-                            <Badge variant="secondary" className="text-xs">
-                              Inactive
-                            </Badge>
+                <div className="space-y-3">
+                  {rules.map((rule) => {
+                    const RuleIcon = getRuleIcon(rule.type);
+                    return (
+                      <div
+                        key={rule.id}
+                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <RuleIcon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{getRuleDescription(rule)}</span>
+                            {!rule.enabled && (
+                              <Badge variant="secondary" className="text-xs">Disabled</Badge>
+                            )}
+                          </div>
+                          {rule.daysOfWeek && rule.daysOfWeek.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {rule.daysOfWeek
+                                .map((d: string) => d.charAt(0).toUpperCase() + d.slice(1, 3))
+                                .join(", ")}
+                            </p>
                           )}
                         </div>
-                        {rule.daysOfWeek && rule.daysOfWeek.length > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            {rule.daysOfWeek
-                              .map((d: string) => d.charAt(0).toUpperCase() + d.slice(1, 3))
-                              .join(", ")}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openRuleDialog(rule)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setRuleToDelete(rule.id)}
+                            disabled={deletingRuleId === rule.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openRuleDialog(rule)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setRuleToDelete(rule.id)}
-                          disabled={deletingRuleId === rule.id}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Column 3: Default Values + Activity */}
-        <div className="space-y-3">
           {/* Default Values */}
-          <Card className="rounded-lg">
-            <CardHeader className="pb-3">
+          <Card>
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Default Values</CardTitle>
-                <Button onClick={() => setShowDefaultDialog(true)} size="sm">
+                <div>
+                  <CardTitle>Default Values</CardTitle>
+                  <CardDescription>
+                    Set default values to apply to posts automatically
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setShowDefaultDialog(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add
+                  Add Default
                 </Button>
               </div>
             </CardHeader>
@@ -804,26 +720,116 @@ export function AutomationDetail() {
               />
             </CardContent>
           </Card>
+        </div>
 
-          {/* Sale Queue Settings */}
-          <Card className="rounded-lg">
-            <CardHeader className="pb-3">
+        {/* Right Column - Sidebar */}
+        <div className="space-y-6">
+          {/* Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Draft Selection</Label>
+                <Select
+                  value={automation.draftSelectionMethod}
+                  onValueChange={(value) => updateSettings({ draftSelectionMethod: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fifo">Oldest first (FIFO)</SelectItem>
+                    <SelectItem value="lifo">Newest first (LIFO)</SelectItem>
+                    <SelectItem value="random">Random</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Exclusive Sales</CardTitle>
-                  <CardDescription className="text-xs">
-                    Automatically add published posts to sale queue
-                  </CardDescription>
+                  <Label>Sta.sh Only</Label>
+                  <p className="text-xs text-muted-foreground">Only publish to Sta.sh</p>
+                </div>
+                <Switch
+                  checked={automation.stashOnlyByDefault}
+                  onCheckedChange={(checked) => updateSettings({ stashOnlyByDefault: checked })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Random Delay (seconds)</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      min={0}
+                      max={3600}
+                      value={localJitterMin}
+                      onChange={(e) => {
+                        setLocalJitterMin(e.target.value);
+                        const numValue = parseInt(e.target.value);
+                        if (!isNaN(numValue) && numValue >= 0 && numValue <= 3600) {
+                          debouncedUpdateSettings({ jitterMinSeconds: numValue });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value);
+                        const clampedValue = isNaN(value) || value < 0 ? 0 : value > 3600 ? 3600 : value;
+                        setLocalJitterMin(clampedValue);
+                        debouncedUpdateSettings.flush();
+                        updateSettings({ jitterMinSeconds: clampedValue });
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      min={0}
+                      max={3600}
+                      value={localJitterMax}
+                      onChange={(e) => {
+                        setLocalJitterMax(e.target.value);
+                        const numValue = parseInt(e.target.value);
+                        if (!isNaN(numValue) && numValue >= 0 && numValue <= 3600) {
+                          debouncedUpdateSettings({ jitterMaxSeconds: numValue });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const value = parseInt(e.target.value);
+                        const clampedValue = isNaN(value) || value < 0 ? 0 : value > 3600 ? 3600 : value;
+                        setLocalJitterMax(clampedValue);
+                        debouncedUpdateSettings.flush();
+                        updateSettings({ jitterMaxSeconds: clampedValue });
+                      }}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Add random delay to make posting times less predictable
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Exclusive Sales */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Exclusive Sales</CardTitle>
+                  <CardDescription>Auto-add to sale queue after publishing</CardDescription>
                 </div>
                 <Switch
                   checked={automation?.autoAddToSaleQueue || false}
                   onCheckedChange={(checked) => {
-                    // Prevent enabling if no price preset is selected
                     if (checked && !automation?.saleQueuePresetId) {
                       toast({
                         title: "Price Preset Required",
-                        description:
-                          "Please select a price preset before enabling exclusive sales",
+                        description: "Please select a price preset first",
                         variant: "destructive",
                       });
                       return;
@@ -833,120 +839,41 @@ export function AutomationDetail() {
                 />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Price Preset Selector - Always visible */}
-                <div className="space-y-2">
-                  <Label className="text-sm">
-                    Price Preset{" "}
-                    {!automation?.autoAddToSaleQueue && (
-                      <span className="text-muted-foreground">
-                        (Required to enable)
-                      </span>
-                    )}
-                  </Label>
-                  <Select
-                    value={automation?.saleQueuePresetId || ""}
-                    onValueChange={(value) =>
-                      updateSettings({ saleQueuePresetId: value })
-                    }
-                  >
-                    <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Select a price preset" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pricePresetsList.map((preset) => (
-                        <SelectItem key={preset.id} value={preset.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{preset.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {preset.minPrice && preset.maxPrice
-                                ? `$${(preset.minPrice / 100).toFixed(2)} - $${(
-                                    preset.maxPrice / 100
-                                  ).toFixed(2)}`
-                                : `$${(preset.price / 100).toFixed(2)}`}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Select which price preset to use for exclusive sales
-                  </p>
-                </div>
-
-                {automation?.autoAddToSaleQueue && (
-                  <>
-                    {/* Protection Notice */}
-                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                      <div className="flex gap-2">
-                        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
-                            Protection Defaults Applied
-                          </p>
-                          <p className="text-xs text-blue-700 dark:text-blue-300">
-                            When sale queue is enabled, the following settings
-                            are automatically enforced:
-                          </p>
-                          <ul className="text-xs text-blue-700 dark:text-blue-300 list-disc list-inside space-y-0.5 mt-1">
-                            <li>
-                              Display Resolution: 1920px (highest quality with
-                              watermark)
-                            </li>
-                            <li>Add Watermark: Enabled</li>
-                            <li>Allow Free Download: Disabled</li>
-                          </ul>
-                          <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                            These overrides ensure your exclusive content is
-                            protected from unauthorized downloads.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Current Preset Details */}
-                    {automation.saleQueuePreset && (
-                      <div className="bg-muted rounded-lg p-2">
-                        <p className="text-xs font-medium">Selected Preset</p>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {automation.saleQueuePreset.name}
-                        </p>
-                        {automation.saleQueuePreset.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {automation.saleQueuePreset.description}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label>Price Preset</Label>
+                <Select
+                  value={automation?.saleQueuePresetId || ""}
+                  onValueChange={(value) => updateSettings({ saleQueuePresetId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a preset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pricePresetsList.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        {preset.name} - {preset.minPrice && preset.maxPrice
+                          ? `$${(preset.minPrice / 100).toFixed(2)} - $${(preset.maxPrice / 100).toFixed(2)}`
+                          : `$${(preset.price / 100).toFixed(2)}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Recent Activity */}
-          <Card className="rounded-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No activity yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {logs.map((log) => (
-                    <div key={log.id} className="p-2 border rounded text-sm">
-                      <p className="font-medium">
-                        {log.scheduledCount}{" "}
-                        {log.scheduledCount === 1 ? "post" : "posts"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(log.executedAt).toLocaleString()}
-                      </p>
+              {automation?.autoAddToSaleQueue && (
+                <div className="bg-muted/50 border rounded-lg p-3">
+                  <div className="flex gap-2">
+                    <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div className="text-xs text-muted-foreground">
+                      <p className="font-medium text-foreground mb-1">Protection enabled</p>
+                      <ul className="space-y-0.5">
+                        <li>Max resolution: 1920px</li>
+                        <li>Watermark: On</li>
+                        <li>Free download: Off</li>
+                      </ul>
                     </div>
-                  ))}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -958,11 +885,9 @@ export function AutomationDetail() {
       <Dialog open={showRuleDialog} onOpenChange={setShowRuleDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingRule ? "Edit Schedule Rule" : "Add Schedule Rule"}
-            </DialogTitle>
+            <DialogTitle>{editingRule ? "Edit Rule" : "Add Schedule Rule"}</DialogTitle>
             <DialogDescription>
-              Set up when you want to automatically post your drafts
+              Configure when drafts should be automatically published
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -977,12 +902,8 @@ export function AutomationDetail() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed_time">
-                    Post at specific time
-                  </SelectItem>
-                  <SelectItem value="fixed_interval">
-                    Post every X hours
-                  </SelectItem>
+                  <SelectItem value="fixed_time">Post at specific time</SelectItem>
+                  <SelectItem value="fixed_interval">Post every X minutes</SelectItem>
                   <SelectItem value="daily_quota">Posts per day</SelectItem>
                 </SelectContent>
               </Select>
@@ -994,35 +915,22 @@ export function AutomationDetail() {
                 <Input
                   type="time"
                   value={ruleData.timeOfDay}
-                  onChange={(e) =>
-                    setRuleData({ ...ruleData, timeOfDay: e.target.value })
-                  }
+                  onChange={(e) => setRuleData({ ...ruleData, timeOfDay: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Post one item at this time each day
-                </p>
               </div>
             )}
 
             {ruleType === "fixed_interval" && (
               <>
                 <div className="space-y-2">
-                  <Label>Post every X minutes</Label>
+                  <Label>Interval (minutes)</Label>
                   <Input
                     type="number"
                     min={5}
                     max={10080}
                     value={ruleData.intervalMinutes}
-                    onChange={(e) =>
-                      setRuleData({
-                        ...ruleData,
-                        intervalMinutes: parseInt(e.target.value),
-                      })
-                    }
+                    onChange={(e) => setRuleData({ ...ruleData, intervalMinutes: parseInt(e.target.value) })}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    How often to post (5 minutes to 7 days)
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Posts per interval</Label>
@@ -1031,16 +939,8 @@ export function AutomationDetail() {
                     min={1}
                     max={100}
                     value={ruleData.deviationsPerInterval}
-                    onChange={(e) =>
-                      setRuleData({
-                        ...ruleData,
-                        deviationsPerInterval: parseInt(e.target.value),
-                      })
-                    }
+                    onChange={(e) => setRuleData({ ...ruleData, deviationsPerInterval: parseInt(e.target.value) })}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    How many items to post each time
-                  </p>
                 </div>
               </>
             )}
@@ -1053,93 +953,44 @@ export function AutomationDetail() {
                   min={1}
                   max={100}
                   value={ruleData.dailyQuota}
-                  onChange={(e) =>
-                    setRuleData({
-                      ...ruleData,
-                      dailyQuota: parseInt(e.target.value),
-                    })
-                  }
+                  onChange={(e) => setRuleData({ ...ruleData, dailyQuota: parseInt(e.target.value) })}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Total posts to schedule per day (spread automatically
-                  throughout the day)
-                </p>
               </div>
             )}
 
             <div className="space-y-2">
               <Label>Days of Week (optional)</Label>
               <div className="flex flex-wrap gap-2">
-                {[
-                  "monday",
-                  "tuesday",
-                  "wednesday",
-                  "thursday",
-                  "friday",
-                  "saturday",
-                  "sunday",
-                ].map((day) => (
+                {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => (
                   <div key={day} className="flex items-center space-x-2">
                     <Checkbox
                       id={day}
                       checked={ruleData.daysOfWeek.includes(day)}
                       onCheckedChange={() => toggleDay(day)}
                     />
-                    <Label
-                      htmlFor={day}
-                      className="text-sm capitalize cursor-pointer"
-                    >
+                    <Label htmlFor={day} className="text-sm capitalize cursor-pointer">
                       {day.slice(0, 3)}
                     </Label>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Leave empty to run every day
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Input
-                type="number"
-                value={ruleData.priority}
-                onChange={(e) =>
-                  setRuleData({
-                    ...ruleData,
-                    priority: parseInt(e.target.value),
-                  })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Lower numbers run first (0 is highest priority)
-              </p>
+              <p className="text-xs text-muted-foreground">Leave empty for every day</p>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Enabled</Label>
-                <p className="text-xs text-muted-foreground">Rule is active</p>
-              </div>
+              <Label>Enabled</Label>
               <Switch
                 checked={ruleData.enabled}
-                onCheckedChange={(checked) =>
-                  setRuleData({ ...ruleData, enabled: checked })
-                }
+                onCheckedChange={(checked) => setRuleData({ ...ruleData, enabled: checked })}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowRuleDialog(false)}
-              disabled={isSavingRule}
-            >
+            <Button variant="outline" onClick={() => setShowRuleDialog(false)} disabled={isSavingRule}>
               Cancel
             </Button>
             <Button onClick={saveRule} disabled={isSavingRule}>
-              {isSavingRule ? "Saving..." : editingRule ? "Update" : "Create"}{" "}
-              Rule
+              {isSavingRule ? "Saving..." : editingRule ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1154,22 +1005,16 @@ export function AutomationDetail() {
       />
 
       {/* Delete Rule Confirmation */}
-      <AlertDialog
-        open={!!ruleToDelete}
-        onOpenChange={(open) => !open && setRuleToDelete(null)}
-      >
+      <AlertDialog open={!!ruleToDelete} onOpenChange={(open) => !open && setRuleToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Schedule Rule?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Rule?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this schedule rule. This action
-              cannot be undone.
+              This will permanently delete this schedule rule.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!deletingRuleId}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingRuleId}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteRule}
               disabled={!!deletingRuleId}
@@ -1182,22 +1027,16 @@ export function AutomationDetail() {
       </AlertDialog>
 
       {/* Delete Default Value Confirmation */}
-      <AlertDialog
-        open={!!defaultToDelete}
-        onOpenChange={(open) => !open && setDefaultToDelete(null)}
-      >
+      <AlertDialog open={!!defaultToDelete} onOpenChange={(open) => !open && setDefaultToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Default Value?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this default value. This action
-              cannot be undone.
+              This will permanently delete this default value.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!deletingDefaultId}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingDefaultId}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteDefaultValue}
               disabled={!!deletingDefaultId}
@@ -1208,7 +1047,6 @@ export function AutomationDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </PageContent>
-    </PageWrapper>
+    </div>
   );
 }

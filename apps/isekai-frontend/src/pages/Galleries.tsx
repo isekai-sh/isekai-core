@@ -24,8 +24,6 @@ import {
 } from "@tanstack/react-query";
 import {
   Plus,
-  Grid2X2,
-  List,
   Folder,
   Loader2,
   ArrowUpAZ,
@@ -44,9 +42,7 @@ import { cn } from "@/lib/utils";
 import { galleries } from "@/lib/api";
 import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
 import { GalleryCard } from "@/components/galleries/GalleryCard";
-import { GalleryListItem } from "@/components/galleries/GalleryListItem";
 import { SortableGalleryCard } from "@/components/galleries/SortableGalleryCard";
-import { SortableGalleryListItem } from "@/components/galleries/SortableGalleryListItem";
 import { CreateGalleryDialog } from "@/components/galleries/CreateGalleryDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -66,22 +62,15 @@ import {
   SortableContext,
   arrayMove,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import type { DeviantArtGalleryFolder } from "@isekai/shared";
 
-const VIEW_MODE_KEY = "isekai-galleries-view-mode";
 const SORT_MODE_KEY = "isekai-galleries-sort-mode";
 
-type GalleryViewMode = "grid" | "list";
 type GallerySortMode = "custom" | "asc" | "desc";
 
 export function Galleries() {
-  const [viewMode, setViewMode] = useState<GalleryViewMode>(() => {
-    const saved = localStorage.getItem(VIEW_MODE_KEY);
-    return (saved as GalleryViewMode) || "grid";
-  });
   const [sortMode, setSortMode] = useState<GallerySortMode>(() => {
     const saved = localStorage.getItem(SORT_MODE_KEY);
     return (saved as GallerySortMode) || "custom";
@@ -136,22 +125,29 @@ export function Galleries() {
     }
   }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
-  // Computed values for drag-and-drop
+  // Computed values for drag-and-drop (use displayGalleries after it's defined)
   const galleryIds = useMemo(
-    () => galleryList.map((g) => g.folderid),
-    [galleryList]
+    () => (localGalleries.length > 0 ? localGalleries : galleryList).map((g) => g.folderid),
+    [localGalleries, galleryList]
   );
+
+  // Use galleryList as fallback when localGalleries hasn't synced yet (fixes race condition)
+  const displayGalleries = useMemo(() => {
+    if (activeId) return localGalleries; // During drag, use local state
+    // Fallback to galleryList if localGalleries is empty or out of sync
+    return localGalleries.length > 0 ? localGalleries : galleryList;
+  }, [activeId, localGalleries, galleryList]);
 
   const activeGallery = useMemo(
     () =>
-      activeId ? localGalleries.find((g) => g.folderid === activeId) : null,
-    [activeId, localGalleries]
+      activeId ? displayGalleries.find((g) => g.folderid === activeId) : null,
+    [activeId, displayGalleries]
   );
 
   const canReorder =
     sortMode === "custom" &&
     galleryList.length > 1 &&
-    localGalleries.length > 0 &&
+    displayGalleries.length > 0 &&
     !isLoading &&
     !isError;
 
@@ -307,11 +303,6 @@ export function Galleries() {
     }
   }, [galleryList]);
 
-  const handleViewModeChange = (mode: GalleryViewMode) => {
-    setViewMode(mode);
-    localStorage.setItem(VIEW_MODE_KEY, mode);
-  };
-
   const handleSortModeChange = useCallback(
     async (mode: GallerySortMode) => {
       setSortMode(mode);
@@ -384,33 +375,35 @@ export function Galleries() {
       <PageHeader>
         <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Galleries</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="text-gradient">Gallery</span>
+          </h1>
+          <p className="text-lg text-muted-foreground">
             Organize your posts into collections
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Sort mode dropdown */}
+          {/* Sort/Order dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2">
+              <Button variant="outline">
                 {sortMode === "asc" && (
                   <>
-                    <ArrowUpAZ className="h-4 w-4" />
-                    <span className="hidden sm:inline">A-Z</span>
+                    <ArrowUpAZ className="h-4 w-4 mr-2" />
+                    Sort A-Z
                   </>
                 )}
                 {sortMode === "desc" && (
                   <>
-                    <ArrowDownAZ className="h-4 w-4" />
-                    <span className="hidden sm:inline">Z-A</span>
+                    <ArrowDownAZ className="h-4 w-4 mr-2" />
+                    Sort Z-A
                   </>
                 )}
                 {sortMode === "custom" && (
                   <>
-                    <GripVertical className="h-4 w-4" />
-                    <span className="hidden sm:inline">Custom</span>
+                    <GripVertical className="h-4 w-4 mr-2" />
+                    Custom Order
                   </>
                 )}
               </Button>
@@ -418,38 +411,18 @@ export function Galleries() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => handleSortModeChange("custom")}>
                 <GripVertical className="h-4 w-4 mr-2" />
-                Custom Order
+                Custom Order (Drag to Reorder)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSortModeChange("asc")}>
                 <ArrowUpAZ className="h-4 w-4 mr-2" />
-                A-Z
+                Sort A-Z
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSortModeChange("desc")}>
                 <ArrowDownAZ className="h-4 w-4 mr-2" />
-                Z-A
+                Sort Z-A
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* View mode toggle */}
-          <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 px-2"
-              onClick={() => handleViewModeChange("grid")}
-            >
-              <Grid2X2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 px-2"
-              onClick={() => handleViewModeChange("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
 
           {/* Create button */}
           <Button onClick={() => setCreateDialogOpen(true)}>
@@ -463,21 +436,9 @@ export function Galleries() {
       {/* Content */}
       <PageContent>
         {isLoading ? (
-          <div
-            className={cn(
-              viewMode === "grid"
-                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4"
-                : "space-y-3"
-            )}
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={cn(
-                  "rounded-lg",
-                  viewMode === "grid" ? "h-64" : "h-32"
-                )}
-              />
+              <Skeleton key={i} className="rounded-lg h-64" />
             ))}
           </div>
         ) : isError ? (
@@ -511,66 +472,31 @@ export function Galleries() {
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
-            <SortableContext
-              items={galleryIds}
-              strategy={
-                viewMode === "grid"
-                  ? rectSortingStrategy
-                  : verticalListSortingStrategy
-              }
-            >
-              <div
-                className={cn(
-                  viewMode === "grid"
-                    ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4"
-                    : "space-y-3"
-                )}
-              >
-                {localGalleries.map((gallery) =>
-                  viewMode === "grid" ? (
-                    <SortableGalleryCard
-                      key={gallery.folderid}
-                      gallery={gallery}
-                      disabled={reorderMutation.isPending || isFetchingNextPage}
-                    />
-                  ) : (
-                    <SortableGalleryListItem
-                      key={gallery.folderid}
-                      gallery={gallery}
-                      disabled={reorderMutation.isPending || isFetchingNextPage}
-                    />
-                  )
-                )}
+            <SortableContext items={galleryIds} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4">
+                {displayGalleries.map((gallery) => (
+                  <SortableGalleryCard
+                    key={gallery.folderid}
+                    gallery={gallery}
+                    disabled={reorderMutation.isPending || isFetchingNextPage}
+                  />
+                ))}
               </div>
             </SortableContext>
 
             <DragOverlay>
               {activeGallery && (
                 <div className="opacity-90 rotate-2 scale-105 shadow-2xl">
-                  {viewMode === "grid" ? (
-                    <GalleryCard gallery={activeGallery} />
-                  ) : (
-                    <GalleryListItem gallery={activeGallery} />
-                  )}
+                  <GalleryCard gallery={activeGallery} />
                 </div>
               )}
             </DragOverlay>
           </DndContext>
         ) : (
-          <div
-            className={cn(
-              viewMode === "grid"
-                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4"
-                : "space-y-3"
-            )}
-          >
-            {galleryList.map((gallery) =>
-              viewMode === "grid" ? (
-                <GalleryCard key={gallery.folderid} gallery={gallery} />
-              ) : (
-                <GalleryListItem key={gallery.folderid} gallery={gallery} />
-              )
-            )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2000px]:grid-cols-8 gap-4">
+            {galleryList.map((gallery) => (
+              <GalleryCard key={gallery.folderid} gallery={gallery} />
+            ))}
           </div>
         )}
 

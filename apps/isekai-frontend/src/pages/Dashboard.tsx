@@ -29,6 +29,9 @@ import {
   Sparkles,
   Tag,
   Server,
+  ExternalLink,
+  BookOpen,
+  Rocket,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,6 +90,13 @@ export function Dashboard() {
     { label: "Published", value: publishedData?.total ?? 0, icon: History, href: "/published" },
   ];
 
+  const hasNoData = !isLoading &&
+    (reviewData?.total ?? 0) === 0 &&
+    (draftsData?.total ?? 0) === 0 &&
+    (scheduledData?.total ?? 0) === 0 &&
+    (publishedData?.total ?? 0) === 0 &&
+    activeAutomations.length === 0;
+
   return (
     <div className="space-y-4">
       {/* Row 1: Stats - compact horizontal row */}
@@ -129,7 +139,90 @@ export function Dashboard() {
         })}
       </div>
 
+      {/* Empty State Hero */}
+      {hasNoData && (
+        <a
+          href="https://isekai.sh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block"
+        >
+          <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-card/50 to-card/50 hover:border-primary/50 transition-all">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all" />
+            <CardContent className="p-8 relative">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                {/* Left Column - Content */}
+                <div className="space-y-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <Rocket className="h-6 w-6 text-primary flex-shrink-0" />
+                    <h3 className="text-2xl font-bold">Get started with Isekai</h3>
+                  </div>
+                  <p className="text-muted-foreground font-sans text-base leading-relaxed">
+                    Welcome to Isekai! Start by uploading your first artwork, setting up automation workflows,
+                    or exploring the documentation to learn how to streamline your DeviantArt publishing workflow.
+                  </p>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit">
+                    Read the Documentation
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Right Column - Documentation Preview Ornament */}
+                <div className="relative hidden lg:block">
+                  <div className="relative bg-gradient-to-br from-background/90 to-card/90 backdrop-blur-xl rounded-xl border-2 border-border/50 shadow-2xl group-hover:shadow-primary/20 transition-all">
+                    {/* Browser Chrome */}
+                    <div className="px-4 py-3 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        {/* Traffic Lights */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                          <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                          <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                        </div>
+                        {/* Address Bar */}
+                        <span className="text-xs font-mono text-muted-foreground">
+                          https://isekai.sh
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Browser Content - Documentation Preview */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/20 rounded-lg">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-medium">Getting Started</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
+                        <Zap className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">Automation</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
+                        <FileImage className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Upload Artwork
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
+                        <Sparkles className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          ComfyUI Integration
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decorative glow */}
+                  <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+      )}
+
       {/* Row 2: Pending Review + Recent Drafts side by side */}
+      {!hasNoData && (
+      <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pending Review */}
         <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-card">
@@ -402,6 +495,8 @@ export function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 }

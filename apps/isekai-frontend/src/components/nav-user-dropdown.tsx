@@ -20,16 +20,12 @@ import {
   ExternalLinkIcon,
   LogOutIcon,
   SettingsIcon,
-  KeyIcon,
-  FolderOpenIcon,
-  FileTextIcon,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -107,37 +103,13 @@ export function NavUserDropdown() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link to="/galleries">
-                <FolderOpenIcon className="mr-2 h-4 w-4" />
-                Galleries
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/templates">
-                <FileTextIcon className="mr-2 h-4 w-4" />
-                Templates
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link to="/api-keys">
-                <KeyIcon className="mr-2 h-4 w-4" />
-                API Keys
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings">
-                <SettingsIcon className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem asChild>
+            <Link to="/settings">
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              Settings
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>
             <LogOutIcon className="mr-2 h-4 w-4" />
             Log out
           </DropdownMenuItem>
