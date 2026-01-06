@@ -1,6 +1,6 @@
 {
   "name": "isekai-publisher",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.7",
   "private": true,
   "license": "AGPL-3.0",
   "description": "Isekai Publisher Worker - Dedicated microservice for processing DeviantArt publishing jobs",
