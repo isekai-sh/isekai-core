@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Clock,
@@ -29,6 +29,7 @@ import {
   AlignLeft,
   Check,
   FileImage,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,9 +71,12 @@ import { deviations } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import type { Deviation } from "@isekai/shared";
 
+const PAGE_SIZE = 50;
+
 export function Scheduled() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -88,15 +92,52 @@ export function Scheduled() {
   const [showPublishNowDialog, setShowPublishNowDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Fetch scheduled deviations (status = scheduled)
-  const { data, isLoading } = useQuery({
+  // Fetch scheduled deviations with infinite scroll
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["deviations", "scheduled"],
-    queryFn: async () => {
-      return await deviations.list({ status: "scheduled" });
+    queryFn: async ({ pageParam = 1 }) => {
+      return await deviations.list({ status: "scheduled", page: pageParam, limit: PAGE_SIZE });
     },
+    getNextPageParam: (lastPage, allPages) => {
+      const totalFetched = allPages.length * PAGE_SIZE;
+      return totalFetched < lastPage.total ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
-  const allScheduled = data?.deviations || [];
+  // Intersection observer for infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0,
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  const allScheduled = data?.pages.flatMap((page) => page.deviations) || [];
+  const totalCount = data?.pages[0]?.total || 0;
 
   // Filter based on search query
   const scheduledDeviations = searchQuery
@@ -662,14 +703,21 @@ export function Scheduled() {
                   ))}
                 </TableBody>
               </Table>
+              {/* Load more trigger */}
+              <div ref={loadMoreRef} className="h-1" />
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
               {/* Footer status bar */}
               <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t bg-muted/30 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   <span>
                     {searchQuery
-                      ? `Showing ${scheduledDeviations.length} from total ${allScheduled.length} scheduled`
-                      : `Showing all ${scheduledDeviations.length} scheduled`}
+                      ? `Showing ${scheduledDeviations.length} of ${allScheduled.length} loaded (${totalCount} total)`
+                      : `Showing ${allScheduled.length} of ${totalCount} scheduled`}
                   </span>
                 </div>
                 {selectedIds.size > 0 && (

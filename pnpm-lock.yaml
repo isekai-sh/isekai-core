@@ -178,21 +178,6 @@ importers:
       '@fontsource/inter':
         specifier: ^5.2.8
         version: 5.2.8
-      '@fullcalendar/core':
-        specifier: ^6.1.19
-        version: 6.1.19
-      '@fullcalendar/daygrid':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
-      '@fullcalendar/interaction':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
-      '@fullcalendar/react':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@fullcalendar/timegrid':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
       '@isekai/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -1368,31 +1353,6 @@ packages:
 
   '@fontsource/inter@5.2.8':
     resolution: {integrity: sha512-P6r5WnJoKiNVV+zvW2xM13gNdFhAEpQ9dQJHt3naLvfg+LkF2ldgSLiF4T41lf1SQCM9QmkqPTn4TH568IRagg==}
-
-  '@fullcalendar/core@6.1.19':
-    resolution: {integrity: sha512-z0aVlO5e4Wah6p6mouM0UEqtRf1MZZPt4mwzEyU6kusaNL+dlWQgAasF2cK23hwT4cmxkEmr4inULXgpyeExdQ==}
-
-  '@fullcalendar/daygrid@6.1.19':
-    resolution: {integrity: sha512-IAAfnMICnVWPjpT4zi87i3FEw0xxSza0avqY/HedKEz+l5MTBYvCDPOWDATpzXoLut3aACsjktIyw9thvIcRYQ==}
-    peerDependencies:
-      '@fullcalendar/core': ~6.1.19
-
-  '@fullcalendar/interaction@6.1.19':
-    resolution: {integrity: sha512-GOciy79xe8JMVp+1evAU3ytdwN/7tv35t5i1vFkifiuWcQMLC/JnLg/RA2s4sYmQwoYhTw/p4GLcP0gO5B3X5w==}
-    peerDependencies:
-      '@fullcalendar/core': ~6.1.19
-
-  '@fullcalendar/react@6.1.19':
-    resolution: {integrity: sha512-FP78vnyylaL/btZeHig8LQgfHgfwxLaIG6sKbNkzkPkKEACv11UyyBoTSkaavPsHtXvAkcTED1l7TOunAyPEnA==}
-    peerDependencies:
-      '@fullcalendar/core': ~6.1.19
-      react: ^16.7.0 || ^17 || ^18 || ^19
-      react-dom: ^16.7.0 || ^17 || ^18 || ^19
-
-  '@fullcalendar/timegrid@6.1.19':
-    resolution: {integrity: sha512-OuzpUueyO9wB5OZ8rs7TWIoqvu4v3yEqdDxZ2VcsMldCpYJRiOe7yHWKr4ap5Tb0fs7Rjbserc/b6Nt7ol6BRg==}
-    peerDependencies:
-      '@fullcalendar/core': ~6.1.19
 
   '@hono/node-server@1.19.6':
     resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
@@ -4375,9 +4335,6 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
-  preact@10.12.1:
-    resolution: {integrity: sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==}
-
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -6321,29 +6278,6 @@ snapshots:
 
   '@fontsource/inter@5.2.8': {}
 
-  '@fullcalendar/core@6.1.19':
-    dependencies:
-      preact: 10.12.1
-
-  '@fullcalendar/daygrid@6.1.19(@fullcalendar/core@6.1.19)':
-    dependencies:
-      '@fullcalendar/core': 6.1.19
-
-  '@fullcalendar/interaction@6.1.19(@fullcalendar/core@6.1.19)':
-    dependencies:
-      '@fullcalendar/core': 6.1.19
-
-  '@fullcalendar/react@6.1.19(@fullcalendar/core@6.1.19)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@fullcalendar/core': 6.1.19
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
-  '@fullcalendar/timegrid@6.1.19(@fullcalendar/core@6.1.19)':
-    dependencies:
-      '@fullcalendar/core': 6.1.19
-      '@fullcalendar/daygrid': 6.1.19(@fullcalendar/core@6.1.19)
-
   '@hono/node-server@1.19.6(hono@4.10.6)':
     dependencies:
       hono: 4.10.6
@@ -7818,10 +7752,10 @@ snapshots:
   '@types/trusted-types@2.0.7':
     optional: true
 
-  '@typescript-eslint/eslint-plugin@8.48.1(@typescript-eslint/parser@8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3))(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)':
+  '@typescript-eslint/eslint-plugin@8.48.1(@typescript-eslint/parser@8.48.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.6.3))(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
+      '@typescript-eslint/parser': 8.48.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.6.3)
       '@typescript-eslint/scope-manager': 8.48.1
       '@typescript-eslint/type-utils': 8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
       '@typescript-eslint/utils': 8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
@@ -9614,8 +9548,6 @@ snapshots:
 
   postgres@3.4.7: {}
 
-  preact@10.12.1: {}
-
   prelude-ls@1.2.1: {}
 
   prettier@3.7.4: {}
@@ -10260,7 +10192,7 @@ snapshots:
 
   typescript-eslint@8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.48.1(@typescript-eslint/parser@8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3))(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
+      '@typescript-eslint/eslint-plugin': 8.48.1(@typescript-eslint/parser@8.48.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.6.3))(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
       '@typescript-eslint/parser': 8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)
       '@typescript-eslint/typescript-estree': 8.48.1(typescript@5.6.3)
       '@typescript-eslint/utils': 8.48.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.6.3)

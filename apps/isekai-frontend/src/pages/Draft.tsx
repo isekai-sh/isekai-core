@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Upload,
   FileImage,
@@ -27,6 +27,7 @@ import {
   Search,
   AlignLeft,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,8 +71,11 @@ import {
 } from "@/components/TemplateSelector";
 import type { Deviation } from "@isekai/shared";
 
+const PAGE_SIZE = 50;
+
 export function Draft() {
   const queryClient = useQueryClient();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showModeDialog, setShowModeDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
@@ -87,14 +91,49 @@ export function Draft() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch drafts (status = draft)
-  const { data, isLoading } = useQuery({
+  // Fetch drafts with infinite scroll
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["deviations", "draft"],
-    queryFn: async () => {
-      const result = await deviations.list({ status: "draft", limit: 1000 });
-      return result;
+    queryFn: async ({ pageParam = 1 }) => {
+      return await deviations.list({ status: "draft", page: pageParam, limit: PAGE_SIZE });
     },
+    getNextPageParam: (lastPage, allPages) => {
+      const totalFetched = allPages.length * PAGE_SIZE;
+      return totalFetched < lastPage.total ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
+
+  // Intersection observer for infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0,
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   const deleteDeviation = useMutation({
     mutationFn: (deviationId: string) => deviations.delete(deviationId),
@@ -399,13 +438,14 @@ export function Draft() {
     },
   });
 
-  const allDrafts = data?.deviations || [];
+  const allDrafts = data?.pages.flatMap((page) => page.deviations) || [];
+  const totalCount = data?.pages[0]?.total || 0;
 
   // Filter drafts based on search query
   const drafts = searchQuery
     ? allDrafts.filter((d) =>
         d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+        d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : allDrafts;
 
@@ -736,14 +776,21 @@ export function Draft() {
                   ))}
                 </TableBody>
               </Table>
+              {/* Load more trigger */}
+              <div ref={loadMoreRef} className="h-1" />
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
               {/* Footer status bar */}
               <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t bg-muted/30 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <FileImage className="h-3.5 w-3.5" />
                   <span>
                     {searchQuery
-                      ? `Showing ${drafts.length} from total ${allDrafts.length} drafts`
-                      : `Showing all ${drafts.length} drafts`}
+                      ? `Showing ${drafts.length} of ${allDrafts.length} loaded (${totalCount} total)`
+                      : `Showing ${allDrafts.length} of ${totalCount} drafts`}
                   </span>
                 </div>
                 {selectedIds.size > 0 && (
