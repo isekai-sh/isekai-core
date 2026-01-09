@@ -56,20 +56,27 @@ router.get("/", async (req, res) => {
   const limitNum = parseInt(limit as string, 10);
   const offset = (pageNum - 1) * limitNum;
 
-  const userDeviations = await prisma.deviation.findMany({
-    where: {
-      userId,
-      ...(status && typeof status === "string"
-        ? { status: status as DeviationStatus }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: limitNum,
-    skip: offset,
-    include: {
-      files: true,
-    },
-  });
+  const whereClause = {
+    userId,
+    ...(status && typeof status === "string"
+      ? { status: status as DeviationStatus }
+      : {}),
+  };
+
+  const [userDeviations, total] = await Promise.all([
+    prisma.deviation.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      take: limitNum,
+      skip: offset,
+      include: {
+        files: true,
+      },
+    }),
+    prisma.deviation.count({
+      where: whereClause,
+    }),
+  ]);
 
   // Transform to match frontend types
   const transformedDeviations = userDeviations.map((deviation) => ({
@@ -83,7 +90,7 @@ router.get("/", async (req, res) => {
     updatedAt: deviation.updatedAt.toISOString(),
   }));
 
-  res.json({ deviations: transformedDeviations, total: userDeviations.length });
+  res.json({ deviations: transformedDeviations, total });
 });
 
 // Get single deviation
