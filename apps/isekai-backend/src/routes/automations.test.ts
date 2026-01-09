@@ -89,8 +89,8 @@ describe('automations routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (automationsRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -382,7 +382,9 @@ describe('automations routes', () => {
       });
       const res = createMockResponse();
 
-      (prisma.pricePreset.findFirst as any).mockResolvedValue({ id: '00000000-0000-0000-0000-000000000001' });
+      (prisma.pricePreset.findFirst as any).mockResolvedValue({
+        id: '00000000-0000-0000-0000-000000000001',
+      });
       (prisma.automation.findFirst as any).mockResolvedValue(null);
       (prisma.automation.create as any).mockResolvedValue({
         ...mockAutomation,
@@ -516,7 +518,9 @@ describe('automations routes', () => {
 
       (prisma.automation.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow('Automation config not found');
+      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow(
+        'Automation config not found'
+      );
     });
   });
 
@@ -565,7 +569,9 @@ describe('automations routes', () => {
 
       (prisma.automation.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('Automation config not found');
+      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow(
+        'Automation config not found'
+      );
     });
   });
 
@@ -640,7 +646,9 @@ describe('automations routes', () => {
 
       (prisma.automation.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('POST', '/:id/toggle', req, res)).rejects.toThrow('Automation config not found');
+      await expect(callRoute('POST', '/:id/toggle', req, res)).rejects.toThrow(
+        'Automation config not found'
+      );
     });
   });
 
@@ -698,7 +706,9 @@ describe('automations routes', () => {
 
       (prisma.automation.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('GET', '/:id/logs', req, res)).rejects.toThrow('Automation config not found');
+      await expect(callRoute('GET', '/:id/logs', req, res)).rejects.toThrow(
+        'Automation config not found'
+      );
     });
   });
 
@@ -757,7 +767,9 @@ describe('automations routes', () => {
 
       (prisma.automation.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('POST', '/:id/test', req, res)).rejects.toThrow('Automation config not found');
+      await expect(callRoute('POST', '/:id/test', req, res)).rejects.toThrow(
+        'Automation config not found'
+      );
     });
   });
 });

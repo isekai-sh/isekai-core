@@ -15,15 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type BrowseDataSource = "api";
+export type BrowseDataSource = 'api';
 
-export type BrowseMode =
-  | "home"
-  | "daily"
-  | "following"
-  | "tags"
-  | "topic"
-  | "user-gallery";
+export type BrowseMode = 'home' | 'daily' | 'following' | 'tags' | 'topic' | 'user-gallery';
 
 export interface BrowseParams {
   offset?: number;
@@ -44,10 +38,7 @@ export interface BrowseSourceConfig {
  * Determine data source and configuration for browse mode
  * All modes use API with proper caching
  */
-export function getBrowseSource(
-  mode: BrowseMode,
-  params: BrowseParams
-): BrowseSourceConfig {
+export function getBrowseSource(mode: BrowseMode, params: BrowseParams): BrowseSourceConfig {
   // All browse modes now use API with Redis caching
-  return { source: "api" };
+  return { source: 'api' };
 }

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Redis } from "ioredis";
+import { Redis } from 'ioredis';
 
 // Timeout for Redis connection attempt
 const REDIS_CONNECT_TIMEOUT_MS = 5000;
@@ -63,12 +63,12 @@ export class RedisClientManager {
 
     // No Redis URL configured
     if (!redisUrl) {
-      console.log("[Redis] No REDIS_URL configured, caching disabled");
+      console.log('[Redis] No REDIS_URL configured, caching disabled');
       return null;
     }
 
     try {
-      console.log("[Redis] Attempting to connect to Redis for caching...");
+      console.log('[Redis] Attempting to connect to Redis for caching...');
 
       // Create Redis client
       const client = new Redis(redisUrl, {
@@ -80,7 +80,7 @@ export class RedisClientManager {
           const delay = Math.min(times * 100, 3000);
           return delay;
         },
-        tls: redisUrl.startsWith("rediss://")
+        tls: redisUrl.startsWith('rediss://')
           ? {
               rejectUnauthorized: false, // Accept self-signed certificates
             }
@@ -90,47 +90,41 @@ export class RedisClientManager {
       // Attempt connection with timeout
       const connectPromise = client.connect();
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Redis connection timeout")),
-          REDIS_CONNECT_TIMEOUT_MS
-        )
+        setTimeout(() => reject(new Error('Redis connection timeout')), REDIS_CONNECT_TIMEOUT_MS)
       );
 
       await Promise.race([connectPromise, timeoutPromise]);
 
       // Connection successful
-      console.log("[Redis] Successfully connected to Redis for caching");
+      console.log('[Redis] Successfully connected to Redis for caching');
 
       // Add error handler for runtime errors
-      client.on("error", (err) => {
-        console.error("[Redis] Runtime error:", err.message);
+      client.on('error', (err) => {
+        console.error('[Redis] Runtime error:', err.message);
       });
 
       // Add reconnect handler
-      client.on("reconnecting", () => {
-        console.log("[Redis] Reconnecting to Redis...");
+      client.on('reconnecting', () => {
+        console.log('[Redis] Reconnecting to Redis...');
       });
 
       // Add ready handler
-      client.on("ready", () => {
-        console.log("[Redis] Redis client ready");
+      client.on('ready', () => {
+        console.log('[Redis] Redis client ready');
       });
 
       // Add close handler
-      client.on("close", () => {
-        console.warn("[Redis] Redis connection closed");
+      client.on('close', () => {
+        console.warn('[Redis] Redis connection closed');
       });
 
       // Store instance
       this.instance = client;
       return client;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.warn(`[Redis] Failed to connect to Redis: ${errorMessage}`);
-      console.warn(
-        "[Redis] Caching will be disabled, falling back to direct API calls"
-      );
+      console.warn('[Redis] Caching will be disabled, falling back to direct API calls');
       return null;
     }
   }
@@ -139,17 +133,17 @@ export class RedisClientManager {
    * Check if Redis is available
    */
   static isAvailable(): boolean {
-    return this.instance !== null && this.instance.status === "ready";
+    return this.instance !== null && this.instance.status === 'ready';
   }
 
   /**
    * Get connection status
    */
-  static getStatus(): "ready" | "connecting" | "disconnected" | "unavailable" {
+  static getStatus(): 'ready' | 'connecting' | 'disconnected' | 'unavailable' {
     if (!this.instance) {
-      return "unavailable";
+      return 'unavailable';
     }
-    return this.instance.status as "ready" | "connecting" | "disconnected";
+    return this.instance.status as 'ready' | 'connecting' | 'disconnected';
   }
 
   /**
@@ -162,7 +156,7 @@ export class RedisClientManager {
         return false;
       }
       const result = await client.ping();
-      return result === "PONG";
+      return result === 'PONG';
     } catch (error) {
       return false;
     }
@@ -191,12 +185,12 @@ export class RedisClientManager {
    */
   static async close(): Promise<void> {
     if (this.instance) {
-      console.log("[Redis] Closing Redis connection...");
+      console.log('[Redis] Closing Redis connection...');
       try {
         await this.instance.quit();
-        console.log("[Redis] Redis connection closed successfully");
+        console.log('[Redis] Redis connection closed successfully');
       } catch (error) {
-        console.error("[Redis] Error closing Redis connection:", error);
+        console.error('[Redis] Error closing Redis connection:', error);
       }
       this.instance = null;
       this.initPromise = null;

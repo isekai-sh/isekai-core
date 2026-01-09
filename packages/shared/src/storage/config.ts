@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { S3Config } from "./types.js";
+import type { S3Config } from './types.js';
 
 /**
  * Check if S3 environment variables are present.
@@ -33,25 +33,24 @@ export function hasS3Config(): boolean {
  * Throws an error if required variables are missing.
  */
 export function getS3ConfigFromEnv(): S3Config {
-
   const accessKeyId = process.env.S3_ACCESS_KEY_ID;
   const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
   const bucket = process.env.S3_BUCKET_NAME;
-  const region = process.env.S3_REGION || "auto";
+  const region = process.env.S3_REGION || 'auto';
 
   if (!accessKeyId || !secretAccessKey || !bucket) {
     throw new Error(
-      "Missing required S3 configuration. " +
-        "Please set S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_BUCKET_NAME environment variables."
+      'Missing required S3 configuration. ' +
+        'Please set S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_BUCKET_NAME environment variables.'
     );
   }
 
   // Normalize path prefix: strip leading slash, ensure trailing slash
-  let pathPrefix = process.env.S3_PATH_PREFIX || "";
+  let pathPrefix = process.env.S3_PATH_PREFIX || '';
   if (pathPrefix) {
-    pathPrefix = pathPrefix.replace(/^\/+/, ""); // strip leading slash
-    if (!pathPrefix.endsWith("/")) {
-      pathPrefix += "/"; // ensure trailing slash
+    pathPrefix = pathPrefix.replace(/^\/+/, ''); // strip leading slash
+    if (!pathPrefix.endsWith('/')) {
+      pathPrefix += '/'; // ensure trailing slash
     }
   }
 
@@ -62,7 +61,7 @@ export function getS3ConfigFromEnv(): S3Config {
     secretAccessKey,
     bucket,
     publicUrl: process.env.S3_PUBLIC_URL || undefined,
-    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
     presignedEndpoint: process.env.S3_PRESIGNED_ENDPOINT || undefined,
     pathPrefix,
   };
@@ -76,13 +75,13 @@ export function getS3ConfigFromEnv(): S3Config {
  * Allowed MIME types for file uploads.
  */
 export const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
 ];
 
 /**

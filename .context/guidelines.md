@@ -12,6 +12,7 @@
 ### 1. Before Pushing Branch
 
 **Checklist:**
+
 - [ ] Tests pass (`pnpm test`)
 - [ ] Linting passes (`pnpm lint`)
 - [ ] Type checking passes (`pnpm typecheck`)
@@ -23,6 +24,7 @@
 ### 2. PR Title Format
 
 **Use Conventional Commits:**
+
 ```
 feat(automation): add daily quota rule type
 fix(publisher): prevent duplicate publishes
@@ -34,41 +36,50 @@ refactor(storage): abstract S3/R2/MinIO
 
 ```markdown
 ## Summary
+
 Brief description of changes (1-3 sentences).
 
 ## Motivation
+
 Why this change is needed.
 
 ## Changes
+
 - Added X to handle Y
 - Updated Z to support W
 - Refactored A for better B
 
 ## Testing
+
 - [ ] Unit tests added
 - [ ] Integration tests added
 - [ ] Manual testing performed
 
 ## Documentation
+
 - [ ] `.context/` files updated
 - [ ] API docs updated (if applicable)
 - [ ] ADR created (if architectural change)
 
 ## Breaking Changes
+
 None / List breaking changes
 
 ## Screenshots
+
 (If UI changes)
 ```
 
 ### 4. PR Size Guidelines
 
 **Ideal PR Size:**
+
 - **Small:** <200 lines changed (preferred)
 - **Medium:** 200-500 lines
 - **Large:** >500 lines (requires justification)
 
 **Large PRs Should:**
+
 - Be split into smaller PRs if possible
 - Have detailed description and context
 - Include comprehensive tests
@@ -80,18 +91,21 @@ None / List breaking changes
 ### For Reviewers
 
 #### Correctness
+
 - [ ] Code does what PR description claims
 - [ ] Edge cases handled
 - [ ] Error handling appropriate
 - [ ] No obvious bugs
 
 #### Architecture
+
 - [ ] Follows existing patterns
 - [ ] No unnecessary complexity
 - [ ] Appropriate abstractions
 - [ ] Matches ADRs (if applicable)
 
 #### Security
+
 - [ ] No secrets in code
 - [ ] Input validation present
 - [ ] SQL injection prevented (use Prisma)
@@ -99,24 +113,28 @@ None / List breaking changes
 - [ ] Token encryption used
 
 #### Performance
+
 - [ ] No N+1 queries
 - [ ] Appropriate indexes (database changes)
 - [ ] No memory leaks
 - [ ] Efficient algorithms
 
 #### Testing
+
 - [ ] Tests cover new code
 - [ ] Tests are meaningful (not trivial)
 - [ ] Coverage meets threshold
 - [ ] Tests pass consistently
 
 #### Documentation
+
 - [ ] Code comments where needed (complex logic)
 - [ ] `.context/` files updated
 - [ ] API changes documented
 - [ ] Breaking changes noted
 
 #### Style
+
 - [ ] Follows code style (`.context/ai-rules.md`)
 - [ ] Consistent naming
 - [ ] No commented-out code
@@ -129,6 +147,7 @@ None / List breaking changes
 ### 1. Self-Review
 
 Before requesting review:
+
 1. Review your own diff on GitHub
 2. Check for debug logs, console.logs
 3. Verify all files intended to be included
@@ -137,6 +156,7 @@ Before requesting review:
 ### 2. Request Review
 
 **Tag Reviewers:**
+
 - For architectural changes: Tag senior devs
 - For database changes: Tag database expert
 - For security changes: Tag security reviewer
@@ -144,11 +164,13 @@ Before requesting review:
 ### 3. Address Feedback
 
 **Respond to Comments:**
+
 - ✅ **Fixed** - Make change, push commit
 - 💬 **Clarified** - Explain decision
 - 🤔 **Need Discussion** - Tag reviewer for discussion
 
 **Push Changes:**
+
 ```bash
 # Make changes
 git add .
@@ -159,6 +181,7 @@ git push origin feature-branch
 ### 4. Approval
 
 **Merge Requirements:**
+
 - At least 1 approval (standard PRs)
 - At least 2 approvals (architectural changes)
 - All CI checks pass
@@ -169,6 +192,7 @@ git push origin feature-branch
 **Merge Strategy:** Squash and merge (default)
 
 **Final Commit Message:**
+
 ```
 feat(automation): add daily quota rule type (#123)
 
@@ -184,6 +208,7 @@ feat(automation): add daily quota rule type (#123)
 ### When to Create ADR
 
 **Create ADR for:**
+
 - New patterns or paradigms
 - Technology choices (e.g., switching ORM)
 - Major refactorings
@@ -193,6 +218,7 @@ feat(automation): add daily quota rule type (#123)
 **File:** `.context/decisions/NNN-title.md`
 
 **Format:**
+
 ```markdown
 # NNN. Title
 
@@ -201,15 +227,19 @@ feat(automation): add daily quota rule type (#123)
 **Deciders:** Names
 
 ## Context
+
 What problem are we solving?
 
 ## Decision
+
 What did we decide?
 
 ## Consequences
+
 What are the trade-offs?
 
 ## Alternatives Considered
+
 What else did we consider?
 ```
 
@@ -222,6 +252,7 @@ What else did we consider?
 **Breaking Change:** Change that requires users to modify their code/config.
 
 **Examples:**
+
 - API endpoint renamed
 - Required field added to model
 - Environment variable renamed
@@ -235,7 +266,8 @@ What else did we consider?
 4. **Changelog:** Document in `.context/changelog.md`
 
 **Example:**
-```markdown
+
+````markdown
 ## Breaking Changes in v0.2.0
 
 ### Renamed Environment Variable
@@ -244,6 +276,7 @@ What else did we consider?
 
 **Migration:**
 Update your `.env` file:
+
 ```bash
 # Old
 DEVIANTART_REDIRECT_URL=http://localhost:4000/callback
@@ -251,6 +284,8 @@ DEVIANTART_REDIRECT_URL=http://localhost:4000/callback
 # New
 DEVIANTART_REDIRECT_URI=http://localhost:4000/api/auth/deviantart/callback
 ```
+````
+
 ```
 
 ---
@@ -262,6 +297,7 @@ DEVIANTART_REDIRECT_URI=http://localhost:4000/api/auth/deviantart/callback
 ### Structure (Required)
 
 ```
+
 <type>(<scope>): <subject>
 
 <body with bullet points>
@@ -270,6 +306,7 @@ DEVIANTART_REDIRECT_URI=http://localhost:4000/api/auth/deviantart/callback
 ```
 
 **Rules:**
+
 1. Line 1: Type, scope, subject (max 72 chars)
 2. Line 2: Blank line (required)
 3. Line 3+: Detailed body with bullets
@@ -278,24 +315,26 @@ DEVIANTART_REDIRECT_URI=http://localhost:4000/api/auth/deviantart/callback
 
 ### Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `feat` | New feature | `feat(automation): add daily quota` |
-| `fix` | Bug fix | `fix(publisher): race condition` |
+| Type       | Description        | Example                                |
+| ---------- | ------------------ | -------------------------------------- |
+| `feat`     | New feature        | `feat(automation): add daily quota`    |
+| `fix`      | Bug fix            | `fix(publisher): race condition`       |
 | `refactor` | Code restructuring | `refactor(storage): extract interface` |
-| `docs` | Documentation | `docs(api): update endpoints` |
-| `test` | Tests | `test(auth): add OAuth tests` |
-| `chore` | Build/tooling | `chore: update dependencies` |
-| `perf` | Performance | `perf(db): add index on status` |
+| `docs`     | Documentation      | `docs(api): update endpoints`          |
+| `test`     | Tests              | `test(auth): add OAuth tests`          |
+| `chore`    | Build/tooling      | `chore: update dependencies`           |
+| `perf`     | Performance        | `perf(db): add index on status`        |
 
 ### Scopes
 
 Common scopes:
+
 - `automation`, `publisher`, `storage`, `auth`, `api`, `db`, `ui`, `tests`
 
 ### Examples
 
 **✅ Good (Multi-line with details):**
+
 ```
 feat(automation): add daily quota rule type
 
@@ -312,11 +351,13 @@ Closes #42
 ```
 
 **❌ Bad (Single-line):**
+
 ```
 feat: add feature
 ```
 
 **❌ Bad (Has emoji or AI attribution):**
+
 ```
 feat(api): add endpoint 🚀
 
@@ -330,6 +371,7 @@ Generated with Claude Code
 See `.context/ai-rules.md` for complete style guide.
 
 **Key Points:**
+
 - TypeScript strict mode
 - No `any` types (use `unknown`)
 - Prisma ORM only (no raw SQL)
@@ -344,22 +386,28 @@ See `.context/ai-rules.md` for complete style guide.
 ### Bug Reports
 
 **Template:**
+
 ```markdown
 ## Description
+
 Brief description of bug.
 
 ## Steps to Reproduce
+
 1. Go to X
 2. Click Y
 3. See error
 
 ## Expected Behavior
+
 What should happen?
 
 ## Actual Behavior
+
 What actually happens?
 
 ## Environment
+
 - Version: v0.1.0-alpha.5
 - Node.js: 20.10.0
 - OS: Ubuntu 22.04
@@ -367,7 +415,9 @@ What actually happens?
 
 ## Logs
 ```
+
 Error message here
+
 ```
 
 ## Screenshots
@@ -377,17 +427,22 @@ Error message here
 ### Feature Requests
 
 **Template:**
+
 ```markdown
 ## Problem
+
 What problem does this solve?
 
 ## Proposed Solution
+
 How would this work?
 
 ## Alternatives
+
 Other ways to solve this?
 
 ## Additional Context
+
 Any other details?
 ```
 
@@ -398,6 +453,7 @@ Any other details?
 ### GitHub Discussions
 
 **Use for:**
+
 - Feature brainstorming
 - Architecture discussions
 - General questions
@@ -405,6 +461,7 @@ Any other details?
 ### Issues
 
 **Use for:**
+
 - Bug reports
 - Feature requests
 - Task tracking
@@ -412,6 +469,7 @@ Any other details?
 ### Pull Requests
 
 **Use for:**
+
 - Code review
 - Implementation discussion
 
@@ -422,6 +480,7 @@ Any other details?
 All contributions must be under **AGPL-3.0**.
 
 **License Header:**
+
 ```typescript
 /*
  * Copyright (C) 2026 Isekai

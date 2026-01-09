@@ -15,21 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { FileImage } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { review, deviations } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { ReviewHeader } from "@/components/ReviewHeader";
-import { ReviewGridPanel } from "@/components/ReviewGridPanel";
-import { ReviewDetailPanel } from "@/components/ReviewDetailPanel";
-import type { Deviation } from "@isekai/shared";
+import { useState, useEffect, useMemo } from 'react';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileImage } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { review, deviations } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { ReviewHeader } from '@/components/ReviewHeader';
+import { ReviewGridPanel } from '@/components/ReviewGridPanel';
+import { ReviewDetailPanel } from '@/components/ReviewDetailPanel';
+import type { Deviation } from '@isekai/shared';
 
 export function Review() {
   const queryClient = useQueryClient();
@@ -40,11 +36,9 @@ export function Review() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
   // Grid controls
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title">("newest");
-  const [filterBy, setFilterBy] = useState<"all" | "has-tags" | "no-tags">(
-    "all"
-  );
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
+  const [filterBy, setFilterBy] = useState<'all' | 'has-tags' | 'no-tags'>('all');
 
   // Bulk operations
   const [bulkTags, setBulkTags] = useState<string[]>([]);
@@ -58,16 +52,13 @@ export function Review() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["deviations", "review"],
+    queryKey: ['deviations', 'review'],
     queryFn: async ({ pageParam = 1 }) => {
       const result = await review.list({ page: pageParam, limit: 50 });
       return result;
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loadedCount = allPages.reduce(
-        (sum, page) => sum + page.deviations.length,
-        0
-      );
+      const loadedCount = allPages.reduce((sum, page) => sum + page.deviations.length, 0);
       return loadedCount < lastPage.total ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
@@ -83,11 +74,11 @@ export function Review() {
         const currentTotal = data?.pages[0]?.total || 0;
 
         if (result.total > currentTotal) {
-          console.log("[Review Polling] New entries detected, auto-refreshing");
+          console.log('[Review Polling] New entries detected, auto-refreshing');
           refetch();
         }
       } catch (error) {
-        console.error("Failed to poll for new entries:", error);
+        console.error('Failed to poll for new entries:', error);
       }
     }, 60000); // 1 minute
 
@@ -98,17 +89,17 @@ export function Review() {
     mutationFn: ({ id, data }: { id: string; data: Partial<Deviation> }) =>
       deviations.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "review"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'review'] });
       toast({
-        title: "Updated",
-        description: "Deviation updated successfully",
+        title: 'Updated',
+        description: 'Deviation updated successfully',
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to update',
+        variant: 'destructive',
       });
     },
   });
@@ -116,15 +107,15 @@ export function Review() {
   const approveMutation = useMutation({
     mutationFn: (id: string) => review.approve(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "review"] });
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
-      toast({ title: "Approved", description: "Moved to Draft" });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'review'] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+      toast({ title: 'Approved', description: 'Moved to Draft' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to approve",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to approve',
+        variant: 'destructive',
       });
     },
   });
@@ -132,14 +123,14 @@ export function Review() {
   const rejectMutation = useMutation({
     mutationFn: (id: string) => review.reject(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "review"] });
-      toast({ title: "Rejected", description: "Deviation deleted" });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'review'] });
+      toast({ title: 'Rejected', description: 'Deviation deleted' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to reject",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to reject',
+        variant: 'destructive',
       });
     },
   });
@@ -147,20 +138,20 @@ export function Review() {
   const batchApproveMutation = useMutation({
     mutationFn: (ids: string[]) => review.batchApprove(ids),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "review"] });
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'review'] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
       setSelectedIds(new Set());
       setBulkTags([]);
       toast({
-        title: "Approved",
+        title: 'Approved',
         description: `${ids.length} deviations moved to Draft`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to approve",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to approve',
+        variant: 'destructive',
       });
     },
   });
@@ -168,18 +159,18 @@ export function Review() {
   const batchRejectMutation = useMutation({
     mutationFn: (ids: string[]) => review.batchReject(ids),
     onSuccess: (_, ids) => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "review"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'review'] });
       setSelectedIds(new Set());
       toast({
-        title: "Rejected",
+        title: 'Rejected',
         description: `${ids.length} deviations deleted`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to reject",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to reject',
+        variant: 'destructive',
       });
     },
   });
@@ -190,24 +181,22 @@ export function Review() {
     let items = allDeviations;
 
     // Apply filters
-    if (filterBy === "has-tags") {
+    if (filterBy === 'has-tags') {
       items = items.filter((d) => d.tags.length > 0);
-    } else if (filterBy === "no-tags") {
+    } else if (filterBy === 'no-tags') {
       items = items.filter((d) => d.tags.length === 0);
     }
 
     // Apply sorting
-    if (sortBy === "newest") {
+    if (sortBy === 'newest') {
       items = [...items].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-    } else if (sortBy === "oldest") {
+    } else if (sortBy === 'oldest') {
       items = [...items].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
-    } else if (sortBy === "title") {
+    } else if (sortBy === 'title') {
       items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     }
 
@@ -235,35 +224,35 @@ export function Review() {
       // Don't trigger shortcuts when typing in input fields
       const target = e.target as HTMLElement;
       if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.contentEditable === "true"
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true'
       ) {
         return;
       }
 
       // Don't trigger shortcuts if a modal/lightbox is open
-      if (document.body.style.overflow === "hidden") {
+      if (document.body.style.overflow === 'hidden') {
         return;
       }
 
       if (!focusedDeviation) return;
 
       // A or Enter = Approve
-      if (e.key === "a" || e.key === "A" || e.key === "Enter") {
+      if (e.key === 'a' || e.key === 'A' || e.key === 'Enter') {
         e.preventDefault();
         approveMutation.mutate(focusedDeviation.id);
       }
 
       // X or Escape = Reject
-      if (e.key === "x" || e.key === "X" || e.key === "Escape") {
+      if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
         e.preventDefault();
         rejectMutation.mutate(focusedDeviation.id);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [focusedDeviation, approveMutation, rejectMutation]);
 
   const toggleSelect = (id: string) => {
@@ -291,9 +280,7 @@ export function Review() {
     // Apply bulk tags first if any are set
     if (bulkTags.length > 0) {
       await Promise.all(
-        Array.from(selectedIds).map((id) =>
-          deviations.update(id, { tags: bulkTags })
-        )
+        Array.from(selectedIds).map((id) => deviations.update(id, { tags: bulkTags }))
       );
     }
 
@@ -308,7 +295,7 @@ export function Review() {
     if (
       !confirm(
         `Are you sure you want to reject ${selectedIds.size} deviation${
-          selectedIds.size !== 1 ? "s" : ""
+          selectedIds.size !== 1 ? 's' : ''
         }? This action cannot be undone.`
       )
     ) {
@@ -339,25 +326,13 @@ export function Review() {
       {selectedIds.size > 0 && (
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSelectAll}
-              className="h-8 text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={handleSelectAll} className="h-8 text-xs">
               Select All
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeselectAll}
-              className="h-8 text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={handleDeselectAll} className="h-8 text-xs">
               Clear Selection
             </Button>
-            <span className="text-sm text-muted-foreground ml-2">
-              {selectedIds.size} selected
-            </span>
+            <span className="text-sm text-muted-foreground ml-2">{selectedIds.size} selected</span>
           </div>
           <ReviewHeader
             count={allDeviations.length}
@@ -377,9 +352,7 @@ export function Review() {
             <CardContent className="text-center py-12">
               <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium mb-2">No deviations to review</p>
-              <p className="text-sm text-muted-foreground">
-                Upload from ComfyUI to see them here
-              </p>
+              <p className="text-sm text-muted-foreground">Upload from ComfyUI to see them here</p>
             </CardContent>
           </Card>
         ) : (

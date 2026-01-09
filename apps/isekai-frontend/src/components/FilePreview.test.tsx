@@ -46,11 +46,7 @@ describe('FilePreview', () => {
   const renderFilePreview = (props = {}) => {
     return render(
       <DndContext>
-        <FilePreview
-          fileData={mockFileData}
-          onRemove={mockOnRemove}
-          {...props}
-        />
+        <FilePreview fileData={mockFileData} onRemove={mockOnRemove} {...props} />
       </DndContext>
     );
   };

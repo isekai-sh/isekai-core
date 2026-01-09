@@ -15,14 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { refreshTokenIfNeeded } from "../lib/deviantart.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { refreshTokenIfNeeded } from '../lib/deviantart.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
 // Helper function to make DeviantArt API calls
 async function callDeviantArtAPI(
@@ -44,7 +44,7 @@ async function callDeviantArtAPI(
     method,
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      ...(body && { "Content-Type": "application/json" }),
+      ...(body && { 'Content-Type': 'application/json' }),
     },
     ...(body && { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(10000),
@@ -53,26 +53,25 @@ async function callDeviantArtAPI(
   const response = await fetch(url.toString(), options);
 
   if (!response.ok) {
-    let errorMessage = "DeviantArt API request failed";
+    let errorMessage = 'DeviantArt API request failed';
     try {
       const errorData = await response.json();
-      errorMessage =
-        errorData.error_description || errorData.error || errorMessage;
+      errorMessage = errorData.error_description || errorData.error || errorMessage;
     } catch {
       errorMessage = (await response.text()) || errorMessage;
     }
 
-    console.error("DeviantArt API error:", {
+    console.error('DeviantArt API error:', {
       status: response.status,
       endpoint,
       message: errorMessage,
     });
 
     if (response.status === 401) {
-      throw new AppError(401, "Authentication failed");
+      throw new AppError(401, 'Authentication failed');
     }
     if (response.status === 429) {
-      throw new AppError(429, "Rate limit exceeded");
+      throw new AppError(429, 'Rate limit exceeded');
     }
 
     throw new AppError(response.status, errorMessage);
@@ -82,23 +81,17 @@ async function callDeviantArtAPI(
 }
 
 // GET /gallery/folders - Fetch gallery folders
-router.get("/folders", async (req, res) => {
+router.get('/folders', async (req, res) => {
   const user = req.user!;
 
   try {
     const accessToken = await refreshTokenIfNeeded(user);
-    const data = await callDeviantArtAPI(
-      accessToken,
-      "GET",
-      "/gallery/folders",
-      undefined,
-      {
-        calculate_size: (req.query.calculate_size as string) || "false",
-        ext_preload: (req.query.ext_preload as string) || "false",
-        limit: (req.query.limit as string) || "10",
-        offset: (req.query.offset as string) || "0",
-      }
-    );
+    const data = await callDeviantArtAPI(accessToken, 'GET', '/gallery/folders', undefined, {
+      calculate_size: (req.query.calculate_size as string) || 'false',
+      ext_preload: (req.query.ext_preload as string) || 'false',
+      limit: (req.query.limit as string) || '10',
+      offset: (req.query.offset as string) || '0',
+    });
 
     res.json({
       galleries: data.results || [],
@@ -109,34 +102,34 @@ router.get("/folders", async (req, res) => {
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error fetching gallery folders:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error fetching gallery folders:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get("/all", async (req, res) => {
+router.get('/all', async (req, res) => {
   const user = req.user!;
 
   try {
     const accessToken = await refreshTokenIfNeeded(user);
 
     // Enforce DeviantArt API limit: min 1, max 50
-    const requestedLimit = parseInt((req.query.limit as string) || "24");
+    const requestedLimit = parseInt((req.query.limit as string) || '24');
     const limit = Math.min(Math.max(requestedLimit, 1), 50);
-    const offset = parseInt((req.query.offset as string) || "0");
+    const offset = parseInt((req.query.offset as string) || '0');
 
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
-      mature_content: "true",
-      calculate_size: (req.query.calculate_size as string) || "true",
-      ext_preload: (req.query.ext_preload as string) || "true",
+      mature_content: 'true',
+      calculate_size: (req.query.calculate_size as string) || 'true',
+      ext_preload: (req.query.ext_preload as string) || 'true',
     });
 
     const url = `${DEVIANTART_API_URL}/gallery/folders?${params}`;
 
-    console.log("[GALLERIES /all] Making request to:", url);
-    console.log("[GALLERIES /all] Parameters:", Object.fromEntries(params));
+    console.log('[GALLERIES /all] Making request to:', url);
+    console.log('[GALLERIES /all] Parameters:', Object.fromEntries(params));
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -144,18 +137,17 @@ router.get("/all", async (req, res) => {
     });
 
     if (!response.ok) {
-      let errorMessage = "Failed to fetch galleries";
+      let errorMessage = 'Failed to fetch galleries';
       try {
         const errorData = await response.json();
-        errorMessage =
-          errorData.error_description || errorData.error || errorMessage;
+        errorMessage = errorData.error_description || errorData.error || errorMessage;
       } catch {
         errorMessage = (await response.text()) || errorMessage;
       }
 
-      console.error("DeviantArt API error:", {
+      console.error('DeviantArt API error:', {
         status: response.status,
-        endpoint: "/gallery/folders",
+        endpoint: '/gallery/folders',
         message: errorMessage,
       });
 
@@ -170,34 +162,34 @@ router.get("/all", async (req, res) => {
       nextOffset: data.next_offset,
     });
   } catch (error: any) {
-    console.error("Error fetching all gallery:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error fetching all gallery:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // GET /gallery/{folderid} - Fetch gallery folder contents
-router.get("/:folderId", async (req, res) => {
+router.get('/:folderId', async (req, res) => {
   const { folderId } = req.params;
   const user = req.user!;
 
   try {
-    console.log("[GALLERY DETAIL] Fetching contents for folder:", folderId);
-    console.log("[GALLERY DETAIL] Query params:", req.query);
+    console.log('[GALLERY DETAIL] Fetching contents for folder:', folderId);
+    console.log('[GALLERY DETAIL] Query params:', req.query);
 
     const accessToken = await refreshTokenIfNeeded(user);
 
     // DeviantArt API /gallery/{folderid}
     const params: Record<string, string> = {
-      limit: (req.query.limit as string) || "24",
-      offset: (req.query.offset as string) || "0",
-      mature_content: "true",
+      limit: (req.query.limit as string) || '24',
+      offset: (req.query.offset as string) || '0',
+      mature_content: 'true',
     };
 
-    console.log("[GALLERY DETAIL] Calling DeviantArt API with params:", params);
+    console.log('[GALLERY DETAIL] Calling DeviantArt API with params:', params);
 
     const data = await callDeviantArtAPI(
       accessToken,
-      "GET",
+      'GET',
       `/gallery/${folderId}`,
       undefined,
       params
@@ -214,8 +206,8 @@ router.get("/:folderId", async (req, res) => {
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error fetching gallery folder:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error fetching gallery folder:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -226,7 +218,7 @@ const createFolderSchema = z.object({
   description: z.string().optional(),
 });
 
-router.post("/folders/create", async (req, res) => {
+router.post('/folders/create', async (req, res) => {
   const user = req.user!;
 
   try {
@@ -234,43 +226,35 @@ router.post("/folders/create", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("folder", data.folder);
-    if (data.parent) formData.append("parent", data.parent);
-    if (data.description) formData.append("description", data.description);
+    formData.append('folder', data.folder);
+    if (data.parent) formData.append('parent', data.parent);
+    if (data.description) formData.append('description', data.description);
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/create`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/create`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to create folder"
-      );
+      throw new AppError(response.status, errorText || 'Failed to create folder');
     }
 
     const result = await response.json();
     res.status(201).json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error creating gallery folder:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error creating gallery folder:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -279,16 +263,16 @@ const updateFolderOrderSchema = z.object({
   folderids: z.array(z.string()).min(1),
 });
 
-router.patch("/folders/order", async (req, res) => {
-  console.log("=== ROUTE HIT ===");
-  console.log("Request body:", req.body);
-  console.log("Body type:", typeof req.body);
+router.patch('/folders/order', async (req, res) => {
+  console.log('=== ROUTE HIT ===');
+  console.log('Request body:', req.body);
+  console.log('Body type:', typeof req.body);
   const user = req.user!;
 
   try {
-    console.log("Received folder reorder request:", JSON.stringify(req.body));
+    console.log('Received folder reorder request:', JSON.stringify(req.body));
     const data = updateFolderOrderSchema.parse(req.body);
-    console.log("Validated folder IDs:", data.folderids);
+    console.log('Validated folder IDs:', data.folderids);
     const accessToken = await refreshTokenIfNeeded(user);
 
     // Get current folder order from DeviantArt to compare - fetch ALL folders
@@ -305,10 +289,7 @@ router.patch("/folders/order", async (req, res) => {
       );
 
       if (!currentResponse.ok) {
-        throw new AppError(
-          currentResponse.status,
-          "Failed to fetch current folder order"
-        );
+        throw new AppError(currentResponse.status, 'Failed to fetch current folder order');
       }
 
       const currentData = await currentResponse.json();
@@ -338,7 +319,7 @@ router.patch("/folders/order", async (req, res) => {
       return res.json({
         success: true,
         updated: 0,
-        message: "No changes needed",
+        message: 'No changes needed',
       });
     }
 
@@ -356,37 +337,26 @@ router.patch("/folders/order", async (req, res) => {
       }
 
       const formData = new URLSearchParams();
-      formData.append("folderid", folderId);
-      formData.append("position", String(newPosition));
+      formData.append('folderid', folderId);
+      formData.append('position', String(newPosition));
 
       console.log(
-        `Updating folder ${i + 1}/${
-          foldersToUpdate.length
-        }: ${folderId} to position ${newPosition}`
+        `Updating folder ${i + 1}/${foldersToUpdate.length}: ${folderId} to position ${newPosition}`
       );
 
-      const response = await fetch(
-        `${DEVIANTART_API_URL}/gallery/folders/update_order`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData.toString(),
-        }
-      );
+      const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/update_order`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          `DeviantArt API error for folder ${folderId}:`,
-          errorText
-        );
-        throw new AppError(
-          response.status,
-          `Failed to update folder ${folderId}: ${errorText}`
-        );
+        console.error(`DeviantArt API error for folder ${folderId}:`, errorText);
+        throw new AppError(response.status, `Failed to update folder ${folderId}: ${errorText}`);
       }
 
       const result = await response.json();
@@ -397,15 +367,13 @@ router.patch("/folders/order", async (req, res) => {
     res.json({ success: true, updated: results.length });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error updating folder order:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error updating folder order:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -416,7 +384,7 @@ const updateFolderSchema = z.object({
   description: z.string().optional(),
 });
 
-router.patch("/folders/:folderId", async (req, res) => {
+router.patch('/folders/:folderId', async (req, res) => {
   const { folderId } = req.params;
   const user = req.user!;
 
@@ -425,70 +393,56 @@ router.patch("/folders/:folderId", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("folderid", data.folderid);
-    if (data.foldername) formData.append("foldername", data.foldername);
-    if (data.description) formData.append("description", data.description);
+    formData.append('folderid', data.folderid);
+    if (data.foldername) formData.append('foldername', data.foldername);
+    if (data.description) formData.append('description', data.description);
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/update`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/update`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to update folder"
-      );
+      throw new AppError(response.status, errorText || 'Failed to update folder');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error updating gallery folder:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error updating gallery folder:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /gallery/folders/remove/{folderid} - Delete gallery folder
-router.delete("/folders/:folderId", async (req, res) => {
+router.delete('/folders/:folderId', async (req, res) => {
   const { folderId } = req.params;
   const user = req.user!;
 
   try {
     const accessToken = await refreshTokenIfNeeded(user);
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/remove/${folderId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/remove/${folderId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to delete folder"
-      );
+      throw new AppError(response.status, errorText || 'Failed to delete folder');
     }
 
     const result = await response.json();
@@ -497,8 +451,8 @@ router.delete("/folders/:folderId", async (req, res) => {
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error deleting gallery folder:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error deleting gallery folder:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -508,7 +462,7 @@ const moveFolderSchema = z.object({
   parentid: z.string(),
 });
 
-router.post("/folders/move", async (req, res) => {
+router.post('/folders/move', async (req, res) => {
   const user = req.user!;
 
   try {
@@ -516,36 +470,34 @@ router.post("/folders/move", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("folderid", data.folderid);
-    formData.append("parentid", data.parentid);
+    formData.append('folderid', data.folderid);
+    formData.append('parentid', data.parentid);
 
     const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/move`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: formData.toString(),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(response.status, errorText || "Failed to move folder");
+      throw new AppError(response.status, errorText || 'Failed to move folder');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error moving folder:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error moving folder:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -555,7 +507,7 @@ const copyDeviationsSchema = z.object({
   deviationids: z.array(z.string()).min(1),
 });
 
-router.post("/folders/copy-deviations", async (req, res) => {
+router.post('/folders/copy-deviations', async (req, res) => {
   const user = req.user!;
 
   try {
@@ -563,42 +515,34 @@ router.post("/folders/copy-deviations", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("target_folderid", data.target_folderid);
-    data.deviationids.forEach((id) => formData.append("deviationids[]", id));
+    formData.append('target_folderid', data.target_folderid);
+    data.deviationids.forEach((id) => formData.append('deviationids[]', id));
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/copy_deviations`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/copy_deviations`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to copy deviations"
-      );
+      throw new AppError(response.status, errorText || 'Failed to copy deviations');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error copying deviations:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error copying deviations:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -608,7 +552,7 @@ const moveDeviationsSchema = z.object({
   deviationids: z.array(z.string()).min(1),
 });
 
-router.post("/folders/move-deviations", async (req, res) => {
+router.post('/folders/move-deviations', async (req, res) => {
   const user = req.user!;
 
   try {
@@ -616,42 +560,34 @@ router.post("/folders/move-deviations", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("target_folderid", data.target_folderid);
-    data.deviationids.forEach((id) => formData.append("deviationids[]", id));
+    formData.append('target_folderid', data.target_folderid);
+    data.deviationids.forEach((id) => formData.append('deviationids[]', id));
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/move_deviations`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/move_deviations`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to move deviations"
-      );
+      throw new AppError(response.status, errorText || 'Failed to move deviations');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error moving deviations:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error moving deviations:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -661,7 +597,7 @@ const removeDeviationsSchema = z.object({
   deviationids: z.array(z.string()).min(1),
 });
 
-router.delete("/folders/:folderId/deviations", async (req, res) => {
+router.delete('/folders/:folderId/deviations', async (req, res) => {
   const { folderId } = req.params;
   const user = req.user!;
 
@@ -673,42 +609,34 @@ router.delete("/folders/:folderId/deviations", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("folderid", data.folderid);
-    data.deviationids.forEach((id) => formData.append("deviationids[]", id));
+    formData.append('folderid', data.folderid);
+    data.deviationids.forEach((id) => formData.append('deviationids[]', id));
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/remove_deviations`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/remove_deviations`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to remove deviations"
-      );
+      throw new AppError(response.status, errorText || 'Failed to remove deviations');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error removing deviations:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error removing deviations:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -718,7 +646,7 @@ const updateDeviationOrderSchema = z.object({
   deviationids: z.array(z.string()).min(1),
 });
 
-router.patch("/folders/:folderId/deviation-order", async (req, res) => {
+router.patch('/folders/:folderId/deviation-order', async (req, res) => {
   const { folderId } = req.params;
   const user = req.user!;
 
@@ -730,42 +658,34 @@ router.patch("/folders/:folderId/deviation-order", async (req, res) => {
     const accessToken = await refreshTokenIfNeeded(user);
 
     const formData = new URLSearchParams();
-    formData.append("folderid", data.folderid);
-    data.deviationids.forEach((id) => formData.append("deviationids[]", id));
+    formData.append('folderid', data.folderid);
+    data.deviationids.forEach((id) => formData.append('deviationids[]', id));
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/gallery/folders/update_deviation_order`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/gallery/folders/update_deviation_order`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new AppError(
-        response.status,
-        errorText || "Failed to update deviation order"
-      );
+      throw new AppError(response.status, errorText || 'Failed to update deviation order');
     }
 
     const result = await response.json();
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request data", details: error.errors });
+      return res.status(400).json({ error: 'Invalid request data', details: error.errors });
     }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
-    console.error("Error updating deviation order:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error updating deviation order:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

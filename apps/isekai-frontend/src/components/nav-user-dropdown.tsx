@@ -15,14 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Link } from "react-router-dom";
-import {
-  ExternalLinkIcon,
-  LogOutIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Link } from 'react-router-dom';
+import { ExternalLinkIcon, LogOutIcon, SettingsIcon } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,30 +26,30 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuthStore } from "@/stores/auth";
+} from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/stores/auth';
 
 export function NavUserDropdown() {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    window.location.href = '/login';
   };
 
   const userData = {
-    name: user?.username || "User",
-    email: user?.email || "",
-    avatar: user?.avatarUrl || "",
+    name: user?.username || 'User',
+    email: user?.email || '',
+    avatar: user?.avatarUrl || '',
   };
 
   const initials =
     userData.name
-      .split(" ")
+      .split(' ')
       .map((n) => n[0])
-      .join("")
+      .join('')
       .toUpperCase()
-      .slice(0, 2) || "U";
+      .slice(0, 2) || 'U';
 
   return (
     <div className="flex items-center gap-4">
@@ -72,20 +68,13 @@ export function NavUserDropdown() {
       <DropdownMenu>
         <DropdownMenuTrigger className="focus:outline-none">
           <Avatar className="h-8 w-8 cursor-pointer rounded-md border-2 border-transparent hover:border-primary/30 transition-all">
-            <AvatarImage
-              src={userData.avatar}
-              alt={userData.name}
-            />
+            <AvatarImage src={userData.avatar} alt={userData.name} />
             <AvatarFallback className="text-xs bg-primary/10 text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-56 rounded-lg"
-          align="end"
-          sideOffset={8}
-        >
+        <DropdownMenuContent className="w-56 rounded-lg" align="end" sideOffset={8}>
           <DropdownMenuLabel className="p-0 font-normal">
             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar className="h-8 w-8 rounded-lg">
@@ -96,9 +85,7 @@ export function NavUserDropdown() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userData.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {userData.email}
-                </span>
+                <span className="truncate text-xs text-muted-foreground">{userData.email}</span>
               </div>
             </div>
           </DropdownMenuLabel>

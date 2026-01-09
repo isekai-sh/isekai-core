@@ -15,16 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { refreshTokenIfNeeded } from "../lib/deviantart.js";
-import { RedisCache, CacheTTL } from "../lib/redis-cache.js";
-import { CacheKeys } from "../lib/cache-keys.js";
+import { Router } from 'express';
+import { refreshTokenIfNeeded } from '../lib/deviantart.js';
+import { RedisCache, CacheTTL } from '../lib/redis-cache.js';
+import { CacheKeys } from '../lib/cache-keys.js';
 
 const router = Router();
 
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
-router.get("/galleries", async (req, res) => {
+router.get('/galleries', async (req, res) => {
   const user = req.user!;
 
   try {
@@ -43,13 +43,13 @@ router.get("/galleries", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("Error fetching galleries:", error);
+    console.error('Error fetching galleries:', error);
 
-    if (error.name === "AbortError" || error.name === "TimeoutError") {
-      return res.status(504).json({ error: "Request timeout" });
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      return res.status(504).json({ error: 'Request timeout' });
     }
 
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -65,7 +65,7 @@ async function fetchAllGalleries(accessToken: string) {
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
-      mature_content: "true",
+      mature_content: 'true',
     });
 
     const url = `${DEVIANTART_API_URL}/gallery/folders?${params}`;
@@ -77,16 +77,15 @@ async function fetchAllGalleries(accessToken: string) {
     });
 
     if (!response.ok) {
-      let errorMessage = "Failed to fetch galleries";
+      let errorMessage = 'Failed to fetch galleries';
       try {
         const errorData = await response.json();
-        errorMessage =
-          errorData.error_description || errorData.error || errorMessage;
+        errorMessage = errorData.error_description || errorData.error || errorMessage;
       } catch {
         errorMessage = (await response.text()) || errorMessage;
       }
 
-      console.error("DeviantArt API error:", {
+      console.error('DeviantArt API error:', {
         status: response.status,
         message: errorMessage,
       });
@@ -99,13 +98,11 @@ async function fetchAllGalleries(accessToken: string) {
     const data = await response.json();
 
     if (!data || !Array.isArray(data.results)) {
-      console.error("Invalid response structure:", data);
-      throw new Error("Invalid response from DeviantArt");
+      console.error('Invalid response structure:', data);
+      throw new Error('Invalid response from DeviantArt');
     }
 
-    console.log(
-      `Fetched ${data.results.length} items, has_more: ${data.has_more}`
-    );
+    console.log(`Fetched ${data.results.length} items, has_more: ${data.has_more}`);
 
     allResults = allResults.concat(data.results);
     hasMore = data.has_more === true && data.next_offset !== null;
@@ -116,7 +113,7 @@ async function fetchAllGalleries(accessToken: string) {
 
     // Safety limit to prevent infinite loops
     if (offset > 50000) {
-      console.warn("Reached safety limit, stopping pagination");
+      console.warn('Reached safety limit, stopping pagination');
       break;
     }
   }
@@ -128,7 +125,7 @@ async function fetchAllGalleries(accessToken: string) {
   // Map them to gallery format for frontend compatibility
   const galleries = allResults.map((item: any) => ({
     folderId: item.deviationid || item.id,
-    name: item.title || "Untitled",
+    name: item.title || 'Untitled',
     parentId: null,
   }));
 
@@ -136,7 +133,7 @@ async function fetchAllGalleries(accessToken: string) {
 }
 
 // Fetch category tree
-router.get("/categories", async (req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -146,15 +143,12 @@ router.get("/categories", async (req, res) => {
     const result = await RedisCache.getOrFetch(
       cacheKey,
       async () => {
-        const response = await fetch(
-          `${DEVIANTART_API_URL}/browse/categorytree`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
+        const response = await fetch(`${DEVIANTART_API_URL}/browse/categorytree`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch categories");
+          const error: any = new Error('Failed to fetch categories');
           error.status = response.status;
           throw error;
         }
@@ -174,15 +168,13 @@ router.get("/categories", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("Category tree error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Failed to fetch categories" });
+    console.error('Category tree error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Failed to fetch categories' });
   }
 });
 
 // Fetch user profile
-router.get("/user", async (req, res) => {
+router.get('/user', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -197,7 +189,7 @@ router.get("/user", async (req, res) => {
         });
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch user");
+          const error: any = new Error('Failed to fetch user');
           error.status = response.status;
           throw error;
         }
@@ -216,10 +208,8 @@ router.get("/user", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("User profile error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Failed to fetch user" });
+    console.error('User profile error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Failed to fetch user' });
   }
 });
 

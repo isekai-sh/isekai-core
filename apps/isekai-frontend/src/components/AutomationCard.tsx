@@ -15,32 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Clock,
-  Calendar,
-  MoreVertical,
-  Edit,
-  Copy,
-  Trash2,
-} from "lucide-react";
-import { formatNextRunTime } from "@/lib/automation-utils";
+} from '@/components/ui/dropdown-menu';
+import { Clock, Calendar, MoreVertical, Edit, Copy, Trash2 } from 'lucide-react';
+import { formatNextRunTime } from '@/lib/automation-utils';
 
 interface AutomationCardProps {
   automation: any;
@@ -49,12 +36,7 @@ interface AutomationCardProps {
   onDelete?: (automation: any) => void;
 }
 
-export function AutomationCard({
-  automation,
-  onEdit,
-  onDuplicate,
-  onDelete,
-}: AutomationCardProps) {
+export function AutomationCard({ automation, onEdit, onDuplicate, onDelete }: AutomationCardProps) {
   const activeRulesCount =
     automation._count?.scheduleRules ||
     automation.scheduleRules?.filter((r: any) => r.enabled).length ||
@@ -68,9 +50,7 @@ export function AutomationCard({
           <div className="space-y-1">
             <CardTitle>{automation.name}</CardTitle>
             {automation.description && (
-              <CardDescription className="text-sm">
-                {automation.description}
-              </CardDescription>
+              <CardDescription className="text-sm">{automation.description}</CardDescription>
             )}
           </div>
           <DropdownMenu>
@@ -104,8 +84,8 @@ export function AutomationCard({
       <CardContent className="space-y-3">
         {/* Status Badge */}
         <div>
-          <Badge variant={automation.enabled ? "default" : "secondary"}>
-            {automation.enabled ? "● ACTIVE" : "○ INACTIVE"}
+          <Badge variant={automation.enabled ? 'default' : 'secondary'}>
+            {automation.enabled ? '● ACTIVE' : '○ INACTIVE'}
           </Badge>
         </div>
 
@@ -114,11 +94,9 @@ export function AutomationCard({
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-4 w-4" />
             <span>
-              {activeRulesCount} {activeRulesCount === 1 ? "rule" : "rules"}
+              {activeRulesCount} {activeRulesCount === 1 ? 'rule' : 'rules'}
               {defaultValuesCount > 0 &&
-                `, ${defaultValuesCount} default ${
-                  defaultValuesCount === 1 ? "value" : "values"
-                }`}
+                `, ${defaultValuesCount} default ${defaultValuesCount === 1 ? 'value' : 'values'}`}
             </span>
           </div>
 

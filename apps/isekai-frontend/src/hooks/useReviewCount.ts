@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { review } from "@/lib/api";
+import { useState, useEffect } from 'react';
+import { review } from '@/lib/api';
 
 const REFRESH_INTERVAL = 60000; // 60 seconds
 
@@ -30,7 +30,7 @@ export function useReviewCount() {
       setCount(response.total);
       setIsLoading(false);
     } catch (error) {
-      console.error("Failed to fetch review count:", error);
+      console.error('Failed to fetch review count:', error);
       setIsLoading(false);
     }
   };

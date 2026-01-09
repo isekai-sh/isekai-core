@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CreateAutomationDialogProps {
   open: boolean;
@@ -45,8 +45,8 @@ export function CreateAutomationDialog({
   onOpenChange,
   onSubmit,
 }: CreateAutomationDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,8 +61,8 @@ export function CreateAutomationDialog({
       });
 
       // Reset form
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -76,8 +76,7 @@ export function CreateAutomationDialog({
           <DialogHeader>
             <DialogTitle>Create New Workflow</DialogTitle>
             <DialogDescription>
-              Set up a new automated publishing workflow with its own schedule
-              and defaults.
+              Set up a new automated publishing workflow with its own schedule and defaults.
             </DialogDescription>
           </DialogHeader>
 
@@ -113,15 +112,11 @@ export function CreateAutomationDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim() || loading}>
-              {loading ? "Creating..." : "Create Workflow"}
+              {loading ? 'Creating...' : 'Create Workflow'}
             </Button>
           </DialogFooter>
         </form>

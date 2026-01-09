@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UserGallery } from "@isekai/shared";
+import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UserGallery } from '@isekai/shared';
 import {
   Dialog,
   DialogContent,
@@ -25,13 +25,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { galleries } from "@/lib/api";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { galleries } from '@/lib/api';
 
 interface EditGalleryDialogProps {
   gallery: UserGallery;
@@ -39,20 +39,16 @@ interface EditGalleryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditGalleryDialog({
-  gallery,
-  open,
-  onOpenChange,
-}: EditGalleryDialogProps) {
+export function EditGalleryDialog({ gallery, open, onOpenChange }: EditGalleryDialogProps) {
   const [name, setName] = useState(gallery.name);
-  const [description, setDescription] = useState(gallery.description || "");
+  const [description, setDescription] = useState(gallery.description || '');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       setName(gallery.name);
-      setDescription(gallery.description || "");
+      setDescription(gallery.description || '');
     }
   }, [open, gallery]);
 
@@ -63,19 +59,19 @@ export function EditGalleryDialog({
         description: description || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["galleries"] });
-      queryClient.invalidateQueries({ queryKey: ["gallery", gallery.id] });
+      queryClient.invalidateQueries({ queryKey: ['galleries'] });
+      queryClient.invalidateQueries({ queryKey: ['gallery', gallery.id] });
       toast({
-        title: "Gallery updated",
-        description: "Your gallery has been updated successfully.",
+        title: 'Gallery updated',
+        description: 'Your gallery has been updated successfully.',
       });
       onOpenChange(false);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to update gallery. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update gallery. Please try again.',
+        variant: 'destructive',
       });
     },
   });
@@ -93,9 +89,7 @@ export function EditGalleryDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Gallery</DialogTitle>
-            <DialogDescription>
-              Update your gallery name and description
-            </DialogDescription>
+            <DialogDescription>Update your gallery name and description</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -123,18 +117,11 @@ export function EditGalleryDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!name.trim() || updateMutation.isPending}
-            >
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={!name.trim() || updateMutation.isPending}>
+              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

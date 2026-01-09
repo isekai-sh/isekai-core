@@ -15,20 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  Tag,
-  FileText,
-  DollarSign,
-  Pencil,
-  Trash2,
-  X,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Tag, FileText, DollarSign, Pencil, Trash2, X } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -36,7 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,30 +38,30 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { cn } from "@/lib/utils";
-import { templates, pricePresets } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import type { Template, TagContent, DescriptionContent } from "@isekai/shared";
-import type { PricePreset, CreatePricePresetRequest } from "@/lib/api";
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
+import { templates, pricePresets } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import type { Template, TagContent, DescriptionContent } from '@isekai/shared';
+import type { PricePreset, CreatePricePresetRequest } from '@/lib/api';
 
-type TemplateTab = "tags" | "descriptions" | "prices";
+type TemplateTab = 'tags' | 'descriptions' | 'prices';
 
 const tabs: { id: TemplateTab; label: string; icon: typeof Tag }[] = [
-  { id: "tags", label: "Tags", icon: Tag },
-  { id: "descriptions", label: "Descriptions", icon: FileText },
-  { id: "prices", label: "Price Presets", icon: DollarSign },
+  { id: 'tags', label: 'Tags', icon: Tag },
+  { id: 'descriptions', label: 'Descriptions', icon: FileText },
+  { id: 'prices', label: 'Price Presets', icon: DollarSign },
 ];
 
 export function Templates() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = (searchParams.get("tab") as TemplateTab) || "tags";
+  const tab = (searchParams.get('tab') as TemplateTab) || 'tags';
 
   const setTab = (newTab: TemplateTab) => {
     setSearchParams({ tab: newTab });
@@ -100,10 +92,10 @@ export function Templates() {
                   key={t.id}
                   onClick={() => setTab(t.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left",
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -116,9 +108,9 @@ export function Templates() {
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          {tab === "tags" && <TagTemplatesContent />}
-          {tab === "descriptions" && <DescriptionTemplatesContent />}
-          {tab === "prices" && <PricePresetsContent />}
+          {tab === 'tags' && <TagTemplatesContent />}
+          {tab === 'descriptions' && <DescriptionTemplatesContent />}
+          {tab === 'prices' && <PricePresetsContent />}
         </div>
       </div>
     </div>
@@ -136,19 +128,19 @@ function TagTemplatesContent() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["templates", "tag"],
-    queryFn: () => templates.list("tag"),
+    queryKey: ['templates', 'tag'],
+    queryFn: () => templates.list('tag'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => templates.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Deleted", description: "Template deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Deleted', description: 'Template deleted successfully' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
       });
     },
@@ -198,11 +190,7 @@ function TagTemplatesContent() {
                       <h3 className="font-medium mb-1.5">{template.name}</h3>
                       <div className="flex flex-wrap gap-1">
                         {content.tags.slice(0, 8).map((tag, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="secondary"
-                            className="text-xs"
-                          >
+                          <Badge key={idx} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
                         ))}
@@ -262,8 +250,8 @@ function TagTemplateDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [tagInput, setTagInput] = useState("");
+  const [name, setName] = useState('');
+  const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
@@ -272,40 +260,35 @@ function TagTemplateDialog({
       const content = template.content as TagContent;
       setTags(content.tags);
     } else {
-      setName("");
+      setName('');
       setTags([]);
-      setTagInput("");
+      setTagInput('');
     }
   }, [template, open]);
 
   const createMutation = useMutation({
-    mutationFn: (data: { type: "tag"; name: string; content: TagContent }) =>
+    mutationFn: (data: { type: 'tag'; name: string; content: TagContent }) =>
       templates.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Created", description: "Template created successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Created', description: 'Template created successfully' });
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: { name?: string; content?: TagContent };
-    }) => templates.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; content?: TagContent } }) =>
+      templates.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Updated", description: "Template updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Updated', description: 'Template updated successfully' });
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
@@ -313,7 +296,7 @@ function TagTemplateDialog({
     const trimmed = tagInput.trim();
     if (trimmed && !tags.includes(trimmed)) {
       setTags([...tags, trimmed]);
-      setTagInput("");
+      setTagInput('');
     }
   };
 
@@ -323,12 +306,12 @@ function TagTemplateDialog({
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      toast({ title: "Error", description: "Name is required" });
+      toast({ title: 'Error', description: 'Name is required' });
       return;
     }
 
     if (tags.length === 0) {
-      toast({ title: "Error", description: "At least one tag is required" });
+      toast({ title: 'Error', description: 'At least one tag is required' });
       return;
     }
 
@@ -340,7 +323,7 @@ function TagTemplateDialog({
         data: { name: name.trim(), content },
       });
     } else {
-      createMutation.mutate({ type: "tag", name: name.trim(), content });
+      createMutation.mutate({ type: 'tag', name: name.trim(), content });
     }
   };
 
@@ -348,9 +331,7 @@ function TagTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>
-            {template ? "Edit" : "Create"} Tag Template
-          </DialogTitle>
+          <DialogTitle>{template ? 'Edit' : 'Create'} Tag Template</DialogTitle>
           <DialogDescription>Create a reusable tag combination</DialogDescription>
         </DialogHeader>
 
@@ -374,7 +355,7 @@ function TagTemplateDialog({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAddTag();
                   }
@@ -411,10 +392,10 @@ function TagTemplateDialog({
             disabled={createMutation.isPending || updateMutation.isPending}
           >
             {createMutation.isPending || updateMutation.isPending
-              ? "Saving..."
+              ? 'Saving...'
               : template
-              ? "Update"
-              : "Create"}
+                ? 'Update'
+                : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -433,19 +414,19 @@ function DescriptionTemplatesContent() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["templates", "description"],
-    queryFn: () => templates.list("description"),
+    queryKey: ['templates', 'description'],
+    queryFn: () => templates.list('description'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => templates.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Deleted", description: "Template deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Deleted', description: 'Template deleted successfully' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
       });
     },
@@ -460,9 +441,7 @@ function DescriptionTemplatesContent() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold">Description Templates</h2>
-              <p className="text-sm text-muted-foreground">
-                Reusable descriptions and captions
-              </p>
+              <p className="text-sm text-muted-foreground">Reusable descriptions and captions</p>
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -477,12 +456,8 @@ function DescriptionTemplatesContent() {
           ) : templateList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">
-                No description templates yet
-              </p>
-              <p className="text-sm mb-4">
-                Create description templates to save time when writing
-              </p>
+              <p className="text-lg font-medium mb-2">No description templates yet</p>
+              <p className="text-sm mb-4">Create description templates to save time when writing</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -495,9 +470,7 @@ function DescriptionTemplatesContent() {
                   >
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium mb-1">{template.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {content.text}
-                      </p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{content.text}</p>
                     </div>
                     <div className="flex items-center gap-1 ml-4">
                       <Button
@@ -548,8 +521,8 @@ function DescriptionTemplateDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [text, setText] = useState("");
+  const [name, setName] = useState('');
+  const [text, setText] = useState('');
 
   useEffect(() => {
     if (template) {
@@ -557,24 +530,21 @@ function DescriptionTemplateDialog({
       const content = template.content as DescriptionContent;
       setText(content.text);
     } else {
-      setName("");
-      setText("");
+      setName('');
+      setText('');
     }
   }, [template, open]);
 
   const createMutation = useMutation({
-    mutationFn: (data: {
-      type: "description";
-      name: string;
-      content: DescriptionContent;
-    }) => templates.create(data),
+    mutationFn: (data: { type: 'description'; name: string; content: DescriptionContent }) =>
+      templates.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Created", description: "Template created successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Created', description: 'Template created successfully' });
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
@@ -587,23 +557,23 @@ function DescriptionTemplateDialog({
       data: { name?: string; content?: DescriptionContent };
     }) => templates.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Updated", description: "Template updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast({ title: 'Updated', description: 'Template updated successfully' });
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      toast({ title: "Error", description: "Name is required" });
+      toast({ title: 'Error', description: 'Name is required' });
       return;
     }
 
     if (!text.trim()) {
-      toast({ title: "Error", description: "Description text is required" });
+      toast({ title: 'Error', description: 'Description text is required' });
       return;
     }
 
@@ -616,7 +586,7 @@ function DescriptionTemplateDialog({
       });
     } else {
       createMutation.mutate({
-        type: "description",
+        type: 'description',
         name: name.trim(),
         content,
       });
@@ -627,9 +597,7 @@ function DescriptionTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>
-            {template ? "Edit" : "Create"} Description Template
-          </DialogTitle>
+          <DialogTitle>{template ? 'Edit' : 'Create'} Description Template</DialogTitle>
           <DialogDescription>Create a reusable description</DialogDescription>
         </DialogHeader>
 
@@ -665,10 +633,10 @@ function DescriptionTemplateDialog({
             disabled={createMutation.isPending || updateMutation.isPending}
           >
             {createMutation.isPending || updateMutation.isPending
-              ? "Saving..."
+              ? 'Saving...'
               : template
-              ? "Update"
-              : "Create"}
+                ? 'Update'
+                : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -681,8 +649,8 @@ function DescriptionTemplateDialog({
 // ============================================================================
 
 function formatPrice(cents: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency: currency,
   }).format(cents / 100);
 }
@@ -693,20 +661,18 @@ function PricePresetsContent() {
   const [showPresetDialog, setShowPresetDialog] = useState(false);
   const [editingPreset, setEditingPreset] = useState<PricePreset | null>(null);
   const [deletePresetId, setDeletePresetId] = useState<string | null>(null);
-  const [pricingMode, setPricingMode] = useState<"fixed" | "range">("fixed");
-  const [presetFormData, setPresetFormData] = useState<CreatePricePresetRequest>(
-    {
-      name: "",
-      price: 5000,
-      currency: "USD",
-      description: "",
-      isDefault: false,
-      sortOrder: 0,
-    }
-  );
+  const [pricingMode, setPricingMode] = useState<'fixed' | 'range'>('fixed');
+  const [presetFormData, setPresetFormData] = useState<CreatePricePresetRequest>({
+    name: '',
+    price: 5000,
+    currency: 'USD',
+    description: '',
+    isDefault: false,
+    sortOrder: 0,
+  });
 
   const { data: presetsData, isLoading } = useQuery({
-    queryKey: ["pricePresets"],
+    queryKey: ['pricePresets'],
     queryFn: async () => await pricePresets.list(),
   });
 
@@ -715,12 +681,12 @@ function PricePresetsContent() {
   const createPresetMutation = useMutation({
     mutationFn: (data: CreatePricePresetRequest) => pricePresets.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      queryClient.invalidateQueries({ queryKey: ['pricePresets'] });
       handleClosePresetDialog();
-      toast({ title: "Created", description: "Price preset created successfully" });
+      toast({ title: 'Created', description: 'Price preset created successfully' });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
@@ -728,35 +694,35 @@ function PricePresetsContent() {
     mutationFn: ({ id, data }: { id: string; data: Partial<PricePreset> }) =>
       pricePresets.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      queryClient.invalidateQueries({ queryKey: ['pricePresets'] });
       handleClosePresetDialog();
-      toast({ title: "Updated", description: "Price preset updated successfully" });
+      toast({ title: 'Updated', description: 'Price preset updated successfully' });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
   const deletePresetMutation = useMutation({
     mutationFn: (id: string) => pricePresets.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pricePresets"] });
+      queryClient.invalidateQueries({ queryKey: ['pricePresets'] });
       setDeletePresetId(null);
-      toast({ title: "Deleted", description: "Price preset deleted successfully" });
+      toast({ title: 'Deleted', description: 'Price preset deleted successfully' });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message });
+      toast({ title: 'Error', description: error.message });
     },
   });
 
   const handleOpenCreatePreset = () => {
     setEditingPreset(null);
-    setPricingMode("fixed");
+    setPricingMode('fixed');
     setPresetFormData({
-      name: "",
+      name: '',
       price: 5000,
-      currency: "USD",
-      description: "",
+      currency: 'USD',
+      description: '',
       isDefault: false,
       sortOrder: 0,
     });
@@ -766,23 +732,23 @@ function PricePresetsContent() {
   const handleOpenEditPreset = (preset: PricePreset) => {
     setEditingPreset(preset);
     if (preset.minPrice && preset.maxPrice) {
-      setPricingMode("range");
+      setPricingMode('range');
       setPresetFormData({
         name: preset.name,
         minPrice: preset.minPrice,
         maxPrice: preset.maxPrice,
         currency: preset.currency,
-        description: preset.description || "",
+        description: preset.description || '',
         isDefault: preset.isDefault,
         sortOrder: preset.sortOrder,
       });
     } else {
-      setPricingMode("fixed");
+      setPricingMode('fixed');
       setPresetFormData({
         name: preset.name,
         price: preset.price,
         currency: preset.currency,
-        description: preset.description || "",
+        description: preset.description || '',
         isDefault: preset.isDefault,
         sortOrder: preset.sortOrder,
       });
@@ -799,7 +765,7 @@ function PricePresetsContent() {
     e.preventDefault();
 
     const data = { ...presetFormData };
-    if (pricingMode === "fixed") {
+    if (pricingMode === 'fixed') {
       data.minPrice = undefined;
       data.maxPrice = undefined;
     } else {
@@ -820,9 +786,7 @@ function PricePresetsContent() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold">Price Presets</h2>
-              <p className="text-sm text-muted-foreground">
-                Pricing templates for exclusive sales
-              </p>
+              <p className="text-sm text-muted-foreground">Pricing templates for exclusive sales</p>
             </div>
             <Button onClick={handleOpenCreatePreset}>
               <Plus className="h-4 w-4 mr-2" />
@@ -838,9 +802,7 @@ function PricePresetsContent() {
             <div className="text-center py-12 text-muted-foreground">
               <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium mb-2">No price presets yet</p>
-              <p className="text-sm mb-4">
-                Create price presets to use with exclusive sales
-              </p>
+              <p className="text-sm mb-4">Create price presets to use with exclusive sales</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -861,7 +823,7 @@ function PricePresetsContent() {
                     <div className="text-sm text-muted-foreground">
                       {preset.minPrice && preset.maxPrice ? (
                         <span>
-                          {formatPrice(preset.minPrice, preset.currency)} -{" "}
+                          {formatPrice(preset.minPrice, preset.currency)} -{' '}
                           {formatPrice(preset.maxPrice, preset.currency)}
                           <span className="text-xs ml-2">(Random)</span>
                         </span>
@@ -903,13 +865,11 @@ function PricePresetsContent() {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleSubmitPreset}>
             <DialogHeader>
-              <DialogTitle>
-                {editingPreset ? "Edit" : "Create"} Price Preset
-              </DialogTitle>
+              <DialogTitle>{editingPreset ? 'Edit' : 'Create'} Price Preset</DialogTitle>
               <DialogDescription>
                 {editingPreset
-                  ? "Update the preset details below"
-                  : "Create a reusable price template for exclusive sales"}
+                  ? 'Update the preset details below'
+                  : 'Create a reusable price template for exclusive sales'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -918,9 +878,7 @@ function PricePresetsContent() {
                 <Input
                   id="name"
                   value={presetFormData.name}
-                  onChange={(e) =>
-                    setPresetFormData({ ...presetFormData, name: e.target.value })
-                  }
+                  onChange={(e) => setPresetFormData({ ...presetFormData, name: e.target.value })}
                   placeholder="e.g., Standard, Premium"
                   required
                   maxLength={100}
@@ -931,8 +889,8 @@ function PricePresetsContent() {
                 <RadioGroup
                   value={pricingMode}
                   onValueChange={(v) => {
-                    setPricingMode(v as "fixed" | "range");
-                    if (v === "fixed") {
+                    setPricingMode(v as 'fixed' | 'range');
+                    if (v === 'fixed') {
                       setPresetFormData({
                         ...presetFormData,
                         price: 5000,
@@ -964,7 +922,7 @@ function PricePresetsContent() {
                 </RadioGroup>
               </div>
 
-              {pricingMode === "fixed" ? (
+              {pricingMode === 'fixed' ? (
                 <div className="grid gap-2">
                   <Label htmlFor="price">Price (USD)</Label>
                   <div className="relative">
@@ -988,9 +946,7 @@ function PricePresetsContent() {
                       required
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Minimum $1, maximum $10,000
-                  </p>
+                  <p className="text-xs text-muted-foreground">Minimum $1, maximum $10,000</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
@@ -1086,7 +1042,7 @@ function PricePresetsContent() {
                 type="submit"
                 disabled={createPresetMutation.isPending || updatePresetMutation.isPending}
               >
-                {editingPreset ? "Update" : "Create"} Preset
+                {editingPreset ? 'Update' : 'Create'} Preset
               </Button>
             </DialogFooter>
           </form>

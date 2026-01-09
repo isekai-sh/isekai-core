@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // NOTE: This file is kept for backwards compatibility with tests
 // The application now uses runtime configuration from window.ISEKAI_CONFIG
@@ -24,9 +24,9 @@ import { z } from "zod";
 const envSchema = z.object({
   // Optional - these are only used in test environment
   // Production uses window.ISEKAI_CONFIG loaded from /config.js
-  VITE_API_URL: z.string().default("/api"),
-  VITE_DEVIANTART_CLIENT_ID: z.string().default(""),
-  VITE_S3_PUBLIC_URL: z.string().default("http://localhost:9000/isekai-uploads"),
+  VITE_API_URL: z.string().default('/api'),
+  VITE_DEVIANTART_CLIENT_ID: z.string().default(''),
+  VITE_S3_PUBLIC_URL: z.string().default('http://localhost:9000/isekai-uploads'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -36,12 +36,12 @@ export function validateEnv(): Env {
   const result = envSchema.safeParse(import.meta.env);
 
   if (!result.success) {
-    console.warn("Environment validation warning (tests only):", result.error);
+    console.warn('Environment validation warning (tests only):', result.error);
     // Return defaults instead of throwing
     return {
-      VITE_API_URL: "/api",
-      VITE_DEVIANTART_CLIENT_ID: "",
-      VITE_S3_PUBLIC_URL: "http://localhost:9000/isekai-uploads",
+      VITE_API_URL: '/api',
+      VITE_DEVIANTART_CLIENT_ID: '',
+      VITE_S3_PUBLIC_URL: 'http://localhost:9000/isekai-uploads',
     };
   }
 

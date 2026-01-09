@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,46 +23,39 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
-  DefaultValueEditor,
-  FIELD_LABELS,
-} from "@/components/DefaultValueEditor";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { DefaultValueEditor, FIELD_LABELS } from '@/components/DefaultValueEditor';
 
 interface AddDefaultValueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    fieldName: string;
-    value: any;
-    applyIfEmpty: boolean;
-  }) => Promise<void>;
+  onSubmit: (data: { fieldName: string; value: any; applyIfEmpty: boolean }) => Promise<void>;
   existingFields: string[];
 }
 
 const AVAILABLE_FIELDS = [
-  "description",
-  "tags",
-  "isMature",
-  "matureLevel",
-  "categoryPath",
-  "galleryIds",
-  "allowComments",
-  "allowFreeDownload",
-  "isAiGenerated",
-  "noAi",
-  "addWatermark",
-  "displayResolution",
+  'description',
+  'tags',
+  'isMature',
+  'matureLevel',
+  'categoryPath',
+  'galleryIds',
+  'allowComments',
+  'allowFreeDownload',
+  'isAiGenerated',
+  'noAi',
+  'addWatermark',
+  'displayResolution',
 ];
 
 export function AddDefaultValueDialog({
@@ -71,14 +64,12 @@ export function AddDefaultValueDialog({
   onSubmit,
   existingFields,
 }: AddDefaultValueDialogProps) {
-  const [fieldName, setFieldName] = useState("");
+  const [fieldName, setFieldName] = useState('');
   const [value, setValue] = useState<any>(null);
   const [applyIfEmpty, setApplyIfEmpty] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const availableFields = AVAILABLE_FIELDS.filter(
-    (field) => !existingFields.includes(field)
-  );
+  const availableFields = AVAILABLE_FIELDS.filter((field) => !existingFields.includes(field));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +84,7 @@ export function AddDefaultValueDialog({
       });
 
       // Reset form
-      setFieldName("");
+      setFieldName('');
       setValue(null);
       setApplyIfEmpty(true);
       onOpenChange(false);
@@ -107,23 +98,23 @@ export function AddDefaultValueDialog({
 
     // Set default values based on field type
     switch (newField) {
-      case "description":
-      case "categoryPath":
-        setValue("");
+      case 'description':
+      case 'categoryPath':
+        setValue('');
         break;
-      case "tags":
-      case "galleryIds":
+      case 'tags':
+      case 'galleryIds':
         setValue([]);
         break;
-      case "isMature":
-      case "allowComments":
-      case "allowFreeDownload":
-      case "isAiGenerated":
-      case "noAi":
+      case 'isMature':
+      case 'allowComments':
+      case 'allowFreeDownload':
+      case 'isAiGenerated':
+      case 'noAi':
         setValue(true);
         break;
-      case "matureLevel":
-        setValue("moderate");
+      case 'matureLevel':
+        setValue('moderate');
         break;
       default:
         setValue(null);
@@ -137,8 +128,7 @@ export function AddDefaultValueDialog({
           <DialogHeader>
             <DialogTitle>Add Default Value</DialogTitle>
             <DialogDescription>
-              Set a default value that will be applied to drafts when they are
-              scheduled.
+              Set a default value that will be applied to drafts when they are scheduled.
             </DialogDescription>
           </DialogHeader>
 
@@ -169,24 +159,16 @@ export function AddDefaultValueDialog({
 
                 {fieldName && (
                   <>
-                    <DefaultValueEditor
-                      fieldName={fieldName}
-                      value={value}
-                      onChange={setValue}
-                    />
+                    <DefaultValueEditor fieldName={fieldName} value={value} onChange={setValue} />
 
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="space-y-0.5">
                         <Label>Only apply if empty</Label>
                         <p className="text-sm text-muted-foreground">
-                          Only set this value if the draft doesn't already have
-                          one
+                          Only set this value if the draft doesn't already have one
                         </p>
                       </div>
-                      <Switch
-                        checked={applyIfEmpty}
-                        onCheckedChange={setApplyIfEmpty}
-                      />
+                      <Switch checked={applyIfEmpty} onCheckedChange={setApplyIfEmpty} />
                     </div>
                   </>
                 )}
@@ -195,11 +177,7 @@ export function AddDefaultValueDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button
@@ -212,7 +190,7 @@ export function AddDefaultValueDialog({
                 availableFields.length === 0
               }
             >
-              {loading ? "Adding..." : "Add Default"}
+              {loading ? 'Adding...' : 'Add Default'}
             </Button>
           </DialogFooter>
         </form>

@@ -24,6 +24,7 @@ DATABASE_URL=postgresql://user:password@host:port/database
 **Format:** PostgreSQL connection string
 
 **Example:**
+
 ```bash
 # Development (Docker Compose)
 DATABASE_URL=postgresql://isekai:isekai@postgres:5432/isekai
@@ -41,6 +42,7 @@ REDIS_URL=redis://host:port
 **Optional:** If not set, sessions/cache fall back to PostgreSQL.
 
 **Examples:**
+
 ```bash
 # Development
 REDIS_URL=redis://redis:6379
@@ -72,6 +74,7 @@ ENCRYPTION_KEY=your-32-byte-hex-key
 ```
 
 **Generate:**
+
 ```bash
 # Session secret (any length, 32+ recommended)
 openssl rand -base64 32
@@ -154,6 +157,7 @@ NODE_ENV=development
 ```
 
 **NODE_ENV:**
+
 - `development` - Dev mode, verbose logging
 - `production` - Prod mode, HTTPS enforcement, secure cookies
 
@@ -181,6 +185,7 @@ CACHE_STALE_TTL=7200                # 2 hours (rate limit fallback)
 ```
 
 **Cache TTLs:**
+
 - `CACHE_DEFAULT_TTL` - Normal cache lifetime
 - `CACHE_STALE_TTL` - Max age for stale cache on 429 errors
 
@@ -196,6 +201,7 @@ CIRCUIT_BREAKER_PERSIST_TO_REDIS=true
 ```
 
 **When Circuit Opens:**
+
 - Stops sending requests to DeviantArt for 5 minutes
 - Returns cached data or 429 error
 - Prevents wasting API quota
@@ -242,6 +248,7 @@ LOG_LEVEL=info                               # debug | info | warn | error
 ```
 
 **Log Levels:**
+
 - `debug` - Verbose (all requests, SQL queries)
 - `info` - Normal (startup, key events)
 - `warn` - Warnings (retries, fallbacks)
@@ -316,6 +323,7 @@ SESSION_MAX_AGE_DAYS=30
 **File:** `docker-compose.yml`
 
 **Services:**
+
 - **postgres** - PostgreSQL database
 - **redis** - Redis cache/sessions
 - **minio** - S3-compatible storage
@@ -324,6 +332,7 @@ SESSION_MAX_AGE_DAYS=30
 - **publisher** - BullMQ worker
 
 **Start All:**
+
 ```bash
 docker compose up -d
 ```
@@ -333,6 +342,7 @@ docker compose up -d
 ## Environment Validation
 
 **Validated on Startup:**
+
 ```typescript
 // apps/isekai-backend/src/lib/env.ts
 import { z } from 'zod';
@@ -360,6 +370,7 @@ export const env = envSchema.parse(process.env);
 **Cause:** Wrong length for AES-256-GCM.
 
 **Solution:**
+
 ```bash
 openssl rand -hex 32  # Generates 64 hex characters
 ```
@@ -367,11 +378,13 @@ openssl rand -hex 32  # Generates 64 hex characters
 ### "Cannot connect to PostgreSQL"
 
 **Check:**
+
 1. Database running? (`docker ps`)
 2. Correct host/port?
 3. User/password correct?
 
 **Test Connection:**
+
 ```bash
 psql "postgresql://isekai:isekai@localhost:5432/isekai"
 ```
@@ -381,12 +394,14 @@ psql "postgresql://isekai:isekai@localhost:5432/isekai"
 **Fallback:** Sessions/cache use PostgreSQL automatically.
 
 **To Use Redis:**
+
 1. Start Redis (`docker compose up redis -d`)
 2. Set `REDIS_URL=redis://localhost:6379`
 
 ### "MinIO bucket not found"
 
 **Create Bucket:**
+
 1. Open http://localhost:9001
 2. Login: minioadmin / minioadmin
 3. Create bucket: `isekai-uploads`

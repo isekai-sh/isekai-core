@@ -15,13 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Job } from "bullmq";
+import type { Job } from 'bullmq';
 import type {
   PublisherDependencies,
   DeviationPublishJobData,
   PublishJobResult,
   DeviationWithRelations,
-} from "./types.js";
+} from './types.js';
 
 /**
  * Acquire execution lock using optimistic locking
@@ -59,7 +59,7 @@ async function acquireExecutionLock(
 
     return result.count > 0;
   } catch (error) {
-    console.error("[Lock] Failed to acquire execution lock:", error);
+    console.error('[Lock] Failed to acquire execution lock:', error);
     return false;
   }
 }
@@ -92,7 +92,7 @@ async function releaseExecutionLock(
       },
     });
   } catch (error) {
-    console.error("[Lock] Failed to release execution lock:", error);
+    console.error('[Lock] Failed to release execution lock:', error);
     // Non-fatal - stale lock cleanup will handle this
   }
 }
@@ -107,11 +107,7 @@ async function releaseExecutionLock(
  * @param tx - Prisma transaction client
  * @param logger - Logger instance
  */
-async function autoCreateSaleQueue(
-  deviation: any,
-  tx: any,
-  logger: any
-): Promise<void> {
+async function autoCreateSaleQueue(deviation: any, tx: any, logger: any): Promise<void> {
   // Only proceed if scheduled by automation
   if (!deviation.automationId) {
     return;
@@ -119,7 +115,7 @@ async function autoCreateSaleQueue(
 
   // Skip if Sta.sh-only
   if (deviation.stashOnly) {
-    logger.info("Skipping sale queue - Sta.sh only mode", {
+    logger.info('Skipping sale queue - Sta.sh only mode', {
       deviationId: deviation.id,
     });
     return;
@@ -139,7 +135,7 @@ async function autoCreateSaleQueue(
 
     const preset = automation.saleQueuePreset;
     if (!preset) {
-      logger.warn("Sale queue preset not found", {
+      logger.warn('Sale queue preset not found', {
         automationId: automation.id,
         presetId: automation.saleQueuePresetId,
       });
@@ -152,7 +148,7 @@ async function autoCreateSaleQueue(
       // Random price within range - use Math.floor to ensure INT
       const range = preset.maxPrice - preset.minPrice;
       finalPrice = preset.minPrice + Math.floor(Math.random() * (range + 1));
-      logger.info("Using random price", {
+      logger.info('Using random price', {
         minPrice: preset.minPrice,
         maxPrice: preset.maxPrice,
         finalPrice,
@@ -160,7 +156,7 @@ async function autoCreateSaleQueue(
     } else {
       // Fixed price
       finalPrice = preset.price;
-      logger.info("Using fixed price", { finalPrice });
+      logger.info('Using fixed price', { finalPrice });
     }
 
     // Create sale queue entry with calculated price
@@ -170,26 +166,26 @@ async function autoCreateSaleQueue(
         deviationId: deviation.id,
         pricePresetId: preset.id,
         price: finalPrice,
-        status: "pending",
+        status: 'pending',
       },
     });
 
-    logger.info("Created sale queue entry", {
+    logger.info('Created sale queue entry', {
       deviationId: deviation.id,
       presetId: preset.id,
       finalPrice,
     });
   } catch (error: any) {
     // Handle duplicate (unique constraint on deviationId)
-    if (error.code === "P2002") {
-      logger.info("Sale queue entry already exists", {
+    if (error.code === 'P2002') {
+      logger.info('Sale queue entry already exists', {
         deviationId: deviation.id,
       });
       return;
     }
 
     // Log error but don't fail the publish
-    logger.warn("Failed to create sale queue entry", {
+    logger.warn('Failed to create sale queue entry', {
       error: error.message,
       deviationId: deviation.id,
     });
@@ -217,20 +213,13 @@ export async function publishDeviationJob(
 
   // STEP 0: Acquire execution lock (CRITICAL - prevents concurrent execution)
   const lockId = `${job.id}-${Date.now()}`;
-  const lockAcquired = await acquireExecutionLock(
-    deviationId,
-    lockId,
-    deps.prisma
-  );
+  const lockAcquired = await acquireExecutionLock(deviationId, lockId, deps.prisma);
 
   if (!lockAcquired) {
-    logger.warn(
-      "Failed to acquire execution lock - job already running elsewhere",
-      {
-        deviationId,
-        lockId,
-      }
-    );
+    logger.warn('Failed to acquire execution lock - job already running elsewhere', {
+      deviationId,
+      lockId,
+    });
     // This is NOT an error - just means another worker is handling it
     // Return success to prevent retry
     return {
@@ -240,10 +229,10 @@ export async function publishDeviationJob(
     };
   }
 
-  logger.info("Acquired execution lock", { lockId });
+  logger.info('Acquired execution lock', { lockId });
 
   try {
-    logger.info("Starting deviation publish job", {
+    logger.info('Starting deviation publish job', {
       uploadMode,
       maxAttempts: job.opts.attempts,
       lockId,
@@ -253,24 +242,20 @@ export async function publishDeviationJob(
 
     // STEP 1: Rate Limit Check (circuit breaker and rate limiter)
     const circuitKey = `deviantart:publish:${userId}`;
-    const circuitAllowed = await deps.CircuitBreaker.shouldAllowRequest(
-      circuitKey
-    );
+    const circuitAllowed = await deps.CircuitBreaker.shouldAllowRequest(circuitKey);
 
     if (!circuitAllowed) {
-      logger.warn("Circuit breaker is open, deferring job");
-      throw new Error("CIRCUIT_OPEN: Circuit breaker is open for this user");
+      logger.warn('Circuit breaker is open, deferring job');
+      throw new Error('CIRCUIT_OPEN: Circuit breaker is open for this user');
     }
 
     const rateLimitCheck = await deps.rateLimiter.shouldAllowRequest(userId);
     if (!rateLimitCheck.allowed) {
-      logger.warn("Rate limit active, will retry", {
+      logger.warn('Rate limit active, will retry', {
         waitMs: rateLimitCheck.waitMs,
         reason: rateLimitCheck.reason,
       });
-      throw new Error(
-        `RATE_LIMITED: Wait ${rateLimitCheck.waitMs}ms - ${rateLimitCheck.reason}`
-      );
+      throw new Error(`RATE_LIMITED: Wait ${rateLimitCheck.waitMs}ms - ${rateLimitCheck.reason}`);
     }
 
     // STEP 2: Update retry tracking in database
@@ -308,8 +293,8 @@ export async function publishDeviationJob(
 
     try {
       // STEP 3: Idempotency check - prevent duplicate publish on retry
-      if (deviation.status === "published" && deviation.deviationId) {
-        logger.info("Deviation already published, skipping", {
+      if (deviation.status === 'published' && deviation.deviationId) {
+        logger.info('Deviation already published, skipping', {
           deviationId: deviation.deviationId,
           deviationUrl: deviation.deviationUrl,
         });
@@ -328,17 +313,14 @@ export async function publishDeviationJob(
       // STEP 3.5: Check for Sta.sh-only mode (only submit to Sta.sh, don't publish)
       if (deviation.stashOnly && deviation.stashItemId) {
         // Already submitted to Sta.sh, mark as "published" (but only in Sta.sh)
-        logger.info(
-          "Deviation already in Sta.sh (Sta.sh-only mode), skipping publish",
-          {
-            stashItemId: deviation.stashItemId,
-          }
-        );
+        logger.info('Deviation already in Sta.sh (Sta.sh-only mode), skipping publish', {
+          stashItemId: deviation.stashItemId,
+        });
 
         await deps.prisma.deviation.update({
           where: { id: deviationId },
           data: {
-            status: "published",
+            status: 'published',
             publishedAt: new Date(),
             errorMessage: null,
             postCountIncremented: true,
@@ -351,7 +333,7 @@ export async function publishDeviationJob(
         return {
           success: true,
           alreadyPublished: true,
-          results: [{ deviationId: deviation.stashItemId, url: "" }],
+          results: [{ deviationId: deviation.stashItemId, url: '' }],
         };
       }
 
@@ -359,21 +341,15 @@ export async function publishDeviationJob(
       // Note: Status remains 'scheduled' until transaction completes after successful API call
       // For Sta.sh-only mode, this will only submit to Sta.sh and not publish
       logger.info(
-        deviation.stashOnly
-          ? "Submitting to Sta.sh (Sta.sh-only mode)"
-          : "Publishing to DeviantArt"
+        deviation.stashOnly ? 'Submitting to Sta.sh (Sta.sh-only mode)' : 'Publishing to DeviantArt'
       );
       const result = await deps.withCircuitBreaker(
         circuitKey,
         async () => {
-          return await deps.publishToDeviantArt(
-            deviation,
-            deviation.user,
-            uploadMode
-          );
+          return await deps.publishToDeviantArt(deviation, deviation.user, uploadMode);
         },
         async () => {
-          throw new Error("CIRCUIT_OPEN: Circuit breaker fallback triggered");
+          throw new Error('CIRCUIT_OPEN: Circuit breaker fallback triggered');
         }
       );
 
@@ -391,7 +367,7 @@ export async function publishDeviationJob(
         await tx.deviation.update({
           where: { id: deviationId },
           data: {
-            status: "published",
+            status: 'published',
             publishedAt: new Date(),
             ...(deviation.stashOnly
               ? {
@@ -410,8 +386,7 @@ export async function publishDeviationJob(
         });
 
         // 5b. Increment user's posts count ONLY if not already incremented (idempotent)
-        const postsIncrement =
-          uploadMode === "multiple" ? deviation.files.length : 1;
+        const postsIncrement = uploadMode === 'multiple' ? deviation.files.length : 1;
 
         // Use updateMany with condition to ensure idempotency
         const incrementResult = await tx.deviation.updateMany({
@@ -436,12 +411,9 @@ export async function publishDeviationJob(
         await deps.queueStorageCleanup(deviationId, userId);
       } catch (cleanupError) {
         logger.warn(
-          "Failed to queue storage cleanup - will not retry, files will remain in storage",
+          'Failed to queue storage cleanup - will not retry, files will remain in storage',
           {
-            cleanupError:
-              cleanupError instanceof Error
-                ? cleanupError.message
-                : "Unknown error",
+            cleanupError: cleanupError instanceof Error ? cleanupError.message : 'Unknown error',
             deviationId,
           }
         );
@@ -453,7 +425,7 @@ export async function publishDeviationJob(
       const latencyMs = Date.now() - startTime;
       deps.metricsCollector.recordJobSuccess(job.id!, latencyMs);
 
-      logger.info("Successfully published deviation", {
+      logger.info('Successfully published deviation', {
         deviationUrl: primaryResult.url,
         latencyMs,
         uploadMode,
@@ -468,7 +440,7 @@ export async function publishDeviationJob(
       const categorized = deps.errorCategorizer.categorize(error);
       const latencyMs = Date.now() - startTime;
 
-      logger.error("Failed to publish deviation", error, {
+      logger.error('Failed to publish deviation', error, {
         errorCategory: categorized.category,
         isRetryable: categorized.isRetryable,
         latencyMs,
@@ -480,7 +452,7 @@ export async function publishDeviationJob(
       deps.metricsCollector.recordJobFailure(job.id!, categorized, latencyMs);
 
       // Handle specific error categories
-      if (categorized.category === "RATE_LIMIT") {
+      if (categorized.category === 'RATE_LIMIT') {
         const retryAfter = error.retryAfter;
         await deps.rateLimiter.recordFailure(userId, retryAfter);
         deps.metricsCollector.recordRateLimitHit(
@@ -497,26 +469,25 @@ export async function publishDeviationJob(
         await deps.prisma.deviation.update({
           where: { id: deviationId },
           data: {
-            status: "draft",
-            errorMessage:
-              error instanceof Error ? error.message : "Unknown error",
+            status: 'draft',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
             updatedAt: new Date(),
           },
         });
 
-        logger.error("Job failed after all retries, status reset to draft");
+        logger.error('Job failed after all retries, status reset to draft');
       } else {
         // Reset to scheduled status for retry
         await deps.prisma.deviation.update({
           where: { id: deviationId },
           data: {
-            status: "scheduled",
+            status: 'scheduled',
             errorMessage: categorized.errorContext.message,
             updatedAt: new Date(),
           },
         });
 
-        logger.info("Job will retry", {
+        logger.info('Job will retry', {
           nextAttempt: attemptNumber + 1,
           maxAttempts: job.opts.attempts,
         });
@@ -527,6 +498,6 @@ export async function publishDeviationJob(
   } finally {
     // ALWAYS release lock, even on error
     await releaseExecutionLock(deviationId, lockId, deps.prisma);
-    logger.info("Released execution lock", { lockId });
+    logger.info('Released execution lock', { lockId });
   }
 }

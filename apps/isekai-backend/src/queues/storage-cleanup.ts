@@ -15,17 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Queue, Worker, Job } from "bullmq";
-import { Redis } from "ioredis";
-import { prisma } from "../db/index.js";
-import { deleteFromStorage } from "../lib/upload-service.js";
-import { StructuredLogger } from "../lib/structured-logger.js";
+import { Queue, Worker, Job } from 'bullmq';
+import { Redis } from 'ioredis';
+import { prisma } from '../db/index.js';
+import { deleteFromStorage } from '../lib/upload-service.js';
+import { StructuredLogger } from '../lib/structured-logger.js';
 
 const redisUrl = process.env.REDIS_URL!;
 
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: redisUrl.startsWith("rediss://")
+  tls: redisUrl.startsWith('rediss://')
     ? {
         rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
       }
@@ -41,12 +41,12 @@ export interface StorageCleanupJobData {
  * Queue for cleaning up storage files after successful publish
  * Separate from main publisher queue to allow independent retries
  */
-export const storageCleanupQueue = new Queue<StorageCleanupJobData>("storage-cleanup", {
+export const storageCleanupQueue = new Queue<StorageCleanupJobData>('storage-cleanup', {
   connection,
   defaultJobOptions: {
     attempts: 5,
     backoff: {
-      type: "exponential",
+      type: 'exponential',
       delay: 5000, // Start with 5 seconds
     },
     removeOnComplete: {
@@ -65,13 +65,13 @@ export const storageCleanupQueue = new Queue<StorageCleanupJobData>("storage-cle
  * Deletes files from storage, updates storage quota, and removes DB records
  */
 export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
-  "storage-cleanup",
+  'storage-cleanup',
   async (job: Job<StorageCleanupJobData>) => {
     const { deviationId, userId } = job.data;
     const attemptNumber = job.attemptsMade + 1;
     const logger = StructuredLogger.createJobLogger(job);
 
-    logger.info("Starting storage cleanup job", {
+    logger.info('Starting storage cleanup job', {
       deviationId,
       userId,
       attemptNumber,
@@ -83,7 +83,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
     });
 
     if (!files || files.length === 0) {
-      logger.info("No files to clean up for published deviation", {
+      logger.info('No files to clean up for published deviation', {
         deviationId,
       });
       return { filesDeleted: 0, bytesFreed: 0 };
@@ -91,7 +91,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
 
     const totalSize = files.reduce((sum, f) => sum + f.fileSize, 0);
 
-    logger.info("Starting storage file deletion", {
+    logger.info('Starting storage file deletion', {
       fileCount: files.length,
       totalSizeBytes: totalSize,
     });
@@ -101,13 +101,13 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
       files.map(async (file) => {
         try {
           await deleteFromStorage(file.storageKey);
-          logger.debug("Deleted file from storage", {
+          logger.debug('Deleted file from storage', {
             storageKey: file.storageKey,
             fileName: file.originalFilename,
           });
           return { success: true, key: file.storageKey };
         } catch (error) {
-          logger.error("Failed to delete file from storage", error, {
+          logger.error('Failed to delete file from storage', error, {
             storageKey: file.storageKey,
             fileName: file.originalFilename,
           });
@@ -117,9 +117,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
     );
 
     // Check if any deletions failed
-    const failedDeletions = deletionResults.filter(
-      (r) => r.status === "rejected"
-    );
+    const failedDeletions = deletionResults.filter((r) => r.status === 'rejected');
     if (failedDeletions.length > 0) {
       throw new Error(
         `Failed to delete ${failedDeletions.length} of ${files.length} files from storage`
@@ -131,7 +129,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
       where: { deviationId },
     });
 
-    logger.info("Storage cleanup completed successfully", {
+    logger.info('Storage cleanup completed successfully', {
       deviationId,
       filesDeleted: files.length,
       bytesFreed: totalSize,
@@ -152,12 +150,9 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
  * Queue storage cleanup job for a published deviation
  * Uses jobId to prevent duplicate cleanup jobs for the same deviation
  */
-export async function queueStorageCleanup(
-  deviationId: string,
-  userId: string
-): Promise<void> {
+export async function queueStorageCleanup(deviationId: string, userId: string): Promise<void> {
   await storageCleanupQueue.add(
-    "cleanup",
+    'cleanup',
     { deviationId, userId },
     {
       jobId: `storage-cleanup-${deviationId}`, // Prevent duplicates
@@ -166,19 +161,19 @@ export async function queueStorageCleanup(
 }
 
 // Event handlers for monitoring
-storageCleanupWorker.on("completed", (job) => {
+storageCleanupWorker.on('completed', (job) => {
   const logger = StructuredLogger.createJobLogger(job);
-  logger.info("Storage cleanup job completed", {
+  logger.info('Storage cleanup job completed', {
     deviationId: job.data.deviationId,
     filesDeleted: job.returnvalue?.filesDeleted,
     bytesFreed: job.returnvalue?.bytesFreed,
   });
 });
 
-storageCleanupWorker.on("failed", (job, error) => {
+storageCleanupWorker.on('failed', (job, error) => {
   if (job) {
     const logger = StructuredLogger.createJobLogger(job);
-    logger.error("Storage cleanup job failed", error, {
+    logger.error('Storage cleanup job failed', error, {
       deviationId: job.data.deviationId,
       attemptsMade: job.attemptsMade,
       maxAttempts: job.opts.attempts,
@@ -186,6 +181,6 @@ storageCleanupWorker.on("failed", (job, error) => {
   }
 });
 
-storageCleanupWorker.on("stalled", (jobId) => {
+storageCleanupWorker.on('stalled', (jobId) => {
   console.error(`Storage cleanup job ${jobId} has stalled`);
 });

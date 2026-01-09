@@ -85,10 +85,7 @@ export async function sendRefreshTokenWarningEmail(
   }
 }
 
-export async function sendRefreshTokenExpiredEmail(
-  user: User,
-  scheduledPostsCount: number
-) {
+export async function sendRefreshTokenExpiredEmail(user: User, scheduledPostsCount: number) {
   const resend = getResendClient();
   if (!resend) {
     return;
@@ -148,10 +145,7 @@ export async function sendRefreshTokenExpiredEmail(
   }
 }
 
-export async function sendRefreshTokenExpiredJobNotification(
-  user: User,
-  deviationTitle: string
-) {
+export async function sendRefreshTokenExpiredJobNotification(user: User, deviationTitle: string) {
   const resend = getResendClient();
   if (!resend) {
     return;

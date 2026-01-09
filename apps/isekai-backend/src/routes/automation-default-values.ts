@@ -15,27 +15,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
 // Valid field names for default values
 const VALID_FIELD_NAMES = [
-  "description",
-  "tags",
-  "isMature",
-  "matureLevel",
-  "categoryPath",
-  "galleryIds",
-  "allowComments",
-  "allowFreeDownload",
-  "isAiGenerated",
-  "noAi",
-  "addWatermark",
-  "displayResolution",
+  'description',
+  'tags',
+  'isMature',
+  'matureLevel',
+  'categoryPath',
+  'galleryIds',
+  'allowComments',
+  'allowFreeDownload',
+  'isAiGenerated',
+  'noAi',
+  'addWatermark',
+  'displayResolution',
 ] as const;
 
 // Zod schemas
@@ -53,9 +53,9 @@ const updateDefaultValueSchema = z.object({
 // Validate value based on field name
 function validateFieldValue(fieldName: string, value: any): void {
   switch (fieldName) {
-    case "description":
-    case "categoryPath":
-      if (typeof value !== "string") {
+    case 'description':
+    case 'categoryPath':
+      if (typeof value !== 'string') {
         throw new AppError(400, `${fieldName} must be a string`);
       }
       // Add max length validation
@@ -64,97 +64,95 @@ function validateFieldValue(fieldName: string, value: any): void {
       }
       break;
 
-    case "tags":
+    case 'tags':
       if (!Array.isArray(value)) {
-        throw new AppError(400, "tags must be an array of strings");
+        throw new AppError(400, 'tags must be an array of strings');
       }
 
       // Check max number of tags
       if (value.length > 50) {
-        throw new AppError(400, "Cannot exceed 50 tags");
+        throw new AppError(400, 'Cannot exceed 50 tags');
       }
 
       // Validate each tag
       for (const tag of value) {
-        if (typeof tag !== "string") {
-          throw new AppError(400, "All tags must be strings");
+        if (typeof tag !== 'string') {
+          throw new AppError(400, 'All tags must be strings');
         }
 
         // Check for empty tags
         if (tag.trim().length === 0) {
-          throw new AppError(400, "Tags cannot be empty strings");
+          throw new AppError(400, 'Tags cannot be empty strings');
         }
 
         // Check tag length
         if (tag.length > 100) {
-          throw new AppError(400, "Tags cannot exceed 100 characters");
+          throw new AppError(400, 'Tags cannot exceed 100 characters');
         }
       }
 
       // Check for duplicates
-      const uniqueTags = new Set(
-        value.map((t: string) => t.trim().toLowerCase())
-      );
+      const uniqueTags = new Set(value.map((t: string) => t.trim().toLowerCase()));
       if (uniqueTags.size !== value.length) {
-        throw new AppError(400, "Duplicate tags detected");
+        throw new AppError(400, 'Duplicate tags detected');
       }
       break;
 
-    case "galleryIds":
+    case 'galleryIds':
       if (!Array.isArray(value)) {
-        throw new AppError(400, "galleryIds must be an array of strings");
+        throw new AppError(400, 'galleryIds must be an array of strings');
       }
 
       // Check max number of galleries
       if (value.length > 10) {
-        throw new AppError(400, "Cannot exceed 10 galleries");
+        throw new AppError(400, 'Cannot exceed 10 galleries');
       }
 
       // Validate each gallery ID
       for (const galleryId of value) {
-        if (typeof galleryId !== "string") {
-          throw new AppError(400, "All gallery IDs must be strings");
+        if (typeof galleryId !== 'string') {
+          throw new AppError(400, 'All gallery IDs must be strings');
         }
 
         // Check for empty IDs
         if (galleryId.trim().length === 0) {
-          throw new AppError(400, "Gallery IDs cannot be empty strings");
+          throw new AppError(400, 'Gallery IDs cannot be empty strings');
         }
       }
 
       // Check for duplicates
       const uniqueGalleryIds = new Set(value);
       if (uniqueGalleryIds.size !== value.length) {
-        throw new AppError(400, "Duplicate gallery IDs detected");
+        throw new AppError(400, 'Duplicate gallery IDs detected');
       }
       break;
 
-    case "isMature":
-    case "allowComments":
-    case "allowFreeDownload":
-    case "isAiGenerated":
-    case "noAi":
-    case "addWatermark":
-      if (typeof value !== "boolean") {
+    case 'isMature':
+    case 'allowComments':
+    case 'allowFreeDownload':
+    case 'isAiGenerated':
+    case 'noAi':
+    case 'addWatermark':
+      if (typeof value !== 'boolean') {
         throw new AppError(400, `${fieldName} must be a boolean`);
       }
       break;
 
-    case "matureLevel":
-      if (value !== "moderate" && value !== "strict") {
+    case 'matureLevel':
+      if (value !== 'moderate' && value !== 'strict') {
         throw new AppError(400, 'matureLevel must be "moderate" or "strict"');
       }
       break;
 
-    case "displayResolution":
-      if (typeof value !== "number") {
-        throw new AppError(400, "displayResolution must be a number");
+    case 'displayResolution':
+      if (typeof value !== 'number') {
+        throw new AppError(400, 'displayResolution must be a number');
       }
       if (!Number.isInteger(value)) {
-        throw new AppError(400, "displayResolution must be an integer");
+        throw new AppError(400, 'displayResolution must be an integer');
       }
       if (value < 0 || value > 8) {
-        throw new AppError(400, "displayResolution must be between 0 and 8");
+        throw new AppError(400, 'displayResolution must be between 0 and 8');
       }
       break;
 
@@ -164,7 +162,7 @@ function validateFieldValue(fieldName: string, value: any): void {
 }
 
 // List default values for specific automation
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const userId = req.user!.id;
   const { automationId } = z
     .object({
@@ -178,12 +176,12 @@ router.get("/", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation not found");
+    throw new AppError(404, 'Automation not found');
   }
 
   const values = await prisma.automationDefaultValue.findMany({
     where: { automationId },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
   });
 
   res.json({
@@ -196,7 +194,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create default value
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const userId = req.user!.id;
   const { automationId, ...data } = z
     .object({
@@ -214,7 +212,7 @@ router.post("/", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation not found");
+    throw new AppError(404, 'Automation not found');
   }
 
   // Check if default already exists for this field
@@ -253,7 +251,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update default value
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
   const data = updateDefaultValueSchema.parse(req.body);
@@ -265,7 +263,7 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!defaultValue || defaultValue.automation.userId !== userId) {
-    throw new AppError(404, "Default value not found");
+    throw new AppError(404, 'Default value not found');
   }
 
   // Validate the new value if provided
@@ -275,8 +273,7 @@ router.patch("/:id", async (req, res) => {
 
   const updateData: any = {};
   if (data.value !== undefined) updateData.value = data.value;
-  if (data.applyIfEmpty !== undefined)
-    updateData.applyIfEmpty = data.applyIfEmpty;
+  if (data.applyIfEmpty !== undefined) updateData.applyIfEmpty = data.applyIfEmpty;
 
   const updated = await prisma.automationDefaultValue.update({
     where: { id },
@@ -293,7 +290,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete default value
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -304,7 +301,7 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!defaultValue || defaultValue.automation.userId !== userId) {
-    throw new AppError(404, "Default value not found");
+    throw new AppError(404, 'Default value not found');
   }
 
   await prisma.automationDefaultValue.delete({

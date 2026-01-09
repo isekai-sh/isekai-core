@@ -7,6 +7,7 @@
 ## Prerequisites
 
 Before starting, ensure you have:
+
 - [ ] API endpoint exists (if fetching data)
 - [ ] Frontend dev server running (`pnpm dev`)
 - [ ] shadcn/ui components installed
@@ -17,6 +18,7 @@ Before starting, ensure you have:
 ## Step 1: Define Requirements
 
 **Questions to Answer:**
+
 1. What is the page's purpose?
 2. What data does it display?
 3. What user interactions are needed?
@@ -24,6 +26,7 @@ Before starting, ensure you have:
 5. What is the route path?
 
 **Example:**
+
 ```
 Purpose: Display list of user's automations
 Data: Automation[] from /api/automations
@@ -50,19 +53,13 @@ Path: /automation
  * (at your option) any later version.
  */
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash, Edit } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { myEndpoint } from "@/lib/api";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash, Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
+import { myEndpoint } from '@/lib/api';
 
 export function MyPage() {
   const queryClient = useQueryClient();
@@ -70,7 +67,7 @@ export function MyPage() {
 
   // Fetch data
   const { data, isLoading, error } = useQuery({
-    queryKey: ["my-endpoint"],
+    queryKey: ['my-endpoint'],
     queryFn: () => myEndpoint.getAll(),
   });
 
@@ -78,17 +75,17 @@ export function MyPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => myEndpoint.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-endpoint"] });
+      queryClient.invalidateQueries({ queryKey: ['my-endpoint'] });
       toast({
-        title: "Success",
-        description: "Item deleted successfully.",
+        title: 'Success',
+        description: 'Item deleted successfully.',
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -176,7 +173,7 @@ export function MyPage() {
 **File:** `apps/isekai-frontend/src/App.tsx`
 
 ```tsx
-import { MyPage } from "@/pages/MyPage";
+import { MyPage } from '@/pages/MyPage';
 
 function App() {
   return (
@@ -215,21 +212,21 @@ export const myEndpoint = {
 
   async create(data: CreateMyItemRequest) {
     return fetchWithRetry<{ item: MyItem }>(`${API_URL}/my-endpoint`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
   async update(id: string, data: UpdateMyItemRequest) {
     return fetchWithRetry<{ item: MyItem }>(`${API_URL}/my-endpoint/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
   async delete(id: string) {
     return fetchWithRetry<void>(`${API_URL}/my-endpoint/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };
@@ -242,13 +239,13 @@ export const myEndpoint = {
 **File:** `apps/isekai-frontend/src/components/app-sidebar.tsx`
 
 ```tsx
-import { MyIcon } from "lucide-react";
+import { MyIcon } from 'lucide-react';
 
 const navItems = [
   // ... existing items ...
   {
-    title: "My Page",
-    href: "/my-page",
+    title: 'My Page',
+    href: '/my-page',
     icon: MyIcon,
   },
 ];
@@ -261,20 +258,20 @@ const navItems = [
 **Location:** `apps/isekai-frontend/src/pages/MyPage.test.tsx`
 
 ```tsx
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MyPage } from "./MyPage";
-import { myEndpoint } from "@/lib/api";
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MyPage } from './MyPage';
+import { myEndpoint } from '@/lib/api';
 
-vi.mock("@/lib/api");
+vi.mock('@/lib/api');
 
-describe("MyPage", () => {
+describe('MyPage', () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
 
-  it("should display loading state", () => {
+  it('should display loading state', () => {
     vi.mocked(myEndpoint.getAll).mockReturnValue(new Promise(() => {}));
 
     render(
@@ -283,14 +280,14 @@ describe("MyPage", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it("should display items", async () => {
+  it('should display items', async () => {
     vi.mocked(myEndpoint.getAll).mockResolvedValue({
       items: [
-        { id: "1", name: "Item 1", createdAt: new Date().toISOString() },
-        { id: "2", name: "Item 2", createdAt: new Date().toISOString() },
+        { id: '1', name: 'Item 1', createdAt: new Date().toISOString() },
+        { id: '2', name: 'Item 2', createdAt: new Date().toISOString() },
       ],
     });
 
@@ -301,12 +298,12 @@ describe("MyPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Item 1")).toBeInTheDocument();
-      expect(screen.getByText("Item 2")).toBeInTheDocument();
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
+      expect(screen.getByText('Item 2')).toBeInTheDocument();
     });
   });
 
-  it("should display empty state", async () => {
+  it('should display empty state', async () => {
     vi.mocked(myEndpoint.getAll).mockResolvedValue({ items: [] });
 
     render(
@@ -316,7 +313,7 @@ describe("MyPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("No items yet")).toBeInTheDocument();
+      expect(screen.getByText('No items yet')).toBeInTheDocument();
     });
   });
 });

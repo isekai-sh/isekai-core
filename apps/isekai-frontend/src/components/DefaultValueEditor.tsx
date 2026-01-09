@@ -15,23 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { galleries } from "@/lib/api";
-import { X, Loader2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { galleries } from '@/lib/api';
+import { X, Loader2 } from 'lucide-react';
 
 interface DefaultValueEditorProps {
   fieldName: string;
@@ -39,18 +39,14 @@ interface DefaultValueEditorProps {
   onChange: (value: any) => void;
 }
 
-export function DefaultValueEditor({
-  fieldName,
-  value,
-  onChange,
-}: DefaultValueEditorProps) {
+export function DefaultValueEditor({ fieldName, value, onChange }: DefaultValueEditorProps) {
   const { toast } = useToast();
   const [userGalleries, setUserGalleries] = useState<any[]>([]);
   const [loadingGalleries, setLoadingGalleries] = useState(false);
 
   // Fetch galleries when galleryIds field is rendered
   useEffect(() => {
-    if (fieldName === "galleryIds") {
+    if (fieldName === 'galleryIds') {
       loadGalleries();
     }
   }, [fieldName]);
@@ -62,9 +58,9 @@ export function DefaultValueEditor({
       setUserGalleries(allGalleries || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load galleries",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to load galleries',
+        variant: 'destructive',
       });
     } finally {
       setLoadingGalleries(false);
@@ -78,41 +74,37 @@ export function DefaultValueEditor({
     // Validate tag
     if (!trimmedTag) {
       toast({
-        title: "Invalid Tag",
-        description: "Tag cannot be empty",
-        variant: "destructive",
+        title: 'Invalid Tag',
+        description: 'Tag cannot be empty',
+        variant: 'destructive',
       });
       return false;
     }
 
     if (trimmedTag.length > 100) {
       toast({
-        title: "Invalid Tag",
-        description: "Tag cannot exceed 100 characters",
-        variant: "destructive",
+        title: 'Invalid Tag',
+        description: 'Tag cannot exceed 100 characters',
+        variant: 'destructive',
       });
       return false;
     }
 
     if (currentTags.length >= 50) {
       toast({
-        title: "Too Many Tags",
-        description: "Cannot exceed 50 tags",
-        variant: "destructive",
+        title: 'Too Many Tags',
+        description: 'Cannot exceed 50 tags',
+        variant: 'destructive',
       });
       return false;
     }
 
     // Check for duplicates (case-insensitive)
-    if (
-      currentTags.some(
-        (t: string) => t.toLowerCase() === trimmedTag.toLowerCase()
-      )
-    ) {
+    if (currentTags.some((t: string) => t.toLowerCase() === trimmedTag.toLowerCase())) {
       toast({
-        title: "Duplicate Tag",
-        description: "This tag already exists",
-        variant: "destructive",
+        title: 'Duplicate Tag',
+        description: 'This tag already exists',
+        variant: 'destructive',
       });
       return false;
     }
@@ -127,20 +119,20 @@ export function DefaultValueEditor({
   };
 
   switch (fieldName) {
-    case "description":
+    case 'description':
       return (
         <div className="space-y-2">
           <Label>Description</Label>
           <Textarea
             placeholder="Enter default description..."
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             rows={4}
           />
         </div>
       );
 
-    case "tags":
+    case 'tags':
       return (
         <div className="space-y-2">
           <Label>Tags</Label>
@@ -166,42 +158,38 @@ export function DefaultValueEditor({
             <Input
               placeholder="Type a tag and press Enter"
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   const success = handleTagAdd(e.currentTarget.value);
                   if (success) {
-                    e.currentTarget.value = "";
+                    e.currentTarget.value = '';
                   }
                 }
               }}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Press Enter to add each tag
-          </p>
+          <p className="text-xs text-muted-foreground">Press Enter to add each tag</p>
         </div>
       );
 
-    case "isMature":
+    case 'isMature':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Mature Content</Label>
-              <p className="text-sm text-muted-foreground">
-                Mark content as mature
-              </p>
+              <p className="text-sm text-muted-foreground">Mark content as mature</p>
             </div>
             <Switch checked={!!value} onCheckedChange={onChange} />
           </div>
         </div>
       );
 
-    case "matureLevel":
+    case 'matureLevel':
       return (
         <div className="space-y-2">
           <Label>Mature Content Level</Label>
-          <Select value={value || "moderate"} onValueChange={onChange}>
+          <Select value={value || 'moderate'} onValueChange={onChange}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -216,23 +204,22 @@ export function DefaultValueEditor({
         </div>
       );
 
-    case "categoryPath":
+    case 'categoryPath':
       return (
         <div className="space-y-2">
           <Label>Category Path</Label>
           <Input
             placeholder="e.g., Digital Art / Drawings"
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            DeviantArt category path for the post (e.g., "Digital Art /
-            Drawings")
+            DeviantArt category path for the post (e.g., "Digital Art / Drawings")
           </p>
         </div>
       );
 
-    case "galleryIds":
+    case 'galleryIds':
       const selectedGalleryIds = Array.isArray(value) ? value : [];
 
       const toggleGallery = (galleryId: string) => {
@@ -241,9 +228,9 @@ export function DefaultValueEditor({
         } else {
           if (selectedGalleryIds.length >= 10) {
             toast({
-              title: "Too Many Galleries",
-              description: "Cannot exceed 10 galleries",
-              variant: "destructive",
+              title: 'Too Many Galleries',
+              description: 'Cannot exceed 10 galleries',
+              variant: 'destructive',
             });
             return;
           }
@@ -283,28 +270,26 @@ export function DefaultValueEditor({
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Select gallery folders where posts will be published (
-            {selectedGalleryIds.length}/10 selected)
+            Select gallery folders where posts will be published ({selectedGalleryIds.length}/10
+            selected)
           </p>
         </div>
       );
 
-    case "allowComments":
+    case 'allowComments':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Allow Comments</Label>
-              <p className="text-sm text-muted-foreground">
-                Let others comment on this deviation
-              </p>
+              <p className="text-sm text-muted-foreground">Let others comment on this deviation</p>
             </div>
             <Switch checked={!!value} onCheckedChange={onChange} />
           </div>
         </div>
       );
 
-    case "allowFreeDownload":
+    case 'allowFreeDownload':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -319,22 +304,20 @@ export function DefaultValueEditor({
         </div>
       );
 
-    case "isAiGenerated":
+    case 'isAiGenerated':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>AI Generated</Label>
-              <p className="text-sm text-muted-foreground">
-                Content was generated using AI
-              </p>
+              <p className="text-sm text-muted-foreground">Content was generated using AI</p>
             </div>
             <Switch checked={!!value} onCheckedChange={onChange} />
           </div>
         </div>
       );
 
-    case "noAi":
+    case 'noAi':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -349,15 +332,14 @@ export function DefaultValueEditor({
         </div>
       );
 
-    case "addWatermark":
+    case 'addWatermark':
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Add Watermark</Label>
               <p className="text-sm text-muted-foreground">
-                Add DeviantArt watermark (only works when display resolution is
-                set)
+                Add DeviantArt watermark (only works when display resolution is set)
               </p>
             </div>
             <Switch checked={!!value} onCheckedChange={onChange} />
@@ -365,14 +347,11 @@ export function DefaultValueEditor({
         </div>
       );
 
-    case "displayResolution":
+    case 'displayResolution':
       return (
         <div className="space-y-2">
           <Label>Display Resolution</Label>
-          <Select
-            value={String(value ?? 0)}
-            onValueChange={(val) => onChange(Number(val))}
-          >
+          <Select value={String(value ?? 0)} onValueChange={(val) => onChange(Number(val))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -389,32 +368,27 @@ export function DefaultValueEditor({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Resize images to display resolution. Watermark only available when
-            not set to Original.
+            Resize images to display resolution. Watermark only available when not set to Original.
           </p>
         </div>
       );
 
     default:
-      return (
-        <div className="text-sm text-muted-foreground">
-          Unknown field type: {fieldName}
-        </div>
-      );
+      return <div className="text-sm text-muted-foreground">Unknown field type: {fieldName}</div>;
   }
 }
 
 export const FIELD_LABELS: Record<string, string> = {
-  description: "Description",
-  tags: "Tags",
-  isMature: "Mature Content",
-  matureLevel: "Mature Level",
-  categoryPath: "Category Path",
-  galleryIds: "Gallery Folders",
-  allowComments: "Allow Comments",
-  allowFreeDownload: "Allow Free Download",
-  isAiGenerated: "AI Generated",
-  noAi: "No AI Training",
-  addWatermark: "Add Watermark",
-  displayResolution: "Display Resolution",
+  description: 'Description',
+  tags: 'Tags',
+  isMature: 'Mature Content',
+  matureLevel: 'Mature Level',
+  categoryPath: 'Category Path',
+  galleryIds: 'Gallery Folders',
+  allowComments: 'Allow Comments',
+  allowFreeDownload: 'Allow Free Download',
+  isAiGenerated: 'AI Generated',
+  noAi: 'No AI Training',
+  addWatermark: 'Add Watermark',
+  displayResolution: 'Display Resolution',
 };

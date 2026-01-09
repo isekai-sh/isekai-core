@@ -15,36 +15,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
   type InfiniteData,
-} from "@tanstack/react-query";
-import {
-  Plus,
-  Folder,
-  Loader2,
-  ArrowUpAZ,
-  ArrowDownAZ,
-  GripVertical,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@tanstack/react-query';
+import { Plus, Folder, Loader2, ArrowUpAZ, ArrowDownAZ, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { galleries } from "@/lib/api";
-import { PageWrapper, PageHeader, PageContent } from "@/components/ui/page-wrapper";
-import { GalleryCard } from "@/components/galleries/GalleryCard";
-import { SortableGalleryCard } from "@/components/galleries/SortableGalleryCard";
-import { CreateGalleryDialog } from "@/components/galleries/CreateGalleryDialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import { galleries } from '@/lib/api';
+import { PageWrapper, PageHeader, PageContent } from '@/components/ui/page-wrapper';
+import { GalleryCard } from '@/components/galleries/GalleryCard';
+import { SortableGalleryCard } from '@/components/galleries/SortableGalleryCard';
+import { CreateGalleryDialog } from '@/components/galleries/CreateGalleryDialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   DndContext,
   DragOverlay,
@@ -57,23 +50,23 @@ import {
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   SortableContext,
   arrayMove,
   sortableKeyboardCoordinates,
   rectSortingStrategy,
-} from "@dnd-kit/sortable";
-import type { DeviantArtGalleryFolder } from "@isekai/shared";
+} from '@dnd-kit/sortable';
+import type { DeviantArtGalleryFolder } from '@isekai/shared';
 
-const SORT_MODE_KEY = "isekai-galleries-sort-mode";
+const SORT_MODE_KEY = 'isekai-galleries-sort-mode';
 
-type GallerySortMode = "custom" | "asc" | "desc";
+type GallerySortMode = 'custom' | 'asc' | 'desc';
 
 export function Galleries() {
   const [sortMode, setSortMode] = useState<GallerySortMode>(() => {
     const saved = localStorage.getItem(SORT_MODE_KEY);
-    return (saved as GallerySortMode) || "custom";
+    return (saved as GallerySortMode) || 'custom';
   });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -81,37 +74,27 @@ export function Galleries() {
 
   // Drag-and-drop state
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [localGalleries, setLocalGalleries] = useState<
-    DeviantArtGalleryFolder[]
-  >([]);
+  const [localGalleries, setLocalGalleries] = useState<DeviantArtGalleryFolder[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Infinite query for galleries - load all upfront for proper reordering
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ["galleries"],
-    queryFn: ({ pageParam = 0 }) => galleries.list(pageParam, 100), // Load 100 at a time
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextOffset : undefined,
-    initialPageParam: 0,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch } =
+    useInfiniteQuery({
+      queryKey: ['galleries'],
+      queryFn: ({ pageParam = 0 }) => galleries.list(pageParam, 100), // Load 100 at a time
+      getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextOffset : undefined),
+      initialPageParam: 0,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    });
 
   const rawGalleryList = data?.pages.flatMap((page) => page.galleries) ?? [];
 
   // Apply sorting based on sort mode
   const galleryList = useMemo(() => {
-    if (sortMode === "asc") {
+    if (sortMode === 'asc') {
       return [...rawGalleryList].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortMode === "desc") {
+    } else if (sortMode === 'desc') {
       return [...rawGalleryList].sort((a, b) => b.name.localeCompare(a.name));
     }
     // custom: use original order from API (user's manual sort on DeviantArt)
@@ -139,13 +122,12 @@ export function Galleries() {
   }, [activeId, localGalleries, galleryList]);
 
   const activeGallery = useMemo(
-    () =>
-      activeId ? displayGalleries.find((g) => g.folderid === activeId) : null,
+    () => (activeId ? displayGalleries.find((g) => g.folderid === activeId) : null),
     [activeId, displayGalleries]
   );
 
   const canReorder =
-    sortMode === "custom" &&
+    sortMode === 'custom' &&
     galleryList.length > 1 &&
     displayGalleries.length > 0 &&
     !isLoading &&
@@ -169,17 +151,15 @@ export function Galleries() {
     mutationFn: (folderIds: string[]) => galleries.reorderFolders(folderIds),
 
     onMutate: async (newOrder) => {
-      await queryClient.cancelQueries({ queryKey: ["galleries"] });
-      const previousData = queryClient.getQueryData(["galleries"]);
+      await queryClient.cancelQueries({ queryKey: ['galleries'] });
+      const previousData = queryClient.getQueryData(['galleries']);
 
       // Optimistically update cache
-      queryClient.setQueryData<InfiniteData<any>>(["galleries"], (old) => {
+      queryClient.setQueryData<InfiniteData<any>>(['galleries'], (old) => {
         if (!old) return old;
 
         const flatGalleries = old.pages.flatMap((p) => p.galleries ?? []);
-        const reordered = newOrder.map(
-          (id) => flatGalleries.find((g) => g.folderid === id)!
-        );
+        const reordered = newOrder.map((id) => flatGalleries.find((g) => g.folderid === id)!);
 
         const newPages = old.pages.map((page, idx) => {
           const startIdx = idx * 24;
@@ -198,20 +178,20 @@ export function Galleries() {
 
     onError: (err, newOrder, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["galleries"], context.previousData);
+        queryClient.setQueryData(['galleries'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: "Failed to reorder galleries. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to reorder galleries. Please try again.',
+        variant: 'destructive',
       });
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      queryClient.invalidateQueries({ queryKey: ['galleries'] });
       toast({
-        title: "Success",
-        description: "Gallery order updated successfully.",
+        title: 'Success',
+        description: 'Gallery order updated successfully.',
       });
     },
   });
@@ -221,8 +201,8 @@ export function Galleries() {
     if (!activeId) {
       setLocalGalleries((prev) => {
         // Only update if the gallery IDs are different
-        const prevIds = prev.map((g) => g.folderid).join(",");
-        const newIds = galleryList.map((g) => g.folderid).join(",");
+        const prevIds = prev.map((g) => g.folderid).join(',');
+        const newIds = galleryList.map((g) => g.folderid).join(',');
         return prevIds !== newIds ? galleryList : prev;
       });
     }
@@ -252,9 +232,9 @@ export function Galleries() {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      console.log("=== DRAG END STARTED ===");
+      console.log('=== DRAG END STARTED ===');
       const { active, over } = event;
-      console.log("Active:", active.id, "Over:", over?.id);
+      console.log('Active:', active.id, 'Over:', over?.id);
 
       // Resume infinite scroll
       if (observerRef.current && loadMoreRef.current) {
@@ -264,7 +244,7 @@ export function Galleries() {
       setActiveId(null);
 
       if (!over || active.id === over.id) {
-        console.log("Early exit: no over or same position");
+        console.log('Early exit: no over or same position');
         setLocalGalleries(galleryList);
         return;
       }
@@ -275,17 +255,17 @@ export function Galleries() {
 
       // Get all folder IDs
       const allFolderIds = localGalleries.map((g) => g.folderid);
-      console.log("All folder IDs:", allFolderIds);
+      console.log('All folder IDs:', allFolderIds);
 
       // Filter to only include valid UUID folder IDs (exclude special folders like "Featured", "All", etc.)
       const newOrder = allFolderIds.filter((id) => {
-        if (!id || typeof id !== "string") return false;
+        if (!id || typeof id !== 'string') return false;
         return uuidPattern.test(id);
       });
-      console.log("Filtered UUID folder IDs:", newOrder);
+      console.log('Filtered UUID folder IDs:', newOrder);
 
       if (newOrder.length === 0) {
-        console.log("No valid UUID folder IDs found, skipping reorder");
+        console.log('No valid UUID folder IDs found, skipping reorder');
         return;
       }
 
@@ -309,9 +289,9 @@ export function Galleries() {
       localStorage.setItem(SORT_MODE_KEY, mode);
 
       // If switching to asc or desc, sync the order to DeviantArt
-      if (mode !== "custom" && galleryList.length > 0) {
+      if (mode !== 'custom' && galleryList.length > 0) {
         const sortedList =
-          mode === "asc"
+          mode === 'asc'
             ? [...galleryList].sort((a, b) => a.name.localeCompare(b.name))
             : [...galleryList].sort((a, b) => b.name.localeCompare(a.name));
 
@@ -319,22 +299,22 @@ export function Galleries() {
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
         const folderIds = sortedList
           .map((g) => g.folderid)
-          .filter((id) => id && typeof id === "string" && uuidPattern.test(id));
+          .filter((id) => id && typeof id === 'string' && uuidPattern.test(id));
 
         if (folderIds.length > 0) {
           try {
             await reorderMutation.mutateAsync(folderIds);
             toast({
-              title: "Order synced",
+              title: 'Order synced',
               description: `Galleries sorted ${
-                mode === "asc" ? "A-Z" : "Z-A"
+                mode === 'asc' ? 'A-Z' : 'Z-A'
               } and synced to DeviantArt.`,
             });
           } catch (error) {
             toast({
-              title: "Sync failed",
-              description: "Failed to sync gallery order to DeviantArt.",
-              variant: "destructive",
+              title: 'Sync failed',
+              description: 'Failed to sync gallery order to DeviantArt.',
+              variant: 'destructive',
             });
           }
         }
@@ -374,63 +354,61 @@ export function Galleries() {
       {/* Header */}
       <PageHeader>
         <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">
-            <span className="text-gradient">Gallery</span>
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Organize your posts into collections
-          </p>
-        </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">
+              <span className="text-gradient">Gallery</span>
+            </h1>
+            <p className="text-lg text-muted-foreground">Organize your posts into collections</p>
+          </div>
 
-        <div className="flex items-center gap-2">
-          {/* Sort/Order dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                {sortMode === "asc" && (
-                  <>
-                    <ArrowUpAZ className="h-4 w-4 mr-2" />
-                    Sort A-Z
-                  </>
-                )}
-                {sortMode === "desc" && (
-                  <>
-                    <ArrowDownAZ className="h-4 w-4 mr-2" />
-                    Sort Z-A
-                  </>
-                )}
-                {sortMode === "custom" && (
-                  <>
-                    <GripVertical className="h-4 w-4 mr-2" />
-                    Custom Order
-                  </>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleSortModeChange("custom")}>
-                <GripVertical className="h-4 w-4 mr-2" />
-                Custom Order (Drag to Reorder)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortModeChange("asc")}>
-                <ArrowUpAZ className="h-4 w-4 mr-2" />
-                Sort A-Z
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortModeChange("desc")}>
-                <ArrowDownAZ className="h-4 w-4 mr-2" />
-                Sort Z-A
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            {/* Sort/Order dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  {sortMode === 'asc' && (
+                    <>
+                      <ArrowUpAZ className="h-4 w-4 mr-2" />
+                      Sort A-Z
+                    </>
+                  )}
+                  {sortMode === 'desc' && (
+                    <>
+                      <ArrowDownAZ className="h-4 w-4 mr-2" />
+                      Sort Z-A
+                    </>
+                  )}
+                  {sortMode === 'custom' && (
+                    <>
+                      <GripVertical className="h-4 w-4 mr-2" />
+                      Custom Order
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleSortModeChange('custom')}>
+                  <GripVertical className="h-4 w-4 mr-2" />
+                  Custom Order (Drag to Reorder)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortModeChange('asc')}>
+                  <ArrowUpAZ className="h-4 w-4 mr-2" />
+                  Sort A-Z
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortModeChange('desc')}>
+                  <ArrowDownAZ className="h-4 w-4 mr-2" />
+                  Sort Z-A
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Create button */}
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Gallery
-          </Button>
+            {/* Create button */}
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Gallery
+            </Button>
+          </div>
         </div>
-      </div>
       </PageHeader>
 
       {/* Content */}
@@ -443,9 +421,7 @@ export function Galleries() {
           </div>
         ) : isError ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              Failed to load galleries
-            </p>
+            <p className="text-muted-foreground mb-4">Failed to load galleries</p>
             <Button onClick={() => refetch()}>Try again</Button>
           </div>
         ) : galleryList.length === 0 ? (
@@ -455,8 +431,7 @@ export function Galleries() {
             </div>
             <h3 className="text-lg font-semibold mb-2">No galleries yet</h3>
             <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              Create your first gallery to start organizing your posts into
-              collections
+              Create your first gallery to start organizing your posts into collections
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -522,10 +497,7 @@ export function Galleries() {
       )}
 
       {/* Create Dialog */}
-      <CreateGalleryDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
+      <CreateGalleryDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </PageWrapper>
   );
 }

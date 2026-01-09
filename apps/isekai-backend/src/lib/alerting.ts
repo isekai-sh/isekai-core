@@ -22,9 +22,9 @@
  */
 
 export enum AlertSeverity {
-  CRITICAL = "critical",
-  WARNING = "warning",
-  INFO = "info",
+  CRITICAL = 'critical',
+  WARNING = 'warning',
+  INFO = 'info',
 }
 
 export interface Alert {
@@ -41,7 +41,7 @@ export interface Alert {
  */
 export class AlertManager {
   private static webhookUrl = process.env.ALERT_WEBHOOK_URL;
-  private static enabled = process.env.ENABLE_ALERTS === "true";
+  private static enabled = process.env.ENABLE_ALERTS === 'true';
 
   /**
    * Send a critical alert
@@ -80,11 +80,7 @@ export class AlertManager {
   /**
    * Send an info alert
    */
-  static async info(
-    title: string,
-    message: string,
-    context?: Record<string, any>
-  ): Promise<void> {
+  static async info(title: string, message: string, context?: Record<string, any>): Promise<void> {
     await this.send({
       severity: AlertSeverity.INFO,
       title,
@@ -99,16 +95,12 @@ export class AlertManager {
    */
   private static async send(alert: Alert): Promise<void> {
     if (!this.enabled) {
-      console.log(
-        `[Alert] ${alert.severity.toUpperCase()}: ${alert.title} - ${
-          alert.message
-        }`
-      );
+      console.log(`[Alert] ${alert.severity.toUpperCase()}: ${alert.title} - ${alert.message}`);
       return;
     }
 
     if (!this.webhookUrl) {
-      console.error("[Alert] Alert webhook URL not configured, skipping alert");
+      console.error('[Alert] Alert webhook URL not configured, skipping alert');
       return;
     }
 
@@ -116,9 +108,9 @@ export class AlertManager {
       const payload = this.formatPayload(alert);
 
       const response = await fetch(this.webhookUrl, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
@@ -127,7 +119,7 @@ export class AlertManager {
         console.error(`[Alert] Failed to send alert: ${response.statusText}`);
       }
     } catch (error) {
-      console.error("[Alert] Error sending alert:", error);
+      console.error('[Alert] Error sending alert:', error);
     }
   }
 
@@ -141,7 +133,7 @@ export class AlertManager {
 
     // Generic webhook payload (works with Slack, Discord, etc.)
     return {
-      username: "Isekai Alerts",
+      username: 'Isekai Alerts',
       embeds: [
         {
           title: `${emoji} ${alert.title}`,
@@ -163,13 +155,13 @@ export class AlertManager {
   private static getSeverityEmoji(severity: AlertSeverity): string {
     switch (severity) {
       case AlertSeverity.CRITICAL:
-        return "🚨";
+        return '🚨';
       case AlertSeverity.WARNING:
-        return "⚠️";
+        return '⚠️';
       case AlertSeverity.INFO:
-        return "ℹ️";
+        return 'ℹ️';
       default:
-        return "📢";
+        return '📢';
     }
   }
 
@@ -201,10 +193,8 @@ export class PublisherAlerts {
     duration: number
   ): Promise<void> {
     await AlertManager.critical(
-      "Deviation Stuck in Publishing",
-      `A deviation has been stuck in publishing state for ${Math.round(
-        duration / 60000
-      )} minutes`,
+      'Deviation Stuck in Publishing',
+      `A deviation has been stuck in publishing state for ${Math.round(duration / 60000)} minutes`,
       {
         deviationId,
         username,
@@ -223,10 +213,8 @@ export class PublisherAlerts {
     failed: number
   ): Promise<void> {
     await AlertManager.critical(
-      "High R2 Cleanup Failure Rate",
-      `Cleanup failure rate is ${Math.round(
-        failureRate * 100
-      )}% (${failed}/${total} failed)`,
+      'High R2 Cleanup Failure Rate',
+      `Cleanup failure rate is ${Math.round(failureRate * 100)}% (${failed}/${total} failed)`,
       {
         failureRate: `${Math.round(failureRate * 100)}%`,
         totalJobs: total,
@@ -244,10 +232,8 @@ export class PublisherAlerts {
     duration: number
   ): Promise<void> {
     await AlertManager.warning(
-      "Circuit Breaker Open",
-      `Circuit breaker has been open for ${Math.round(
-        duration / 60000
-      )} minutes`,
+      'Circuit Breaker Open',
+      `Circuit breaker has been open for ${Math.round(duration / 60000)} minutes`,
       {
         userId,
         username,
@@ -261,7 +247,7 @@ export class PublisherAlerts {
    */
   static async highTokenRefreshFailureRate(failureRate: number): Promise<void> {
     await AlertManager.warning(
-      "High Token Refresh Failure Rate",
+      'High Token Refresh Failure Rate',
       `Token refresh failure rate is ${Math.round(failureRate * 100)}%`,
       {
         failureRate: `${Math.round(failureRate * 100)}%`,
@@ -273,14 +259,10 @@ export class PublisherAlerts {
    * Alert when queue depth exceeds threshold
    */
   static async highQueueDepth(queueName: string, depth: number): Promise<void> {
-    await AlertManager.info(
-      "High Queue Depth",
-      `Queue '${queueName}' has ${depth} pending jobs`,
-      {
-        queueName,
-        depth,
-      }
-    );
+    await AlertManager.info('High Queue Depth', `Queue '${queueName}' has ${depth} pending jobs`, {
+      queueName,
+      depth,
+    });
   }
 
   /**
@@ -292,10 +274,8 @@ export class PublisherAlerts {
     recovered: number
   ): Promise<void> {
     await AlertManager.warning(
-      "High Stuck Job Recovery Rate",
-      `${Math.round(
-        recoveryRate * 100
-      )}% of jobs required recovery (${recovered}/${total})`,
+      'High Stuck Job Recovery Rate',
+      `${Math.round(recoveryRate * 100)}% of jobs required recovery (${recovered}/${total})`,
       {
         recoveryRate: `${Math.round(recoveryRate * 100)}%`,
         totalJobs: total,

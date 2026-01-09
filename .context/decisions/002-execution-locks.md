@@ -9,6 +9,7 @@
 ## Context
 
 Isekai Core processes scheduled deviations at specific times. Multiple workers (or multiple instances of the publisher) might try to publish the same deviation simultaneously, causing:
+
 - **Duplicate uploads** to DeviantArt (same file uploaded twice)
 - **Race conditions** (status updated incorrectly)
 - **API rate limit violations** (double the expected requests)
@@ -43,7 +44,7 @@ const lockId = randomUUID();
 const result = await prisma.deviation.updateMany({
   where: {
     id: deviationId,
-    status: "scheduled",
+    status: 'scheduled',
     executionLockId: null, // Only lock if not already locked
   },
   data: {
@@ -55,7 +56,7 @@ const result = await prisma.deviation.updateMany({
 
 // 3. If count === 0, another worker got the lock (skip)
 if (result.count === 0) {
-  console.log("Deviation already locked by another worker");
+  console.log('Deviation already locked by another worker');
   return;
 }
 
@@ -68,7 +69,7 @@ await prisma.deviation.update({
   data: {
     executionLockId: null,
     executionLockedAt: null,
-    status: "published",
+    status: 'published',
   },
 });
 ```
@@ -84,6 +85,7 @@ await prisma.deviation.update({
 **Solution:** `updateMany` with `executionLockId: null` is atomic.
 
 **Flow:**
+
 1. Worker A generates `lockId = abc123`
 2. Worker B generates `lockId = def456`
 3. Both attempt `updateMany` simultaneously
@@ -101,6 +103,7 @@ await prisma.deviation.update({
 **Solution:** Lock state stored in database (shared resource).
 
 **Example:**
+
 - 3 publisher instances running
 - All query same deviation at 2pm
 - First instance to execute `updateMany` gets lock
@@ -113,6 +116,7 @@ await prisma.deviation.update({
 **Solution:** Use PostgreSQL (already required for data).
 
 **Comparison:**
+
 - Redis locks: Redlock algorithm, requires Redis cluster
 - Database locks: Atomic SQL, uses existing PostgreSQL
 
@@ -191,20 +195,16 @@ const staleLocks = await prisma.deviation.updateMany({
 **Approach:** Use Redis `SET NX` with expiration.
 
 ```typescript
-const lockAcquired = await redis.set(
-  `lock:deviation:${deviationId}`,
-  workerId,
-  "NX",
-  "EX",
-  3600
-);
+const lockAcquired = await redis.set(`lock:deviation:${deviationId}`, workerId, 'NX', 'EX', 3600);
 ```
 
 **Pros:**
+
 - Fast (in-memory)
 - Built-in expiration
 
 **Cons:**
+
 - Requires Redis cluster for reliability
 - Redlock algorithm complex (clock skew issues)
 - Separate state from database (can diverge)
@@ -225,10 +225,12 @@ COMMIT;
 ```
 
 **Pros:**
+
 - Native database feature
 - Automatic release on transaction end
 
 **Cons:**
+
 - Requires holding transaction open during publish (30-60 seconds)
 - Long transactions block other queries
 - Connection pool exhaustion risk
@@ -242,14 +244,16 @@ COMMIT;
 **Approach:** Rely on BullMQ's job deduplication.
 
 ```typescript
-await deviationQueue.add("publish", { deviationId }, { jobId: deviationId });
+await deviationQueue.add('publish', { deviationId }, { jobId: deviationId });
 ```
 
 **Pros:**
+
 - Simple implementation
 - Built into BullMQ
 
 **Cons:**
+
 - Only prevents duplicate jobs in queue
 - Doesn't prevent duplicate processing (e.g., past-due recovery + auto-scheduler)
 - No protection against multiple queues
@@ -283,7 +287,7 @@ async function processScheduledDeviation(deviationId: string) {
   const locked = await prisma.deviation.updateMany({
     where: {
       id: deviationId,
-      status: "scheduled",
+      status: 'scheduled',
       executionLockId: null,
     },
     data: {
@@ -308,7 +312,7 @@ async function processScheduledDeviation(deviationId: string) {
       data: {
         executionLockId: null,
         executionLockedAt: null,
-        status: "published",
+        status: 'published',
       },
     });
   } catch (error) {
@@ -318,7 +322,7 @@ async function processScheduledDeviation(deviationId: string) {
       data: {
         executionLockId: null,
         executionLockedAt: null,
-        status: "failed",
+        status: 'failed',
       },
     });
   }
@@ -332,22 +336,25 @@ async function processScheduledDeviation(deviationId: string) {
 
 const LOCK_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
-setInterval(async () => {
-  const result = await prisma.deviation.updateMany({
-    where: {
-      executionLockId: { not: null },
-      executionLockedAt: { lt: new Date(Date.now() - LOCK_TIMEOUT) },
-    },
-    data: {
-      executionLockId: null,
-      executionLockedAt: null,
-    },
-  });
+setInterval(
+  async () => {
+    const result = await prisma.deviation.updateMany({
+      where: {
+        executionLockId: { not: null },
+        executionLockedAt: { lt: new Date(Date.now() - LOCK_TIMEOUT) },
+      },
+      data: {
+        executionLockId: null,
+        executionLockedAt: null,
+      },
+    });
 
-  if (result.count > 0) {
-    console.log(`Released ${result.count} stale locks`);
-  }
-}, 30 * 60 * 1000); // Every 30 minutes
+    if (result.count > 0) {
+      console.log(`Released ${result.count} stale locks`);
+    }
+  },
+  30 * 60 * 1000
+); // Every 30 minutes
 ```
 
 ---
@@ -364,6 +371,7 @@ setInterval(async () => {
 ## Testing Strategy
 
 **Test Cases:**
+
 1. Single worker acquires lock successfully
 2. Second worker skips locked deviation
 3. Lock released after successful publish
@@ -372,6 +380,7 @@ setInterval(async () => {
 6. executionVersion increments correctly
 
 **Load Test:**
+
 - 5 concurrent workers
 - 100 deviations scheduled simultaneously
 - Result: 0 duplicates, 100% success rate
@@ -381,12 +390,14 @@ setInterval(async () => {
 ## Success Metrics
 
 **Target Metrics:**
+
 - Duplicate publishes: 0
 - Lock acquisition time: < 100ms
 - Lock cleanup interval: 30 minutes
 - Maximum lock hold time: 10 minutes (publish + upload)
 
 **Actual Results (v0.1.0-alpha.5):**
+
 - Duplicate publishes: 0 (across 1000+ test publishes)
 - Lock acquisition time: 20ms average
 - Lock cleanup: Works as expected

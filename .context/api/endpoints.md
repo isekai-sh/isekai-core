@@ -14,18 +14,24 @@
 **Response Format:** All endpoints return JSON with consistent structure:
 
 **Success:**
+
 ```json
 {
-  "data": { /* response data */ }
+  "data": {
+    /* response data */
+  }
 }
 ```
 
 **Error:**
+
 ```json
 {
   "error": "Error message",
   "code": "ERROR_CODE",
-  "details": { /* optional error context */ }
+  "details": {
+    /* optional error context */
+  }
 }
 ```
 
@@ -33,27 +39,27 @@
 
 ## Route Groups
 
-| Group | Base Path | Auth | Description |
-|-------|-----------|------|-------------|
-| Health | `/api/health` | Public | Health check, cache stats |
-| Auth | `/api/auth` | Public | OAuth login, logout |
-| Config | `/api/config` | Public | Instance configuration |
-| Deviations | `/api/deviations` | Session | Deviation CRUD, scheduling |
-| Uploads | `/api/uploads` | Session | File upload (presigned URLs) |
-| DeviantArt | `/api/deviantart` | Session | DeviantArt API proxy |
-| Browse | `/api/browse` | Session | Browse DeviantArt content |
-| Galleries | `/api/galleries` | Session | Gallery/folder management |
-| Templates | `/api/templates` | Session | Metadata templates |
-| Cache | `/api/cache` | Session | Cache management |
-| API Keys | `/api/api-keys` | Session | API key management |
-| Review | `/api/review` | Session | Review management |
-| Price Presets | `/api/price-presets` | Session | Price preset management |
-| Sale Queue | `/api/sale-queue` | Hybrid | Sale queue management |
-| Automations | `/api/automations` | Session | Automation workflows |
-| Schedule Rules | `/api/automation-schedule-rules` | Session | Automation schedule rules |
-| Default Values | `/api/automation-default-values` | Session | Automation default values |
-| ComfyUI | `/api/comfyui` | API Key | ComfyUI integration |
-| Admin | `/api/admin` | Session + Admin | Admin-only routes |
+| Group          | Base Path                        | Auth            | Description                  |
+| -------------- | -------------------------------- | --------------- | ---------------------------- |
+| Health         | `/api/health`                    | Public          | Health check, cache stats    |
+| Auth           | `/api/auth`                      | Public          | OAuth login, logout          |
+| Config         | `/api/config`                    | Public          | Instance configuration       |
+| Deviations     | `/api/deviations`                | Session         | Deviation CRUD, scheduling   |
+| Uploads        | `/api/uploads`                   | Session         | File upload (presigned URLs) |
+| DeviantArt     | `/api/deviantart`                | Session         | DeviantArt API proxy         |
+| Browse         | `/api/browse`                    | Session         | Browse DeviantArt content    |
+| Galleries      | `/api/galleries`                 | Session         | Gallery/folder management    |
+| Templates      | `/api/templates`                 | Session         | Metadata templates           |
+| Cache          | `/api/cache`                     | Session         | Cache management             |
+| API Keys       | `/api/api-keys`                  | Session         | API key management           |
+| Review         | `/api/review`                    | Session         | Review management            |
+| Price Presets  | `/api/price-presets`             | Session         | Price preset management      |
+| Sale Queue     | `/api/sale-queue`                | Hybrid          | Sale queue management        |
+| Automations    | `/api/automations`               | Session         | Automation workflows         |
+| Schedule Rules | `/api/automation-schedule-rules` | Session         | Automation schedule rules    |
+| Default Values | `/api/automation-default-values` | Session         | Automation default values    |
+| ComfyUI        | `/api/comfyui`                   | API Key         | ComfyUI integration          |
+| Admin          | `/api/admin`                     | Session + Admin | Admin-only routes            |
 
 ---
 
@@ -66,6 +72,7 @@
 **Description:** Health check with cache stats.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -85,6 +92,7 @@
 **Description:** Get instance configuration (whitelabel settings).
 
 **Response:**
+
 ```json
 {
   "instanceName": "My Isekai Instance",
@@ -112,6 +120,7 @@
 **Description:** OAuth callback handler. Sets session cookie and redirects to frontend.
 
 **Query Params:**
+
 - `code`: OAuth authorization code
 - `state`: CSRF token
 
@@ -124,6 +133,7 @@
 **Description:** Destroy session and logout.
 
 **Response:**
+
 ```json
 {
   "message": "Logged out successfully"
@@ -137,6 +147,7 @@
 **Description:** Get current user info.
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -162,11 +173,13 @@
 **Description:** List user's deviations with pagination.
 
 **Query Params:**
+
 - `status`: Filter by status (optional)
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 20, max: 100)
 
 **Response:**
+
 ```json
 {
   "deviations": [
@@ -176,7 +189,9 @@
       "description": "...",
       "status": "published",
       "deviationUrl": "https://www.deviantart.com/...",
-      "files": [/* DeviationFile[] */],
+      "files": [
+        /* DeviationFile[] */
+      ],
       "createdAt": "2025-01-10T14:00:00Z"
     }
   ],
@@ -199,6 +214,7 @@
 **Description:** Create new deviation.
 
 **Body:**
+
 ```json
 {
   "title": "My Artwork",
@@ -237,6 +253,7 @@
 **Description:** Schedule deviation for publishing.
 
 **Body:**
+
 ```json
 {
   "scheduledAt": "2025-01-15T14:00:00Z"
@@ -244,6 +261,7 @@
 ```
 
 **Validation:**
+
 - Must be at least 1 hour in future
 - Max 365 days in future
 
@@ -278,6 +296,7 @@
 **Description:** Get presigned URL for uploading file to storage (R2/S3/MinIO).
 
 **Body:**
+
 ```json
 {
   "deviationId": "deviation-uuid",
@@ -288,6 +307,7 @@
 ```
 
 **Response:**
+
 ```json
 {
   "uploadUrl": "https://r2.example.com/presigned?...",
@@ -297,6 +317,7 @@
 ```
 
 **Client Flow:**
+
 1. Call `/api/uploads/presigned-url`
 2. Upload file to `uploadUrl` with PUT request
 3. Call `/api/uploads/confirm` with `fileId`
@@ -308,6 +329,7 @@
 **Description:** Confirm file upload and create DeviationFile record.
 
 **Body:**
+
 ```json
 {
   "fileId": "file-uuid"
@@ -315,6 +337,7 @@
 ```
 
 **Response:**
+
 ```json
 {
   "file": {
@@ -349,6 +372,7 @@
 **Description:** Get current DeviantArt user info (whoami endpoint).
 
 **Response:**
+
 ```json
 {
   "username": "artist",
@@ -365,6 +389,7 @@
 **Description:** List user's galleries/folders.
 
 **Response:**
+
 ```json
 {
   "folders": [
@@ -393,6 +418,7 @@
 **Modes:** `home`, `daily`, `following`, `tags`, `topic`, `user-gallery`
 
 **Query Params:**
+
 - `offset`: Pagination offset (default: 0)
 - `limit`: Items per page (default: 24, max: 50)
 - `tag`: Tag name (for `tags` mode)
@@ -402,9 +428,12 @@
 - `mature_content`: Include mature content (default: false)
 
 **Response:**
+
 ```json
 {
-  "deviations": [/* BrowseDeviation[] */],
+  "deviations": [
+    /* BrowseDeviation[] */
+  ],
   "hasMore": true,
   "nextOffset": 24,
   "estimatedTotal": 500
@@ -418,9 +447,11 @@
 **Description:** Tag autocomplete.
 
 **Query Params:**
+
 - `tag_name`: Search query (min 2 characters)
 
 **Response:**
+
 ```json
 {
   "tags": ["fantasy", "fantasy art", "fantasy character"]
@@ -434,13 +465,16 @@
 **Description:** List all topics with sample deviations.
 
 **Response:**
+
 ```json
 {
   "topics": [
     {
       "name": "Digital Art",
       "canonicalName": "digitalart",
-      "exampleDeviations": [/* up to 4 deviations */]
+      "exampleDeviations": [
+        /* up to 4 deviations */
+      ]
     }
   ],
   "hasMore": false
@@ -466,6 +500,7 @@
 **Description:** List user's galleries/folders (cached).
 
 **Response:**
+
 ```json
 {
   "folders": [
@@ -490,9 +525,11 @@
 **Description:** List user's templates.
 
 **Query Params:**
+
 - `type`: Filter by type (optional): `tag`, `description`, `comment`
 
 **Response:**
+
 ```json
 {
   "templates": [
@@ -515,6 +552,7 @@
 **Description:** Create template.
 
 **Body:**
+
 ```json
 {
   "name": "Fantasy Tags",
@@ -548,6 +586,7 @@
 **Description:** Clear gallery cache for current user.
 
 **Response:**
+
 ```json
 {
   "message": "Gallery cache cleared"
@@ -571,6 +610,7 @@
 **Description:** List user's API keys (shows only prefix, not full key).
 
 **Response:**
+
 ```json
 {
   "apiKeys": [
@@ -592,6 +632,7 @@
 **Description:** Create API key.
 
 **Body:**
+
 ```json
 {
   "name": "ComfyUI Integration"
@@ -599,12 +640,13 @@
 ```
 
 **Response:**
+
 ```json
 {
   "apiKey": {
     "id": "key-uuid",
     "name": "ComfyUI Integration",
-    "key": "isk_live_abc123def456...",  // ONLY shown once
+    "key": "isk_live_abc123def456...", // ONLY shown once
     "keyPrefix": "isk_live_"
   }
 }
@@ -651,6 +693,7 @@
 **Description:** List price presets.
 
 **Response:**
+
 ```json
 {
   "presets": [
@@ -674,6 +717,7 @@
 **Description:** Create price preset.
 
 **Body:**
+
 ```json
 {
   "name": "Variable $30-100",
@@ -710,6 +754,7 @@
 **Description:** List sale queue items.
 
 **Query Params:**
+
 - `status`: Filter by status (optional)
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 50, max: 100)
@@ -721,6 +766,7 @@
 **Description:** Add deviations to sale queue (batch up to 50).
 
 **Body:**
+
 ```json
 {
   "deviationIds": ["deviation-uuid-1", "deviation-uuid-2"],
@@ -753,6 +799,7 @@
 **Description:** List user's automation workflows.
 
 **Response:**
+
 ```json
 {
   "automations": [
@@ -763,7 +810,9 @@
       "draftSelectionMethod": "random",
       "jitterMinSeconds": 0,
       "jitterMaxSeconds": 300,
-      "scheduleRules": [/* AutomationScheduleRule[] */],
+      "scheduleRules": [
+        /* AutomationScheduleRule[] */
+      ],
       "_count": {
         "scheduleRules": 2,
         "defaultValues": 3
@@ -786,6 +835,7 @@
 **Description:** Create automation workflow.
 
 **Body:**
+
 ```json
 {
   "name": "Daily Posts",
@@ -821,6 +871,7 @@
 **Description:** Reorder automations (update sortOrder).
 
 **Body:**
+
 ```json
 {
   "automationIds": ["uuid-1", "uuid-2", "uuid-3"]
@@ -834,6 +885,7 @@
 **Description:** Get execution logs (paginated).
 
 **Query Params:**
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 20)
 
@@ -848,6 +900,7 @@
 **Description:** List rules for automation.
 
 **Query Params:**
+
 - `automationId`: Automation ID (required)
 
 ### POST /api/automation-schedule-rules
@@ -857,6 +910,7 @@
 **Description:** Create schedule rule.
 
 **Body (Fixed Time):**
+
 ```json
 {
   "automationId": "automation-uuid",
@@ -868,6 +922,7 @@
 ```
 
 **Body (Fixed Interval):**
+
 ```json
 {
   "automationId": "automation-uuid",
@@ -879,6 +934,7 @@
 ```
 
 **Body (Daily Quota):**
+
 ```json
 {
   "automationId": "automation-uuid",
@@ -911,6 +967,7 @@
 **Description:** List default values for automation.
 
 **Query Params:**
+
 - `automationId`: Automation ID (required)
 
 ### POST /api/automation-default-values
@@ -920,6 +977,7 @@
 **Description:** Create default value.
 
 **Body:**
+
 ```json
 {
   "automationId": "automation-uuid",
@@ -954,6 +1012,7 @@
 **Description:** Create deviation from ComfyUI workflow.
 
 **Body:**
+
 ```json
 {
   "title": "AI Generated Art",
@@ -983,6 +1042,7 @@
 **Description:** Get instance statistics.
 
 **Response:**
+
 ```json
 {
   "users": 10,
@@ -996,20 +1056,21 @@
 
 ## Error Codes
 
-| Code | HTTP | Description |
-|------|------|-------------|
-| `UNAUTHORIZED` | 401 | Not authenticated |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request body |
-| `RATE_LIMITED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code               | HTTP | Description              |
+| ------------------ | ---- | ------------------------ |
+| `UNAUTHORIZED`     | 401  | Not authenticated        |
+| `FORBIDDEN`        | 403  | Insufficient permissions |
+| `NOT_FOUND`        | 404  | Resource not found       |
+| `VALIDATION_ERROR` | 400  | Invalid request body     |
+| `RATE_LIMITED`     | 429  | Too many requests        |
+| `INTERNAL_ERROR`   | 500  | Server error             |
 
 ---
 
 ## Rate Limiting
 
 **Scheduling Endpoints:**
+
 - `/api/deviations/:id/schedule`
 - `/api/deviations/:id/publish`
 

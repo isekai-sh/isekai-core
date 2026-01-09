@@ -48,7 +48,9 @@ async function recoverPastDueDeviations(): Promise<void> {
       return;
     }
 
-    console.log(`[Past Due Recovery] Found ${pastDueDeviations.length} past due deviations, checking queue status...`);
+    console.log(
+      `[Past Due Recovery] Found ${pastDueDeviations.length} past due deviations, checking queue status...`
+    );
 
     let recovered = 0;
     let alreadyQueued = 0;
@@ -71,23 +73,31 @@ async function recoverPastDueDeviations(): Promise<void> {
             await existingJob.remove();
             await reQueueDeviation(deviation);
             recovered++;
-            console.log(`[Past Due Recovery] Re-queued deviation ${deviation.id} (old job state: ${jobState})`);
+            console.log(
+              `[Past Due Recovery] Re-queued deviation ${deviation.id} (old job state: ${jobState})`
+            );
           } else if ((jobState === 'waiting' || jobState === 'delayed') && attemptsMade >= 2) {
             // Job has burned attempts (likely due to infrastructure issues) - reset it
             // This prevents jobs from silently failing after schema bugs, network issues, etc.
             await existingJob.remove();
             await reQueueDeviation(deviation);
             recovered++;
-            console.log(`[Past Due Recovery] Reset job with ${attemptsMade} burned attempts (state: ${jobState}) - deviation ${deviation.id}`);
+            console.log(
+              `[Past Due Recovery] Reset job with ${attemptsMade} burned attempts (state: ${jobState}) - deviation ${deviation.id}`
+            );
           } else if (jobState === 'active' && attemptsMade >= 4) {
             // Active job with high attempts - log warning but let it finish
             // It might succeed, and we don't want to interfere with active processing
             alreadyQueued++;
-            console.warn(`[Past Due Recovery] Job ${deviation.id} is active but has ${attemptsMade} attempts - monitoring`);
+            console.warn(
+              `[Past Due Recovery] Job ${deviation.id} is active but has ${attemptsMade} attempts - monitoring`
+            );
           } else {
             // Job is processing normally
             alreadyQueued++;
-            console.log(`[Past Due Recovery] Deviation ${deviation.id} already in queue (state: ${jobState}, attempts: ${attemptsMade}), skipping`);
+            console.log(
+              `[Past Due Recovery] Deviation ${deviation.id} already in queue (state: ${jobState}, attempts: ${attemptsMade}), skipping`
+            );
           }
         } else {
           // No job found - this is the main recovery case
@@ -109,21 +119,30 @@ async function recoverPastDueDeviations(): Promise<void> {
             },
           });
         } catch (updateError) {
-          console.error(`[Past Due Recovery] Failed to update error message for ${deviation.id}:`, updateError);
+          console.error(
+            `[Past Due Recovery] Failed to update error message for ${deviation.id}:`,
+            updateError
+          );
         }
       }
     }
 
-    console.log(`[Past Due Recovery] Recovery complete: ${recovered} recovered, ${alreadyQueued} already queued, ${failed} failed`);
+    console.log(
+      `[Past Due Recovery] Recovery complete: ${recovered} recovered, ${alreadyQueued} already queued, ${failed} failed`
+    );
 
     // Alert if recovery rate is high (indicates systemic issues)
     if (recovered > 10) {
-      console.error(`[Past Due Recovery] WARNING: High recovery rate ${recovered}/${pastDueDeviations.length} (${Math.round(recovered / pastDueDeviations.length * 100)}%) - indicates systemic issues`);
+      console.error(
+        `[Past Due Recovery] WARNING: High recovery rate ${recovered}/${pastDueDeviations.length} (${Math.round((recovered / pastDueDeviations.length) * 100)}%) - indicates systemic issues`
+      );
     }
 
     // Alert if failure rate is high
     if (failed > 0 && failed / pastDueDeviations.length > 0.1) {
-      console.error(`[Past Due Recovery] WARNING: High failure rate ${failed}/${pastDueDeviations.length} (${Math.round(failed / pastDueDeviations.length * 100)}%)`);
+      console.error(
+        `[Past Due Recovery] WARNING: High failure rate ${failed}/${pastDueDeviations.length} (${Math.round((failed / pastDueDeviations.length) * 100)}%)`
+      );
     }
   } catch (error) {
     console.error('[Past Due Recovery] Critical error in recovery process:', error);
@@ -147,12 +166,7 @@ async function reQueueDeviation(deviation: any): Promise<void> {
 
   // Queue with 1 minute delay to avoid overwhelming the system
   const retryAt = new Date(Date.now() + 60000);
-  await scheduleDeviation(
-    deviation.id,
-    deviation.userId,
-    retryAt,
-    deviation.uploadMode
-  );
+  await scheduleDeviation(deviation.id, deviation.userId, retryAt, deviation.uploadMode);
 }
 
 /**

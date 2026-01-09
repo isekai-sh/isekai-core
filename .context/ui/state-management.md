@@ -26,7 +26,7 @@ Isekai Core frontend uses a **clear separation** between server state and UI sta
 **Configuration:** `apps/isekai-frontend/src/main.tsx`
 
 ```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,7 +57,7 @@ function Root() {
 
 ```tsx
 // Runtime configuration (no build-time env vars)
-const API_URL = (window as any).ISEKAI_CONFIG?.API_URL || "/api";
+const API_URL = (window as any).ISEKAI_CONFIG?.API_URL || '/api';
 
 class ApiError extends Error {
   constructor(
@@ -66,7 +66,7 @@ class ApiError extends Error {
     public upgradeRequired?: boolean
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
   }
 }
 
@@ -87,6 +87,7 @@ function calculateBackoffDelay(attempt: number, config: RetryConfig): number {
 ```
 
 **Features:**
+
 - Exponential backoff (1s to 10s)
 - Retry on 429 (rate limit), 408 (timeout), 5xx (server errors)
 - 0-30% jitter to prevent thundering herd
@@ -103,13 +104,13 @@ function calculateBackoffDelay(attempt: number, config: RetryConfig): number {
 **Example:**
 
 ```tsx
-import { useQuery } from "@tanstack/react-query";
-import { deviations } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { deviations } from '@/lib/api';
 
 function useDrafts() {
   return useQuery({
-    queryKey: ["deviations", "draft"],
-    queryFn: () => deviations.getByStatus("draft"),
+    queryKey: ['deviations', 'draft'],
+    queryFn: () => deviations.getByStatus('draft'),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
@@ -138,9 +139,9 @@ function DraftPage() {
 **Example:**
 
 ```tsx
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deviations } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deviations } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 function useCreateDeviation() {
   const queryClient = useQueryClient();
@@ -149,18 +150,18 @@ function useCreateDeviation() {
     mutationFn: (data: CreateDeviationRequest) => deviations.create(data),
     onSuccess: () => {
       // Invalidate drafts query to refetch
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
 
       toast({
-        title: "Success",
-        description: "Deviation created successfully.",
+        title: 'Success',
+        description: 'Deviation created successfully.',
       });
     },
     onError: (error: ApiError) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -178,7 +179,7 @@ function CreateDeviationForm() {
     <form onSubmit={handleSubmit}>
       {/* Form fields */}
       <Button disabled={createMutation.isPending}>
-        {createMutation.isPending ? "Creating..." : "Create"}
+        {createMutation.isPending ? 'Creating...' : 'Create'}
       </Button>
     </form>
   );
@@ -193,37 +194,34 @@ function CreateDeviationForm() {
 
 ```tsx
 // Create deviation → Invalidate drafts list
-queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
 
 // Update deviation → Invalidate specific deviation + list
-queryClient.invalidateQueries({ queryKey: ["deviations", deviationId] });
-queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+queryClient.invalidateQueries({ queryKey: ['deviations', deviationId] });
+queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
 
 // Delete deviation → Invalidate list
-queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
 
 // Schedule deviation → Invalidate draft list + scheduled list
-queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
-queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
 ```
 
 ### Query Key Conventions
 
 ```tsx
 // Entity list by status
-["deviations", "draft"]
-["deviations", "scheduled"]
-["deviations", "published"]
-
-// Entity detail
-["deviations", deviationId]
-
-// Related entities
-["galleries", userId]
-["automations", userId]
-
-// Browse cache
-["browse", mode, { offset, tag }]
+['deviations', 'draft'][('deviations', 'scheduled')][('deviations', 'published')][
+  // Entity detail
+  ('deviations', deviationId)
+][
+  // Related entities
+  ('galleries', userId)
+][('automations', userId)][
+  // Browse cache
+  ('browse', mode, { offset, tag })
+];
 ```
 
 ---
@@ -245,12 +243,12 @@ queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
 **Pattern:**
 
 ```tsx
-import { create } from "zustand";
-import type { User } from "@isekai/shared";
-import { auth } from "@/lib/api";
+import { create } from 'zustand';
+import type { User } from '@isekai/shared';
+import { auth } from '@/lib/api';
 
 interface ExtendedUser extends User {
-  instanceRole?: "admin" | "member";
+  instanceRole?: 'admin' | 'member';
   isAdmin?: boolean;
 }
 
@@ -275,7 +273,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     try {
       set({ isLoading: true, error: null });
-      const user = await auth.getMe() as ExtendedUser;
+      const user = (await auth.getMe()) as ExtendedUser;
       set({
         user,
         isAuthenticated: true,
@@ -337,8 +335,8 @@ function Header() {
 **Pattern:**
 
 ```tsx
-import { create } from "zustand";
-import { config, type WhitelabelConfig } from "@/lib/api";
+import { create } from 'zustand';
+import { config, type WhitelabelConfig } from '@/lib/api';
 
 interface WhitelabelState {
   config: WhitelabelConfig | null;
@@ -348,7 +346,7 @@ interface WhitelabelState {
   applyBranding: () => void;
 }
 
-const DEFAULT_PRODUCT_NAME = "Isekai";
+const DEFAULT_PRODUCT_NAME = 'Isekai';
 
 export const useWhitelabelStore = create<WhitelabelState>((set, get) => ({
   config: null,
@@ -391,8 +389,8 @@ export const useWhitelabelStore = create<WhitelabelState>((set, get) => ({
       if (existingFavicon) {
         existingFavicon.href = whitelabelConfig.faviconUrl;
       } else {
-        const favicon = document.createElement("link");
-        favicon.rel = "icon";
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
         favicon.href = whitelabelConfig.faviconUrl;
         document.head.appendChild(favicon);
       }
@@ -412,10 +410,8 @@ function Footer() {
 
   return (
     <footer>
-      <p>{config?.footerText || "© 2025 Isekai. All rights reserved."}</p>
-      {config?.supportEmail && (
-        <a href={`mailto:${config.supportEmail}`}>Contact Support</a>
-      )}
+      <p>{config?.footerText || '© 2025 Isekai. All rights reserved.'}</p>
+      {config?.supportEmail && <a href={`mailto:${config.supportEmail}`}>Contact Support</a>}
     </footer>
   );
 }
@@ -430,9 +426,9 @@ function Footer() {
 **Pattern:**
 
 ```tsx
-import { Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "@/components/layouts/AppLayout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AppLayout } from '@/components/layouts/AppLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 function App() {
   return (
@@ -475,7 +471,7 @@ function App() {
 ### Programmatic Navigation
 
 ```tsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 function MyComponent() {
   const navigate = useNavigate();
@@ -492,13 +488,13 @@ function MyComponent() {
 ### Route Parameters
 
 ```tsx
-import { useParams } from "react-router-dom";
+import { useParams } from 'react-router-dom';
 
 function AutomationDetail() {
   const { id } = useParams<{ id: string }>();
 
   const { data: automation } = useQuery({
-    queryKey: ["automations", id],
+    queryKey: ['automations', id],
     queryFn: () => automations.getById(id!),
   });
 
@@ -545,8 +541,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 ```tsx
 // Fetch deviations with TanStack Query
 const { data: deviations } = useQuery({
-  queryKey: ["deviations", "draft"],
-  queryFn: () => deviations.getByStatus("draft"),
+  queryKey: ['deviations', 'draft'],
+  queryFn: () => deviations.getByStatus('draft'),
 });
 ```
 
@@ -557,7 +553,7 @@ const { data: deviations } = useQuery({
 const [deviations, setDeviations] = useState<Deviation[]>([]);
 
 useEffect(() => {
-  deviations.getByStatus("draft").then(setDeviations);
+  deviations.getByStatus('draft').then(setDeviations);
 }, []);
 ```
 
@@ -579,7 +575,7 @@ const { config } = useWhitelabelStore();
 // Don't put server data in Zustand
 interface AppState {
   deviations: Deviation[]; // ❌ Server data
-  galleries: Gallery[];    // ❌ Server data
+  galleries: Gallery[]; // ❌ Server data
 }
 ```
 
@@ -593,7 +589,7 @@ interface AppState {
 const createMutation = useMutation({
   mutationFn: deviations.create,
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+    queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
   },
 });
 ```
@@ -606,7 +602,7 @@ const createMutation = useMutation({
   mutationFn: deviations.create,
   onSuccess: () => {
     // ❌ Manual refetch
-    const drafts = await deviations.getByStatus("draft");
+    const drafts = await deviations.getByStatus('draft');
     setDrafts(drafts);
   },
 });
@@ -621,26 +617,23 @@ const updateMutation = useMutation({
   mutationFn: deviations.update,
   onMutate: async (updatedDeviation) => {
     // Cancel outgoing queries
-    await queryClient.cancelQueries({ queryKey: ["deviations", updatedDeviation.id] });
+    await queryClient.cancelQueries({ queryKey: ['deviations', updatedDeviation.id] });
 
     // Snapshot previous value
-    const previousDeviation = queryClient.getQueryData(["deviations", updatedDeviation.id]);
+    const previousDeviation = queryClient.getQueryData(['deviations', updatedDeviation.id]);
 
     // Optimistically update
-    queryClient.setQueryData(["deviations", updatedDeviation.id], updatedDeviation);
+    queryClient.setQueryData(['deviations', updatedDeviation.id], updatedDeviation);
 
     return { previousDeviation };
   },
   onError: (err, updatedDeviation, context) => {
     // Rollback on error
-    queryClient.setQueryData(
-      ["deviations", updatedDeviation.id],
-      context?.previousDeviation
-    );
+    queryClient.setQueryData(['deviations', updatedDeviation.id], context?.previousDeviation);
   },
   onSettled: () => {
     // Refetch after mutation
-    queryClient.invalidateQueries({ queryKey: ["deviations"] });
+    queryClient.invalidateQueries({ queryKey: ['deviations'] });
   },
 });
 ```
@@ -652,14 +645,14 @@ const updateMutation = useMutation({
 ```tsx
 // Short stale time for frequently changing data
 useQuery({
-  queryKey: ["deviations", "scheduled"],
-  queryFn: () => deviations.getByStatus("scheduled"),
+  queryKey: ['deviations', 'scheduled'],
+  queryFn: () => deviations.getByStatus('scheduled'),
   staleTime: 30 * 1000, // 30 seconds
 });
 
 // Long stale time for rarely changing data
 useQuery({
-  queryKey: ["galleries"],
+  queryKey: ['galleries'],
   queryFn: () => galleries.getAll(),
   staleTime: 10 * 60 * 1000, // 10 minutes
 });
@@ -676,14 +669,14 @@ useQuery({
 **Purpose:** Fetch count of deviations in review status for badge.
 
 ```tsx
-import { useQuery } from "@tanstack/react-query";
-import { deviations } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { deviations } from '@/lib/api';
 
 export function useReviewCount() {
   return useQuery({
-    queryKey: ["deviations", "review", "count"],
+    queryKey: ['deviations', 'review', 'count'],
     queryFn: async () => {
-      const data = await deviations.getByStatus("review");
+      const data = await deviations.getByStatus('review');
       return data.length;
     },
     staleTime: 60 * 1000, // 1 minute
@@ -694,11 +687,7 @@ export function useReviewCount() {
 function Sidebar() {
   const { data: reviewCount } = useReviewCount();
 
-  return (
-    <NavItem to="/review">
-      Review {reviewCount > 0 && <Badge>{reviewCount}</Badge>}
-    </NavItem>
-  );
+  return <NavItem to="/review">Review {reviewCount > 0 && <Badge>{reviewCount}</Badge>}</NavItem>;
 }
 ```
 

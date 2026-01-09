@@ -12,11 +12,11 @@
 import type { Redis } from 'ioredis';
 
 export interface RateLimitState {
-  retryAfter: number | null;        // Unix timestamp when rate limit expires
-  lastRequestTime: number;           // Last request timestamp
-  consecutiveSuccesses: number;      // Track success pattern
-  consecutiveFailures: number;       // Track failure pattern
-  baseDelay: number;                 // Current adaptive delay in ms
+  retryAfter: number | null; // Unix timestamp when rate limit expires
+  lastRequestTime: number; // Last request timestamp
+  consecutiveSuccesses: number; // Track success pattern
+  consecutiveFailures: number; // Track failure pattern
+  baseDelay: number; // Current adaptive delay in ms
 }
 
 export interface RateLimitCheck {
@@ -45,8 +45,12 @@ export class AdaptiveRateLimiter {
     this.baseDelayMs = parseInt(process.env.RATE_LIMITER_BASE_DELAY_MS || '3000');
     this.maxDelayMs = parseInt(process.env.RATE_LIMITER_MAX_DELAY_MS || '300000');
     this.jitterPercent = parseInt(process.env.RATE_LIMITER_JITTER_PERCENT || '20');
-    this.successDecreaseFactor = parseFloat(process.env.RATE_LIMITER_SUCCESS_DECREASE_FACTOR || '0.9');
-    this.failureIncreaseFactor = parseFloat(process.env.RATE_LIMITER_FAILURE_INCREASE_FACTOR || '2.0');
+    this.successDecreaseFactor = parseFloat(
+      process.env.RATE_LIMITER_SUCCESS_DECREASE_FACTOR || '0.9'
+    );
+    this.failureIncreaseFactor = parseFloat(
+      process.env.RATE_LIMITER_FAILURE_INCREASE_FACTOR || '2.0'
+    );
   }
 
   /**
@@ -108,10 +112,7 @@ export class AdaptiveRateLimiter {
 
     // Decrease base delay on consecutive successes
     if (state.consecutiveSuccesses >= 3) {
-      state.baseDelay = Math.max(
-        this.baseDelayMs,
-        state.baseDelay * this.successDecreaseFactor
-      );
+      state.baseDelay = Math.max(this.baseDelayMs, state.baseDelay * this.successDecreaseFactor);
       state.consecutiveSuccesses = 0; // Reset counter after adjustment
     }
 
@@ -137,15 +138,12 @@ export class AdaptiveRateLimiter {
     if (retryAfterHeader) {
       const retryAfterSeconds = this.parseRetryAfter(retryAfterHeader);
       if (retryAfterSeconds > 0) {
-        state.retryAfter = Date.now() + (retryAfterSeconds * 1000);
+        state.retryAfter = Date.now() + retryAfterSeconds * 1000;
       }
     }
 
     // Increase base delay on consecutive failures
-    state.baseDelay = Math.min(
-      this.maxDelayMs,
-      state.baseDelay * this.failureIncreaseFactor
-    );
+    state.baseDelay = Math.min(this.maxDelayMs, state.baseDelay * this.failureIncreaseFactor);
 
     await this.setState(userId, state);
   }

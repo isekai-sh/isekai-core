@@ -30,6 +30,7 @@
 ### TypeScript
 
 **Strict Mode:** Always enabled
+
 - Use TypeScript for ALL new code
 - Avoid `any` - use proper types or `unknown`
 - Define interfaces for object shapes
@@ -118,6 +119,7 @@ const deviation: any = {...};
 ### Multi-Line Examples
 
 **Feature Commit:**
+
 ```
 feat(automation): add weekly quota rule type
 
@@ -136,6 +138,7 @@ Closes #42
 ```
 
 **Bug Fix Commit:**
+
 ```
 fix(publisher): prevent race condition in execution lock
 
@@ -153,6 +156,7 @@ Fixes #87
 ```
 
 **Documentation Commit:**
+
 ```
 docs(api): document browse endpoints and caching strategy
 
@@ -167,6 +171,7 @@ Updates .context/api/endpoints.md with code examples and response formats.
 ```
 
 **Refactor Commit:**
+
 ```
 refactor(storage): abstract S3-compatible storage layer
 
@@ -185,16 +190,19 @@ without code changes.
 ### ❌ Bad Examples
 
 **Too short:**
+
 ```
 feat: add feature
 ```
 
 **Has emoji:**
+
 ```
 feat(api): add endpoint 🚀
 ```
 
 **Has AI attribution:**
+
 ```
 feat(api): add endpoint
 
@@ -202,11 +210,13 @@ Generated with Claude Code
 ```
 
 **No body:**
+
 ```
 fix(bug): fix the bug
 ```
 
 **Wrong tense:**
+
 ```
 feat(api): added new endpoint
 ```
@@ -302,7 +312,7 @@ await r2Client.putObject({ Bucket: 'isekai', Key: key, Body: file });
 ```typescript
 // ✅ Good: Respect instance settings
 const settings = await prisma.instanceSettings.findUnique({
-  where: { id: 'singleton' }
+  where: { id: 'singleton' },
 });
 if (!settings?.teamInvitesEnabled) {
   return res.status(403).json({ error: 'Team invites disabled' });
@@ -380,6 +390,7 @@ app.get('/api/deviations', async (req, res) => {
 ### 1. Schema Changes
 
 **Process:**
+
 1. Edit `packages/shared/prisma/schema.prisma`
 2. Run `pnpm db:generate` to create migration
 3. Review generated SQL carefully
@@ -449,7 +460,9 @@ const { data, isLoading } = useQuery({
 // ❌ Bad: Manual fetch with useState
 const [data, setData] = useState(null);
 useEffect(() => {
-  fetch('/api/deviations').then(r => r.json()).then(setData);
+  fetch('/api/deviations')
+    .then((r) => r.json())
+    .then(setData);
 }, []);
 ```
 
@@ -523,13 +536,15 @@ return res.status(400).send('Bad request');
 
 ```typescript
 // ✅ Good
-console.log(JSON.stringify({
-  level: 'error',
-  message: 'Failed to publish deviation',
-  deviationId,
-  userId,
-  error: err.message,
-}));
+console.log(
+  JSON.stringify({
+    level: 'error',
+    message: 'Failed to publish deviation',
+    deviationId,
+    userId,
+    error: err.message,
+  })
+);
 
 // ❌ Bad
 console.log('Error:', err); // Unstructured, may leak tokens
@@ -619,6 +634,7 @@ packages/shared/
 **License compatibility:** All dependencies MUST be AGPL-3.0 compatible
 
 **Adding dependencies:**
+
 1. Check license compatibility
 2. Evaluate bundle size impact (frontend)
 3. Consider security/maintenance status

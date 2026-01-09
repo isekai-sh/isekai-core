@@ -184,9 +184,7 @@ describe('StructuredLogger', () => {
 
       logger.debug('Test debug message', { extra: 'data' });
 
-      expect(consoleSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"debug"')
-      );
+      expect(consoleSpy.debug).toHaveBeenCalledWith(expect.stringContaining('"level":"debug"'));
       expect(consoleSpy.debug).toHaveBeenCalledWith(
         expect.stringContaining('"message":"Test debug message"')
       );
@@ -200,9 +198,7 @@ describe('StructuredLogger', () => {
 
       logger.info('Test info');
 
-      expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"info"')
-      );
+      expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('"level":"info"'));
     });
 
     it('should log warn message', () => {
@@ -210,9 +206,7 @@ describe('StructuredLogger', () => {
 
       logger.warn('Test warning');
 
-      expect(consoleSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"warn"')
-      );
+      expect(consoleSpy.warn).toHaveBeenCalledWith(expect.stringContaining('"level":"warn"'));
     });
 
     it('should log error message without error object', () => {
@@ -220,9 +214,7 @@ describe('StructuredLogger', () => {
 
       logger.error('Test error');
 
-      expect(consoleSpy.error).toHaveBeenCalledWith(
-        expect.stringContaining('"level":"error"')
-      );
+      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('"level":"error"'));
     });
 
     it('should log error message with error object', () => {
@@ -326,7 +318,7 @@ describe('StructuredLogger', () => {
       const logger = new StructuredLogger();
 
       const endTimer = logger.startTimer('Test operation');
-      await new Promise(resolve => setTimeout(resolve, 15));
+      await new Promise((resolve) => setTimeout(resolve, 15));
       endTimer();
 
       const loggedData = consoleSpy.log.mock.calls[0][0];

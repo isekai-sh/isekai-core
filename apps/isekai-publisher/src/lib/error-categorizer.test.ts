@@ -560,7 +560,7 @@ describe('ErrorCategorizer', () => {
       const delayMs = 10000;
       const results = Array.from({ length: 100 }, () => ErrorCategorizer.addJitter(delayMs));
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeGreaterThanOrEqual(8000); // 10000 - 20%
         expect(result).toBeLessThanOrEqual(12000); // 10000 + 20%
       });
@@ -573,36 +573,30 @@ describe('ErrorCategorizer', () => {
         ErrorCategorizer.addJitter(delayMs, jitterPercent)
       );
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeGreaterThanOrEqual(5000); // 10000 - 50%
         expect(result).toBeLessThanOrEqual(15000); // 10000 + 50%
       });
     });
 
     it('should never return less than 1000ms', () => {
-      const results = Array.from({ length: 100 }, () =>
-        ErrorCategorizer.addJitter(100, 90)
-      );
+      const results = Array.from({ length: 100 }, () => ErrorCategorizer.addJitter(100, 90));
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeGreaterThanOrEqual(1000);
       });
     });
 
     it('should return integer values', () => {
-      const results = Array.from({ length: 100 }, () =>
-        ErrorCategorizer.addJitter(5555)
-      );
+      const results = Array.from({ length: 100 }, () => ErrorCategorizer.addJitter(5555));
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(Number.isInteger(result)).toBe(true);
       });
     });
 
     it('should produce different values across calls (randomness)', () => {
-      const results = Array.from({ length: 50 }, () =>
-        ErrorCategorizer.addJitter(10000)
-      );
+      const results = Array.from({ length: 50 }, () => ErrorCategorizer.addJitter(10000));
 
       const uniqueValues = new Set(results);
       expect(uniqueValues.size).toBeGreaterThan(1);

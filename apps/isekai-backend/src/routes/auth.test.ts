@@ -108,9 +108,7 @@ describe('Auth Routes', () => {
       expect(res.redirect).toHaveBeenCalledWith(
         expect.stringContaining('https://www.deviantart.com/oauth2/authorize')
       );
-      expect(res.redirect).toHaveBeenCalledWith(
-        expect.stringContaining('response_type=code')
-      );
+      expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('response_type=code'));
       expect(res.redirect).toHaveBeenCalledWith(
         expect.stringContaining('client_id=test-client-id')
       );
@@ -297,7 +295,10 @@ describe('Auth Routes', () => {
         } as any);
 
       mockPrisma.user.findUnique.mockResolvedValue(mockExistingUser as any);
-      mockPrisma.user.update.mockResolvedValue({ ...mockExistingUser, username: 'updateduser' } as any);
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockExistingUser,
+        username: 'updateduser',
+      } as any);
       mockPrisma.instanceUser.findUnique.mockResolvedValue({
         id: 'instance-user-123',
         daUserId: 'da-user-123',

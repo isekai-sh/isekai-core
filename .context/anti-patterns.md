@@ -288,21 +288,29 @@ const user = await prisma.user.findUnique({
 
 ```typescript
 // ❌ BAD: Unlimited retries
-await deviationQueue.add('publish', { deviationId }, {
-  attempts: Infinity, // Never gives up!
-});
+await deviationQueue.add(
+  'publish',
+  { deviationId },
+  {
+    attempts: Infinity, // Never gives up!
+  }
+);
 ```
 
 **✅ CORRECT: Set max attempts**
 
 ```typescript
-await deviationQueue.add('publish', { deviationId }, {
-  attempts: 7, // Publisher max attempts
-  backoff: {
-    type: 'exponential',
-    delay: 5000, // 5s initial delay
-  },
-});
+await deviationQueue.add(
+  'publish',
+  { deviationId },
+  {
+    attempts: 7, // Publisher max attempts
+    backoff: {
+      type: 'exponential',
+      delay: 5000, // 5s initial delay
+    },
+  }
+);
 ```
 
 ### ❌ Ignoring Stalled Jobs
@@ -402,7 +410,7 @@ const [error, setError] = useState(null);
 useEffect(() => {
   setLoading(true);
   fetch('/api/deviations')
-    .then(r => r.json())
+    .then((r) => r.json())
     .then(setDeviations)
     .catch(setError)
     .finally(() => setLoading(false));
@@ -412,7 +420,11 @@ useEffect(() => {
 **✅ CORRECT: Use TanStack Query**
 
 ```tsx
-const { data: deviations, isLoading, error } = useQuery({
+const {
+  data: deviations,
+  isLoading,
+  error,
+} = useQuery({
   queryKey: ['deviations', userId],
   queryFn: () => fetchDeviations(userId),
 });
@@ -432,13 +444,15 @@ console.log('User:', user); // Contains accessToken, refreshToken!
 **✅ CORRECT: Log only safe fields**
 
 ```typescript
-console.log(JSON.stringify({
-  level: 'info',
-  message: 'User authenticated',
-  userId: user.id,
-  username: user.username,
-  // NO tokens!
-}));
+console.log(
+  JSON.stringify({
+    level: 'info',
+    message: 'User authenticated',
+    userId: user.id,
+    username: user.username,
+    // NO tokens!
+  })
+);
 ```
 
 ### ❌ Plain Text Tokens
@@ -584,7 +598,9 @@ async function publishDeviation(id: string) {
 ```typescript
 // lib/deviantart-api.ts
 class DeviantArtClient {
-  async submitStash(params: StashParams): Promise<StashResponse> { /* ... */ }
+  async submitStash(params: StashParams): Promise<StashResponse> {
+    /* ... */
+  }
 }
 
 // queues/deviation-publisher.ts

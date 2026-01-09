@@ -131,7 +131,7 @@ describe('deviation-publisher', () => {
     vi.clearAllTimers();
     vi.useFakeTimers();
     capturedWorkerProcessor = null;
-    Object.keys(workerEventListeners).forEach(key => delete workerEventListeners[key]);
+    Object.keys(workerEventListeners).forEach((key) => delete workerEventListeners[key]);
 
     process.env = { ...originalEnv };
     process.env.REDIS_URL = 'redis://localhost:6379';
@@ -403,9 +403,7 @@ describe('deviation-publisher', () => {
         { deviationId: 'dev-123', userId: 'user-123', uploadMode: 'REPLACE' },
         { jobId: 'deviation-dev-123' }
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('immediate publishing')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('immediate publishing'));
     });
 
     it('should skip if job already exists and is active', async () => {

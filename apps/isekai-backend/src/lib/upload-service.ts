@@ -26,26 +26,20 @@ import {
   checkStorageLimit,
   generateStorageKey as generateStorageKeyBase,
   type StorageService,
-} from "@isekai/shared/storage";
+} from '@isekai/shared/storage';
 
 // Re-export utilities (but NOT generateStorageKey - we wrap it below)
-export {
-  ALLOWED_MIME_TYPES,
-  MAX_FILE_SIZE,
-  validateFileType,
-  validateFileSize,
-  checkStorageLimit,
-};
+export { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, validateFileType, validateFileSize, checkStorageLimit };
 
 // Create storage service singleton
 let storageService: StorageService | null = null;
-let pathPrefix: string = "";
+let pathPrefix: string = '';
 
 function getStorageService(): StorageService {
   if (!storageService) {
     const config = getS3ConfigFromEnv();
     storageService = createStorageService(config);
-    pathPrefix = config.pathPrefix || "";
+    pathPrefix = config.pathPrefix || '';
   }
   return storageService;
 }
@@ -108,12 +102,7 @@ export async function getPresignedUploadUrl(
   contentLength: number,
   expiresIn: number = 900
 ): Promise<string> {
-  return getStorageService().getPresignedUploadUrl(
-    key,
-    contentType,
-    contentLength,
-    expiresIn
-  );
+  return getStorageService().getPresignedUploadUrl(key, contentType, contentLength, expiresIn);
 }
 
 /**

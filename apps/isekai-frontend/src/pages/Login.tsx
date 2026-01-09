@@ -15,14 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { LoginForm } from "@/components/login-form";
-import { useWhitelabelStore } from "@/stores/whitelabel";
+import { LoginForm } from '@/components/login-form';
+import { useWhitelabelStore } from '@/stores/whitelabel';
 
 export function Login() {
   const { config: whitelabelConfig } = useWhitelabelStore();
 
-  const productName = whitelabelConfig?.productName || "Isekai";
-  const logoUrl = whitelabelConfig?.logoUrl || "/isekai-logo.svg";
+  const productName = whitelabelConfig?.productName || 'Isekai';
+  const logoUrl = whitelabelConfig?.logoUrl || '/isekai-logo.svg';
 
   return (
     <div className="relative h-screen w-screen bg-black">

@@ -15,24 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useRef, useEffect } from "react";
-import { Check, X, FileImage } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  TagTemplateSelector,
-  DescriptionTemplateSelector,
-} from "@/components/TemplateSelector";
-import type { Deviation } from "@isekai/shared";
+import { useState, useRef, useEffect } from 'react';
+import { Check, X, FileImage } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
+import type { Deviation } from '@isekai/shared';
 
 interface ReviewDetailPanelProps {
   deviation: Deviation | undefined;
@@ -48,7 +41,7 @@ export function ReviewDetailPanel({
   onUpdate,
 }: ReviewDetailPanelProps) {
   const [tags, setTags] = useState<string[]>([]);
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState('');
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -58,7 +51,7 @@ export function ReviewDetailPanel({
   useEffect(() => {
     if (deviation) {
       setTags(deviation.tags || []);
-      setDescription(deviation.description || "");
+      setDescription(deviation.description || '');
       if (titleRef.current) {
         titleRef.current.textContent = deviation.title;
       }
@@ -68,25 +61,25 @@ export function ReviewDetailPanel({
   // Handle ESC key to close lightbox and prevent body scroll
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
+      if (e.key === 'Escape' && lightboxOpen) {
         setLightboxOpen(false);
       }
     };
 
     if (lightboxOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [lightboxOpen]);
 
   const handleTitleBlur = () => {
     if (titleRef.current && deviation) {
-      const newTitle = titleRef.current.textContent || "";
+      const newTitle = titleRef.current.textContent || '';
       if (newTitle !== deviation.title && newTitle.trim()) {
         onUpdate(deviation.id, { title: newTitle.trim() });
       }
@@ -94,11 +87,11 @@ export function ReviewDetailPanel({
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       titleRef.current?.blur();
     }
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       if (titleRef.current && deviation) {
         titleRef.current.textContent = deviation.title;
       }
@@ -166,7 +159,9 @@ export function ReviewDetailPanel({
             {deviation.files?.[0] && (
               <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded space-x-2 pointer-events-none">
                 {deviation.files[0].width && deviation.files[0].height && (
-                  <span>{deviation.files[0].width}×{deviation.files[0].height}</span>
+                  <span>
+                    {deviation.files[0].width}×{deviation.files[0].height}
+                  </span>
                 )}
                 <span>{(deviation.files[0].fileSize / 1024 / 1024).toFixed(1)}MB</span>
               </div>
@@ -175,7 +170,6 @@ export function ReviewDetailPanel({
 
           {/* Fixed bottom area - actions */}
           <div className="flex-shrink-0 mt-3 pt-3 border-t space-y-2">
-
             {/* Title and Tags side by side */}
             <div className="flex gap-2">
               {/* Editable title */}
@@ -200,17 +194,15 @@ export function ReviewDetailPanel({
                   <PopoverTrigger asChild>
                     <button className="w-full text-left p-2 rounded-md border text-xs hover:bg-muted/50 transition-colors mt-1 truncate">
                       {tags.length > 0
-                        ? `${tags.length} tag${tags.length !== 1 ? "s" : ""}`
-                        : "Add tags..."}
+                        ? `${tags.length} tag${tags.length !== 1 ? 's' : ''}`
+                        : 'Add tags...'}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80" align="end">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <Label>Tags</Label>
-                        <TagTemplateSelector
-                          onSelect={(templateTags) => setTags(templateTags)}
-                        />
+                        <TagTemplateSelector onSelect={(templateTags) => setTags(templateTags)} />
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {tags.map((tag, idx) => (
@@ -228,19 +220,15 @@ export function ReviewDetailPanel({
                       <Input
                         placeholder="Add tag and press Enter..."
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                          if (e.key === 'Enter') {
                             e.preventDefault();
                             addTag(e.currentTarget.value);
-                            e.currentTarget.value = "";
+                            e.currentTarget.value = '';
                           }
                         }}
                       />
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setTagsOpen(false)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => setTagsOpen(false)}>
                           Cancel
                         </Button>
                         <Button size="sm" onClick={handleTagsApply}>
@@ -259,16 +247,14 @@ export function ReviewDetailPanel({
               <Popover open={descOpen} onOpenChange={setDescOpen}>
                 <PopoverTrigger asChild>
                   <button className="w-full text-left p-2 rounded-md border text-xs hover:bg-muted/50 transition-colors max-h-12 overflow-hidden mt-1">
-                    {description || "Add description..."}
+                    {description || 'Add description...'}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-96" align="start">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label>Description</Label>
-                      <DescriptionTemplateSelector
-                        onSelect={(text) => setDescription(text)}
-                      />
+                      <DescriptionTemplateSelector onSelect={(text) => setDescription(text)} />
                     </div>
                     <Textarea
                       value={description}
@@ -277,11 +263,7 @@ export function ReviewDetailPanel({
                       rows={6}
                     />
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDescOpen(false)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setDescOpen(false)}>
                         Cancel
                       </Button>
                       <Button size="sm" onClick={handleDescriptionApply}>
@@ -304,11 +286,7 @@ export function ReviewDetailPanel({
                 <X className="h-4 w-4 mr-2" />
                 Reject
               </Button>
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => onApprove(deviation.id)}
-              >
+              <Button size="sm" className="flex-1" onClick={() => onApprove(deviation.id)}>
                 <Check className="h-4 w-4 mr-2" />
                 Approve
               </Button>

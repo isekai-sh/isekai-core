@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   DollarSign,
   ExternalLink,
@@ -27,13 +27,13 @@ import {
   X,
   CheckCircle,
   Loader2,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -41,7 +41,7 @@ import {
   TableHeader,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -49,17 +49,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { deviations, pricePresets, saleQueue } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
-import type { Deviation } from "@isekai/shared";
+} from '@/components/ui/select';
+import { deviations, pricePresets, saleQueue } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import type { Deviation } from '@isekai/shared';
 
 const PAGE_SIZE = 50;
 
@@ -69,23 +69,17 @@ export function Published() {
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Dialog state
   const [showPresetDialog, setShowPresetDialog] = useState(false);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   // Fetch published deviations with infinite scroll
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["deviations", "published"],
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['deviations', 'published'],
     queryFn: async ({ pageParam = 1 }) => {
-      return await deviations.list({ status: "published", page: pageParam, limit: PAGE_SIZE });
+      return await deviations.list({ status: 'published', page: pageParam, limit: PAGE_SIZE });
     },
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * PAGE_SIZE;
@@ -114,7 +108,7 @@ export function Published() {
 
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
-      rootMargin: "100px",
+      rootMargin: '100px',
       threshold: 0,
     });
 
@@ -124,15 +118,16 @@ export function Published() {
 
   // Filter based on search query
   const publishedDeviations = searchQuery
-    ? allPublished.filter((d) =>
-        d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? allPublished.filter(
+        (d) =>
+          d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : allPublished;
 
   // Fetch price presets
   const { data: presetsData } = useQuery({
-    queryKey: ["pricePresets"],
+    queryKey: ['pricePresets'],
     queryFn: () => pricePresets.list(),
   });
 
@@ -140,44 +135,40 @@ export function Published() {
 
   // Fetch sale queue to know which items are already queued
   const { data: saleQueueData } = useQuery({
-    queryKey: ["saleQueue"],
-    queryFn: () => saleQueue.list({ status: "pending" }),
+    queryKey: ['saleQueue'],
+    queryFn: () => saleQueue.list({ status: 'pending' }),
   });
 
   // Set of deviation IDs already in the queue
-  const queuedDeviationIds = new Set(
-    saleQueueData?.items?.map((item) => item.deviationId) || []
-  );
+  const queuedDeviationIds = new Set(saleQueueData?.items?.map((item) => item.deviationId) || []);
 
   // Add to queue mutation
   const addToQueueMutation = useMutation({
     mutationFn: (data: { deviationIds: string[]; pricePresetId: string }) =>
       saleQueue.addToQueue(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["saleQueue"] });
+      queryClient.invalidateQueries({ queryKey: ['saleQueue'] });
       setSelectedIds(new Set());
       setShowPresetDialog(false);
-      setSelectedPresetId("");
+      setSelectedPresetId('');
       toast({
-        title: "Added to Sale Queue",
+        title: 'Added to Sale Queue',
         description: `${result.created} deviation(s) queued for exclusive sale. ${
-          result.skipped > 0 ? `${result.skipped} already in queue.` : ""
+          result.skipped > 0 ? `${result.skipped} already in queue.` : ''
         }`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to add to sale queue",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to add to sale queue',
+        variant: 'destructive',
       });
     },
   });
 
   // Filter out already queued items for selection
-  const selectableDeviations = publishedDeviations.filter(
-    (d) => !queuedDeviationIds.has(d.id)
-  );
+  const selectableDeviations = publishedDeviations.filter((d) => !queuedDeviationIds.has(d.id));
 
   // Handlers
   const toggleSelectAll = () => {
@@ -204,9 +195,9 @@ export function Published() {
   const handleSetAsExclusive = () => {
     if (selectedIds.size === 0) {
       toast({
-        title: "No Selection",
-        description: "Please select at least one deviation",
-        variant: "destructive",
+        title: 'No Selection',
+        description: 'Please select at least one deviation',
+        variant: 'destructive',
       });
       return;
     }
@@ -223,9 +214,9 @@ export function Published() {
   const handleSubmitPreset = () => {
     if (!selectedPresetId) {
       toast({
-        title: "No Preset Selected",
-        description: "Please select a price preset",
-        variant: "destructive",
+        title: 'No Preset Selected',
+        description: 'Please select a price preset',
+        variant: 'destructive',
       });
       return;
     }
@@ -237,8 +228,8 @@ export function Published() {
   };
 
   const formatPrice = (cents: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
       currency,
     }).format(cents / 100);
   };
@@ -274,11 +265,7 @@ export function Published() {
                 >
                   Clear selection
                 </Button>
-                <Button
-                  onClick={handleSetAsExclusive}
-                  size="sm"
-                  className="h-8"
-                >
+                <Button onClick={handleSetAsExclusive} size="sm" className="h-8">
                   <DollarSign className="h-4 w-4 mr-2" />
                   Set as Exclusive
                 </Button>
@@ -300,9 +287,7 @@ export function Published() {
               <div className="text-center text-muted-foreground">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No published deviations</p>
-                <p className="text-sm">
-                  Your published deviations will appear here
-                </p>
+                <p className="text-sm">Your published deviations will appear here</p>
               </div>
             </div>
           ) : (
@@ -375,34 +360,27 @@ export function Published() {
           <DialogHeader>
             <DialogTitle>Select Price Preset</DialogTitle>
             <DialogDescription>
-              Choose a price template for {selectedIds.size} selected
-              deviation(s)
+              Choose a price template for {selectedIds.size} selected deviation(s)
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             {presetsList.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
                 <p className="mb-2">No price presets available</p>
-                <p className="text-sm">
-                  Create a price preset first in the Price Presets page
-                </p>
+                <p className="text-sm">Create a price preset first in the Price Presets page</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="preset-select">Price Preset</Label>
-                <Select
-                  value={selectedPresetId}
-                  onValueChange={setSelectedPresetId}
-                >
+                <Select value={selectedPresetId} onValueChange={setSelectedPresetId}>
                   <SelectTrigger id="preset-select">
                     <SelectValue placeholder="Select a preset" />
                   </SelectTrigger>
                   <SelectContent>
                     {presetsList.map((preset) => (
                       <SelectItem key={preset.id} value={preset.id}>
-                        {preset.name} -{" "}
-                        {formatPrice(preset.price, preset.currency)}
-                        {preset.isDefault && " (Default)"}
+                        {preset.name} - {formatPrice(preset.price, preset.currency)}
+                        {preset.isDefault && ' (Default)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -411,19 +389,13 @@ export function Published() {
             )}
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPresetDialog(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setShowPresetDialog(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleSubmitPreset}
               disabled={
-                !selectedPresetId ||
-                presetsList.length === 0 ||
-                addToQueueMutation.isPending
+                !selectedPresetId || presetsList.length === 0 || addToQueueMutation.isPending
               }
             >
               Add to Queue
@@ -449,26 +421,24 @@ function PublishedTableRow({
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const publishedDate = deviation.publishedAt
-    ? new Date(deviation.publishedAt)
-    : null;
+  const publishedDate = deviation.publishedAt ? new Date(deviation.publishedAt) : null;
 
   // Handle ESC key to close lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
+      if (e.key === 'Escape' && lightboxOpen) {
         setLightboxOpen(false);
       }
     };
 
     if (lightboxOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [lightboxOpen]);
 
@@ -503,11 +473,7 @@ function PublishedTableRow({
     >
       {/* Checkbox */}
       <TableCell className="py-1 pl-4 text-center">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelect}
-          disabled={isQueued}
-        />
+        <Checkbox checked={isSelected} onCheckedChange={onSelect} disabled={isQueued} />
       </TableCell>
 
       {/* Preview */}
@@ -544,7 +510,7 @@ function PublishedTableRow({
       <TableCell className="py-1">
         {deviation.tags && deviation.tags.length > 0 ? (
           <span className="text-sm text-muted-foreground">
-            {deviation.tags.length} tag{deviation.tags.length !== 1 ? "s" : ""}
+            {deviation.tags.length} tag{deviation.tags.length !== 1 ? 's' : ''}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -563,30 +529,22 @@ function PublishedTableRow({
       {/* Published Date */}
       <TableCell className="py-1">
         <span className="text-sm text-muted-foreground">
-          {publishedDate && publishedDate.toLocaleString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}
+          {publishedDate &&
+            publishedDate.toLocaleString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
         </span>
       </TableCell>
 
       {/* External Link */}
       <TableCell className="py-1 pr-4 text-center">
         {deviation.deviationUrl && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            asChild
-          >
-            <a
-              href={deviation.deviationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
+            <a href={deviation.deviationUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </Button>

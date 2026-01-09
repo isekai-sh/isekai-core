@@ -15,24 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { automations } from "@/lib/api";
-import { CreateAutomationDialog } from "@/components/CreateAutomationDialog";
-import {
-  Plus,
-  Clock,
-  Calendar,
-  ChevronRight,
-  Copy,
-  Trash2,
-  Zap,
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { automations } from '@/lib/api';
+import { CreateAutomationDialog } from '@/components/CreateAutomationDialog';
+import { Plus, Clock, Calendar, ChevronRight, Copy, Trash2, Zap } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,15 +34,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
-import { formatNextRunTime } from "@/lib/automation-utils";
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
+import { formatNextRunTime } from '@/lib/automation-utils';
 
 export function AutomationList() {
   const { toast } = useToast();
@@ -71,9 +63,9 @@ export function AutomationList() {
       setAutomationList(data);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load automations",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to load automations',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -84,23 +76,23 @@ export function AutomationList() {
     try {
       await automations.create({
         ...data,
-        draftSelectionMethod: "fifo",
+        draftSelectionMethod: 'fifo',
         stashOnlyByDefault: false,
         jitterMinSeconds: 0,
         jitterMaxSeconds: 300,
       });
 
       toast({
-        title: "Success",
-        description: "Workflow created successfully",
+        title: 'Success',
+        description: 'Workflow created successfully',
       });
 
       loadAutomations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create workflow",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create workflow',
+        variant: 'destructive',
       });
     }
   };
@@ -112,28 +104,24 @@ export function AutomationList() {
 
     // Optimistic update
     setAutomationList((prev) =>
-      prev.map((a) =>
-        a.id === automation.id ? { ...a, enabled: !a.enabled } : a
-      )
+      prev.map((a) => (a.id === automation.id ? { ...a, enabled: !a.enabled } : a))
     );
 
     try {
       await automations.toggle(automation.id);
       toast({
-        title: automation.enabled ? "Disabled" : "Enabled",
-        description: `${automation.name} has been ${automation.enabled ? "disabled" : "enabled"}`,
+        title: automation.enabled ? 'Disabled' : 'Enabled',
+        description: `${automation.name} has been ${automation.enabled ? 'disabled' : 'enabled'}`,
       });
     } catch (error: any) {
       // Rollback
       setAutomationList((prev) =>
-        prev.map((a) =>
-          a.id === automation.id ? { ...a, enabled: automation.enabled } : a
-        )
+        prev.map((a) => (a.id === automation.id ? { ...a, enabled: automation.enabled } : a))
       );
       toast({
-        title: "Error",
-        description: error.message || "Failed to toggle automation",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to toggle automation',
+        variant: 'destructive',
       });
     } finally {
       setTogglingId(null);
@@ -152,16 +140,16 @@ export function AutomationList() {
       });
 
       toast({
-        title: "Success",
-        description: "Workflow duplicated successfully",
+        title: 'Success',
+        description: 'Workflow duplicated successfully',
       });
 
       loadAutomations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to duplicate workflow",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to duplicate workflow',
+        variant: 'destructive',
       });
     }
   };
@@ -173,17 +161,17 @@ export function AutomationList() {
       await automations.delete(deletingAutomation.id);
 
       toast({
-        title: "Success",
-        description: "Workflow deleted successfully",
+        title: 'Success',
+        description: 'Workflow deleted successfully',
       });
 
       setDeletingAutomation(null);
       loadAutomations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete workflow",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to delete workflow',
+        variant: 'destructive',
       });
     }
   };
@@ -238,8 +226,8 @@ export function AutomationList() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No workflows yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Create your first automation workflow to automatically schedule
-                and publish your drafts based on your preferences.
+                Create your first automation workflow to automatically schedule and publish your
+                drafts based on your preferences.
               </p>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -280,14 +268,12 @@ export function AutomationList() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold truncate">
-                            {automation.name}
-                          </h3>
+                          <h3 className="font-semibold truncate">{automation.name}</h3>
                           <Badge
-                            variant={automation.enabled ? "default" : "secondary"}
+                            variant={automation.enabled ? 'default' : 'secondary'}
                             className="shrink-0"
                           >
-                            {automation.enabled ? "Active" : "Inactive"}
+                            {automation.enabled ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
                         {automation.description && (
@@ -298,11 +284,11 @@ export function AutomationList() {
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {activeRulesCount} {activeRulesCount === 1 ? "rule" : "rules"}
+                            {activeRulesCount} {activeRulesCount === 1 ? 'rule' : 'rules'}
                           </span>
                           {defaultValuesCount > 0 && (
                             <span>
-                              {defaultValuesCount} default{defaultValuesCount !== 1 && "s"}
+                              {defaultValuesCount} default{defaultValuesCount !== 1 && 's'}
                             </span>
                           )}
                           <span className="flex items-center gap-1">
@@ -319,11 +305,7 @@ export function AutomationList() {
                     {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 shrink-0"
-                        >
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -365,9 +347,9 @@ export function AutomationList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Workflow?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingAutomation?.name}"? This
-              will also delete all associated schedule rules, default values,
-              and execution logs. This action cannot be undone.
+              Are you sure you want to delete "{deletingAutomation?.name}"? This will also delete
+              all associated schedule rules, default values, and execution logs. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

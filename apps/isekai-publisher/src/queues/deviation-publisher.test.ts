@@ -35,7 +35,7 @@ const mockWorkerPause = vi.fn();
 let workerProcessor: Function;
 let queueOptions: any = {};
 let workerOptions: any = {};
-let eventHandlers: Map<string, Function> = new Map();
+const eventHandlers: Map<string, Function> = new Map();
 
 vi.mock('bullmq', () => ({
   Queue: class MockQueue {
@@ -92,7 +92,8 @@ vi.mock('./storage-cleanup.js', () => ({
 // Mock email service
 const mockSendRefreshTokenExpiredJobNotification = vi.fn();
 vi.mock('../lib/email-service.js', () => ({
-  sendRefreshTokenExpiredJobNotification: (...args: any[]) => mockSendRefreshTokenExpiredJobNotification(...args),
+  sendRefreshTokenExpiredJobNotification: (...args: any[]) =>
+    mockSendRefreshTokenExpiredJobNotification(...args),
 }));
 
 // Mock StructuredLogger
@@ -251,7 +252,9 @@ describe('deviation-publisher', () => {
     });
 
     it('should handle refresh token expired error', async () => {
-      const tokenExpiredError: any = new Error('REFRESH_TOKEN_EXPIRED: DeviantArt refresh token has expired');
+      const tokenExpiredError: any = new Error(
+        'REFRESH_TOKEN_EXPIRED: DeviantArt refresh token has expired'
+      );
       tokenExpiredError.code = 'REFRESH_TOKEN_EXPIRED';
 
       mockPublishDeviationJob.mockRejectedValue(tokenExpiredError);
@@ -291,7 +294,8 @@ describe('deviation-publisher', () => {
         },
         data: {
           status: 'draft',
-          errorMessage: 'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
+          errorMessage:
+            'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
           updatedAt: expect.any(Date),
         },
       });
@@ -857,7 +861,9 @@ describe('deviation-publisher', () => {
       stalledHandler!('job-stalled-123');
 
       expect(mockRecordStalledJob).toHaveBeenCalledWith('job-stalled-123');
-      expect(console.error).toHaveBeenCalledWith('[Publisher] Job job-stalled-123 stalled - may be stuck');
+      expect(console.error).toHaveBeenCalledWith(
+        '[Publisher] Job job-stalled-123 stalled - may be stuck'
+      );
     });
 
     it('should handle error event', async () => {
@@ -1070,10 +1076,7 @@ describe('deviation-publisher', () => {
 
       await workerProcessor(mockJob);
 
-      expect(mockPublishDeviationJob).toHaveBeenCalledWith(
-        mockJob,
-        expect.any(Object)
-      );
+      expect(mockPublishDeviationJob).toHaveBeenCalledWith(mockJob, expect.any(Object));
     });
   });
 
@@ -1185,10 +1188,7 @@ describe('deviation-publisher', () => {
 
         await workerProcessor(mockJob);
 
-        expect(mockPublishDeviationJob).toHaveBeenCalledWith(
-          mockJob,
-          expect.any(Object)
-        );
+        expect(mockPublishDeviationJob).toHaveBeenCalledWith(mockJob, expect.any(Object));
       }
     });
 
@@ -1262,5 +1262,4 @@ describe('deviation-publisher', () => {
       expect(mockLoggerInfo).toHaveBeenCalledWith('Job completed successfully', { result });
     });
   });
-
 });

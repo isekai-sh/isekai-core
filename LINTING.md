@@ -5,6 +5,7 @@
 > **Please see [`.context/ai-rules.md`](.context/ai-rules.md) for complete code style guidelines.**
 >
 > The `.context/` directory contains comprehensive documentation including:
+>
 > - Code style and linting rules
 > - Commit message format (Conventional Commits)
 > - Security requirements
@@ -49,12 +50,14 @@ pnpm format:check
 ### ESLint Rules
 
 **General:**
+
 - `no-console`: OFF (server-side logging allowed)
 - `no-unused-vars`: WARN
 - `prefer-const`: WARN
 - `no-var`: ERROR
 
 **TypeScript:**
+
 - `@typescript-eslint/no-unused-vars`: WARN (ignores `_` prefixed vars)
 - `@typescript-eslint/no-explicit-any`: WARN (prefer typed code)
 
@@ -82,6 +85,7 @@ echo "pnpm lint-staged" > .husky/pre-commit
 ```
 
 Add to `package.json`:
+
 ```json
 {
   "lint-staged": {

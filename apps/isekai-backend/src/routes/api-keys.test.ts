@@ -429,7 +429,7 @@ describe('api-keys route', () => {
       await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('API key not found');
     });
 
-    it('should throw 404 when trying to revoke another user\'s key', async () => {
+    it("should throw 404 when trying to revoke another user's key", async () => {
       const mockUser = { id: 'user-123' } as any;
       const req = createMockRequest({
         user: mockUser,
@@ -464,7 +464,9 @@ describe('api-keys route', () => {
 
       (prisma.apiKey.findFirst as any).mockResolvedValue(revokedKey);
 
-      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('API key already revoked');
+      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow(
+        'API key already revoked'
+      );
     });
 
     it('should perform soft delete by setting revokedAt timestamp', async () => {

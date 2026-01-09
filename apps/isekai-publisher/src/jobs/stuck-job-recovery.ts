@@ -89,7 +89,9 @@ async function recoverStuckJobs(): Promise<void> {
 
         if (!userExists) {
           // User was deleted - clean up orphaned deviation
-          console.log(`[Stuck Job Recovery] Skipping stuck job for deleted user: ${deviation.id} (userId: ${deviation.userId})`);
+          console.log(
+            `[Stuck Job Recovery] Skipping stuck job for deleted user: ${deviation.id} (userId: ${deviation.userId})`
+          );
 
           // Delete orphaned deviation (files already queued for cleanup when user was deleted)
           await prisma.deviation.delete({
@@ -131,7 +133,9 @@ async function recoverStuckJobs(): Promise<void> {
 
     // Alert if failure rate is high
     if (failed > 0 && failed / stuckDeviations.length > 0.1) {
-      console.error(`[Stuck Job Recovery] WARNING: High failure rate ${failed}/${stuckDeviations.length} (${Math.round(failed / stuckDeviations.length * 100)}%)`);
+      console.error(
+        `[Stuck Job Recovery] WARNING: High failure rate ${failed}/${stuckDeviations.length} (${Math.round((failed / stuckDeviations.length) * 100)}%)`
+      );
     }
   } catch (error) {
     console.error('[Stuck Job Recovery] Critical error in recovery process:', error);
@@ -183,7 +187,9 @@ async function completeGhostPublish(deviation: DeviationWithUser): Promise<void>
   const { queueStorageCleanup } = await import('../queues/storage-cleanup.js');
   await queueStorageCleanup(deviation.id, deviation.userId);
 
-  console.log(`[Stuck Job Recovery] Ghost publish completed: ${deviation.id} (${deviation.deviationUrl})`);
+  console.log(
+    `[Stuck Job Recovery] Ghost publish completed: ${deviation.id} (${deviation.deviationUrl})`
+  );
 }
 
 /**
@@ -205,12 +211,7 @@ async function resetAndRetry(deviation: DeviationWithUser): Promise<void> {
 
   // Re-queue job with 1 minute delay
   const retryAt = new Date(Date.now() + 60000);
-  await scheduleDeviation(
-    deviation.id,
-    deviation.userId,
-    retryAt,
-    deviation.uploadMode
-  );
+  await scheduleDeviation(deviation.id, deviation.userId, retryAt, deviation.uploadMode);
 
   console.log(`[Stuck Job Recovery] Retry queued for ${deviation.id}`);
 }

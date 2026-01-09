@@ -42,10 +42,7 @@ describe('Published', () => {
     invalidateQueries: vi.fn(),
   };
 
-  const createMockPublishedDeviation = (
-    id: string,
-    overrides?: Partial<Deviation>
-  ): Deviation => ({
+  const createMockPublishedDeviation = (id: string, overrides?: Partial<Deviation>): Deviation => ({
     id,
     title: `Published Deviation ${id}`,
     status: 'published',
@@ -180,10 +177,7 @@ describe('Published', () => {
   });
 
   it('should show select all checkbox', () => {
-    const deviations = [
-      createMockPublishedDeviation('1'),
-      createMockPublishedDeviation('2'),
-    ];
+    const deviations = [createMockPublishedDeviation('1'), createMockPublishedDeviation('2')];
 
     vi.mocked(useQuery).mockImplementation((options: any) => {
       if (options.queryKey[0] === 'deviations') {
@@ -241,9 +235,7 @@ describe('Published', () => {
     render(<Published />);
 
     const checkboxes = screen.getAllByRole('checkbox');
-    const deviationCheckbox = checkboxes.find(
-      (cb) => cb !== screen.getByLabelText(/Select all/)
-    );
+    const deviationCheckbox = checkboxes.find((cb) => cb !== screen.getByLabelText(/Select all/));
 
     await user.click(deviationCheckbox!);
 
@@ -254,10 +246,7 @@ describe('Published', () => {
 
   it('should handle select all toggle', async () => {
     const user = userEvent.setup();
-    const deviations = [
-      createMockPublishedDeviation('1'),
-      createMockPublishedDeviation('2'),
-    ];
+    const deviations = [createMockPublishedDeviation('1'), createMockPublishedDeviation('2')];
 
     vi.mocked(useQuery).mockImplementation((options: any) => {
       if (options.queryKey[0] === 'deviations') {

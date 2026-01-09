@@ -15,9 +15,11 @@ const redisUrl = process.env.REDIS_URL!;
 
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: redisUrl.startsWith('rediss://') ? {
-    rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
-  } : undefined,
+  tls: redisUrl.startsWith('rediss://')
+    ? {
+        rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
+      }
+    : undefined,
 });
 
 export interface StorageCleanupJobData {
@@ -136,10 +138,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
  * Queue storage cleanup job for a published deviation
  * Uses jobId to prevent duplicate cleanup jobs for the same deviation
  */
-export async function queueStorageCleanup(
-  deviationId: string,
-  userId: string
-): Promise<void> {
+export async function queueStorageCleanup(deviationId: string, userId: string): Promise<void> {
   await storageCleanupQueue.add(
     'cleanup',
     { deviationId, userId },

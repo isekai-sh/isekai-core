@@ -98,9 +98,7 @@ describe('DeviationUploader', () => {
 
     expect(screen.getByText('Drag & drop files here')).toBeInTheDocument();
     expect(screen.getByText('or click to browse')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Supports images .* and videos .* up to 30MB/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Supports images .* and videos .* up to 30MB/i)).toBeInTheDocument();
   });
 
   it('should display title input field', () => {
@@ -124,9 +122,7 @@ describe('DeviationUploader', () => {
   it('should display description textarea', () => {
     render(<DeviationUploader />);
 
-    const descriptionTextarea = screen.getByPlaceholderText(
-      'Enter deviation description...'
-    );
+    const descriptionTextarea = screen.getByPlaceholderText('Enter deviation description...');
     expect(descriptionTextarea).toBeInTheDocument();
   });
 
@@ -197,9 +193,7 @@ describe('DeviationUploader', () => {
   it('should validate minimum date for schedule', () => {
     render(<DeviationUploader />);
 
-    const dateInput = screen.getByLabelText(
-      'Schedule Date (Optional)'
-    ) as HTMLInputElement;
+    const dateInput = screen.getByLabelText('Schedule Date (Optional)') as HTMLInputElement;
     const today = new Date().toISOString().split('T')[0];
 
     expect(dateInput).toHaveAttribute('min', today);
@@ -269,9 +263,7 @@ describe('DeviationUploader', () => {
   it('should enforce title max length of 50 characters', () => {
     render(<DeviationUploader />);
 
-    const titleInput = screen.getByPlaceholderText(
-      'Enter deviation title'
-    ) as HTMLInputElement;
+    const titleInput = screen.getByPlaceholderText('Enter deviation title') as HTMLInputElement;
 
     expect(titleInput.maxLength).toBe(50);
   });

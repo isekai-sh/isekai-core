@@ -137,9 +137,7 @@ describe('Logger', () => {
       logger.warn('Test warning');
 
       expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('WARN: Test warning')
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('WARN: Test warning'));
     });
 
     it('should include context in warn messages', () => {
@@ -172,9 +170,7 @@ describe('Logger', () => {
       logger.error('Test error');
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('ERROR: Test error')
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('ERROR: Test error'));
     });
 
     it('should include context in error messages', () => {
@@ -269,9 +265,7 @@ describe('Logger', () => {
     it('should handle empty messages', () => {
       logger.info('');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/INFO: $/)
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/INFO: $/));
     });
 
     it('should handle very long messages', () => {
@@ -279,9 +273,7 @@ describe('Logger', () => {
 
       logger.info(longMessage);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining(longMessage)
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining(longMessage));
     });
 
     it('should handle context with circular references gracefully', () => {

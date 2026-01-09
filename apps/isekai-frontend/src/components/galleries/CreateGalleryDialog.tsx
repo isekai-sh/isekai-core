@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -24,25 +24,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { galleries } from "@/lib/api";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { galleries } from '@/lib/api';
 
 interface CreateGalleryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateGalleryDialog({
-  open,
-  onOpenChange,
-}: CreateGalleryDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+export function CreateGalleryDialog({ open, onOpenChange }: CreateGalleryDialogProps) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -53,20 +50,20 @@ export function CreateGalleryDialog({
         description: description || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      queryClient.invalidateQueries({ queryKey: ['galleries'] });
       toast({
-        title: "Gallery created",
-        description: "Your gallery has been created successfully.",
+        title: 'Gallery created',
+        description: 'Your gallery has been created successfully.',
       });
       onOpenChange(false);
-      setName("");
-      setDescription("");
+      setName('');
+      setDescription('');
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to create gallery. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to create gallery. Please try again.',
+        variant: 'destructive',
       });
     },
   });
@@ -84,9 +81,7 @@ export function CreateGalleryDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create Gallery</DialogTitle>
-            <DialogDescription>
-              Create a new gallery to organize your posts
-            </DialogDescription>
+            <DialogDescription>Create a new gallery to organize your posts</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -114,18 +109,11 @@ export function CreateGalleryDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!name.trim() || createMutation.isPending}
-            >
-              {createMutation.isPending ? "Creating..." : "Create Gallery"}
+            <Button type="submit" disabled={!name.trim() || createMutation.isPending}>
+              {createMutation.isPending ? 'Creating...' : 'Create Gallery'}
             </Button>
           </DialogFooter>
         </form>

@@ -30,23 +30,27 @@ Dedicated microservice for processing DeviantArt publishing jobs. This service i
 ## Features
 
 ### Fault Isolation
+
 - **Independent Crash Domains**: Publisher crashes don't affect API, and vice versa
 - **Process Separation**: Each service can be restarted independently
 - **Error Boundaries**: Uncaught exceptions are contained within the service
 
 ### Resilient Publishing
+
 - **Adaptive Rate Limiting**: Smart delays based on DeviantArt Retry-After headers
 - **Circuit Breaker**: Automatic failure detection with Redis-backed state persistence
 - **Error Categorization**: 8 error categories with appropriate retry strategies
 - **Exponential Backoff**: Configurable retry delays with jitter
 
 ### Observability
+
 - **Health Check Endpoints**: `/health`, `/ready`, `/metrics` for monitoring
 - **Structured Logging**: JSON logs with correlation IDs for distributed tracing
 - **Prometheus Metrics**: Job success/failure rates, latency, error distribution
 - **Graceful Shutdown**: Waits for active jobs to complete before exiting
 
 ### Scalability
+
 - **Horizontal Scaling**: Run multiple publisher instances for higher throughput
 - **Configurable Concurrency**: Control jobs per worker via `PUBLISHER_CONCURRENCY`
 - **Independent Deployment**: Deploy publisher updates without API downtime
@@ -89,6 +93,7 @@ HEALTH_CHECK_ENABLED=true
 ## Development
 
 ### Prerequisites
+
 - Node.js 20+
 - pnpm 9+
 - PostgreSQL 16
@@ -97,22 +102,26 @@ HEALTH_CHECK_ENABLED=true
 ### Local Setup
 
 1. **Install dependencies** (from monorepo root):
+
    ```bash
    pnpm install
    ```
 
 2. **Create `.env` file**:
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 3. **Start dependencies** (PostgreSQL + Redis):
+
    ```bash
    docker-compose up postgres redis -d
    ```
 
 4. **Run publisher in dev mode**:
+
    ```bash
    pnpm dev:publisher
    # Or from root: pnpm --filter isekai-publisher dev
@@ -182,7 +191,7 @@ kind: Deployment
 metadata:
   name: isekai-publisher
 spec:
-  replicas: 2  # Scale based on queue depth
+  replicas: 2 # Scale based on queue depth
   selector:
     matchLabels:
       app: isekai-publisher
@@ -192,28 +201,28 @@ spec:
         app: isekai-publisher
     spec:
       containers:
-      - name: publisher
-        image: isekai-publisher:latest
-        ports:
-        - containerPort: 5000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: isekai-secrets
-              key: database-url
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 30
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
+        - name: publisher
+          image: isekai-publisher:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: isekai-secrets
+                  key: database-url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -223,8 +232,8 @@ spec:
   selector:
     app: isekai-publisher
   ports:
-  - port: 5000
-    targetPort: 5000
+    - port: 5000
+      targetPort: 5000
 ```
 
 ## Monitoring
@@ -232,11 +241,13 @@ spec:
 ### Health Checks
 
 **Liveness Probe** - Is the process running?
+
 ```bash
 curl http://localhost:5000/health
 ```
 
 Response:
+
 ```json
 {
   "status": "healthy",
@@ -247,11 +258,13 @@ Response:
 ```
 
 **Readiness Probe** - Can it process jobs?
+
 ```bash
 curl http://localhost:5000/ready
 ```
 
 Response:
+
 ```json
 {
   "status": "ready",
@@ -270,11 +283,13 @@ Response:
 ### Metrics
 
 **Prometheus Endpoint**:
+
 ```bash
 curl http://localhost:5000/metrics
 ```
 
 Response:
+
 ```
 # HELP publisher_active_jobs Number of jobs currently being processed
 # TYPE publisher_active_jobs gauge

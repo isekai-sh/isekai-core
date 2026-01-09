@@ -122,22 +122,34 @@ describe('PublisherMetricsCollector', () => {
   describe('Error Distribution', () => {
     it('should track errors by category', () => {
       collector.recordJobStart('job-1', 'dev-1');
-      collector.recordJobFailure('job-1', {
-        category: ErrorCategory.RATE_LIMIT,
-        message: 'Test'
-      } as any, 50);
+      collector.recordJobFailure(
+        'job-1',
+        {
+          category: ErrorCategory.RATE_LIMIT,
+          message: 'Test',
+        } as any,
+        50
+      );
 
       collector.recordJobStart('job-2', 'dev-2');
-      collector.recordJobFailure('job-2', {
-        category: ErrorCategory.RATE_LIMIT,
-        message: 'Test'
-      } as any, 60);
+      collector.recordJobFailure(
+        'job-2',
+        {
+          category: ErrorCategory.RATE_LIMIT,
+          message: 'Test',
+        } as any,
+        60
+      );
 
       collector.recordJobStart('job-3', 'dev-3');
-      collector.recordJobFailure('job-3', {
-        category: ErrorCategory.NETWORK,
-        message: 'Test'
-      } as any, 70);
+      collector.recordJobFailure(
+        'job-3',
+        {
+          category: ErrorCategory.NETWORK,
+          message: 'Test',
+        } as any,
+        70
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.errorsByCategory[ErrorCategory.RATE_LIMIT]).toBe(2);
@@ -292,10 +304,14 @@ describe('PublisherMetricsCollector', () => {
       // Record more than 1000 failed jobs
       for (let i = 1; i <= 1005; i++) {
         collector.recordJobStart(`job-${i}`, `dev-${i}`);
-        collector.recordJobFailure(`job-${i}`, {
-          category: ErrorCategory.NETWORK_ERROR,
-          message: 'Test error'
-        } as any, i);
+        collector.recordJobFailure(
+          `job-${i}`,
+          {
+            category: ErrorCategory.NETWORK_ERROR,
+            message: 'Test error',
+          } as any,
+          i
+        );
       }
 
       const metrics = collector.getMetrics();
@@ -320,10 +336,14 @@ describe('PublisherMetricsCollector', () => {
       collector.recordJobSuccess('job-1', 100);
 
       collector.recordJobStart('job-2', 'dev-2');
-      collector.recordJobFailure('job-2', {
-        category: ErrorCategory.RATE_LIMIT,
-        message: 'Rate limited'
-      } as any, 150);
+      collector.recordJobFailure(
+        'job-2',
+        {
+          category: ErrorCategory.RATE_LIMIT,
+          message: 'Rate limited',
+        } as any,
+        150
+      );
 
       collector.recordRateLimitHit('user-1', 5000);
       collector.recordCircuitBreakerOpen();
@@ -372,22 +392,34 @@ describe('PublisherMetricsCollector', () => {
 
     it('should include multiple error categories in Prometheus export', () => {
       collector.recordJobStart('job-1', 'dev-1');
-      collector.recordJobFailure('job-1', {
-        category: ErrorCategory.NETWORK_ERROR,
-        message: 'Network error'
-      } as any, 100);
+      collector.recordJobFailure(
+        'job-1',
+        {
+          category: ErrorCategory.NETWORK_ERROR,
+          message: 'Network error',
+        } as any,
+        100
+      );
 
       collector.recordJobStart('job-2', 'dev-2');
-      collector.recordJobFailure('job-2', {
-        category: ErrorCategory.RATE_LIMIT,
-        message: 'Rate limited'
-      } as any, 100);
+      collector.recordJobFailure(
+        'job-2',
+        {
+          category: ErrorCategory.RATE_LIMIT,
+          message: 'Rate limited',
+        } as any,
+        100
+      );
 
       collector.recordJobStart('job-3', 'dev-3');
-      collector.recordJobFailure('job-3', {
-        category: ErrorCategory.VALIDATION_ERROR,
-        message: 'Validation error'
-      } as any, 100);
+      collector.recordJobFailure(
+        'job-3',
+        {
+          category: ErrorCategory.VALIDATION_ERROR,
+          message: 'Validation error',
+        } as any,
+        100
+      );
 
       const prometheus = collector.exportPrometheusFormat();
 
@@ -552,10 +584,14 @@ describe('PublisherMetricsCollector', () => {
     });
 
     it('should handle recording failure for non-existent job', () => {
-      collector.recordJobFailure('non-existent-job', {
-        category: ErrorCategory.UNKNOWN,
-        message: 'Test'
-      } as any, 100);
+      collector.recordJobFailure(
+        'non-existent-job',
+        {
+          category: ErrorCategory.UNKNOWN,
+          message: 'Test',
+        } as any,
+        100
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.failedJobs).toBe(1);
@@ -563,16 +599,24 @@ describe('PublisherMetricsCollector', () => {
 
     it('should increment error count for existing category', () => {
       collector.recordJobStart('job-1', 'dev-1');
-      collector.recordJobFailure('job-1', {
-        category: ErrorCategory.NETWORK_ERROR,
-        message: 'First error'
-      } as any, 100);
+      collector.recordJobFailure(
+        'job-1',
+        {
+          category: ErrorCategory.NETWORK_ERROR,
+          message: 'First error',
+        } as any,
+        100
+      );
 
       collector.recordJobStart('job-2', 'dev-2');
-      collector.recordJobFailure('job-2', {
-        category: ErrorCategory.NETWORK_ERROR,
-        message: 'Second error'
-      } as any, 150);
+      collector.recordJobFailure(
+        'job-2',
+        {
+          category: ErrorCategory.NETWORK_ERROR,
+          message: 'Second error',
+        } as any,
+        150
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.errorsByCategory[ErrorCategory.NETWORK_ERROR]).toBe(2);
@@ -656,20 +700,24 @@ describe('PublisherMetricsCollector', () => {
         ErrorCategory.RATE_LIMIT,
         ErrorCategory.VALIDATION_ERROR,
         ErrorCategory.AUTH_ERROR,
-        ErrorCategory.UNKNOWN
+        ErrorCategory.UNKNOWN,
       ];
 
       categories.forEach((category, index) => {
         collector.recordJobStart(`job-${index}`, `dev-${index}`);
-        collector.recordJobFailure(`job-${index}`, {
-          category,
-          message: 'Test error'
-        } as any, 100);
+        collector.recordJobFailure(
+          `job-${index}`,
+          {
+            category,
+            message: 'Test error',
+          } as any,
+          100
+        );
       });
 
       const metrics = collector.getMetrics();
       expect(Object.keys(metrics.errorsByCategory).length).toBe(5);
-      categories.forEach(category => {
+      categories.forEach((category) => {
         expect(metrics.errorsByCategory[category]).toBe(1);
       });
     });

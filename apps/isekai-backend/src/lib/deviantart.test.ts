@@ -75,11 +75,7 @@ vi.mock('@isekai/shared/storage', () => ({
 }));
 
 // Import deviantart functions AFTER mocks are set up
-import {
-  refreshTokenIfNeeded,
-  getRefreshTokenStatus,
-  publishToDeviantArt,
-} from './deviantart.js';
+import { refreshTokenIfNeeded, getRefreshTokenStatus, publishToDeviantArt } from './deviantart.js';
 import { prisma } from '../db/index.js';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 
@@ -480,9 +476,9 @@ describe('deviantart', () => {
         files: [],
       };
 
-      await expect(
-        publishToDeviantArt(deviationNoFiles, mockUser, 'single')
-      ).rejects.toThrow('No files to upload');
+      await expect(publishToDeviantArt(deviationNoFiles, mockUser, 'single')).rejects.toThrow(
+        'No files to upload'
+      );
     });
 
     it('should sort files by sortOrder before uploading', async () => {

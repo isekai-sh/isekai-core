@@ -17,6 +17,7 @@ open coverage/index.html
 ```
 
 **Identify:**
+
 - Files with < 30% coverage (red)
 - Critical paths with low coverage (auth, publishing, locks)
 - Untested functions
@@ -66,13 +67,13 @@ export function calculateJitter(min: number, max: number): number {
 }
 
 // lib/jitter.test.ts
-import { describe, it, expect, vi } from "vitest";
-import { calculateJitter } from "./jitter";
+import { describe, it, expect, vi } from 'vitest';
+import { calculateJitter } from './jitter';
 
-describe("calculateJitter", () => {
-  it("should return value within range", () => {
+describe('calculateJitter', () => {
+  it('should return value within range', () => {
     // Mock Math.random to return 0.5
-    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
     const result = calculateJitter(0, 300);
     expect(result).toBeGreaterThanOrEqual(0);
@@ -81,7 +82,7 @@ describe("calculateJitter", () => {
     vi.restoreAllMocks();
   });
 
-  it("should handle zero range", () => {
+  it('should handle zero range', () => {
     const result = calculateJitter(0, 0);
     expect(result).toBe(0);
   });
@@ -96,12 +97,12 @@ describe("calculateJitter", () => {
 
 ```typescript
 // routes/automations.test.ts
-import { describe, it, expect, beforeEach } from "vitest";
-import request from "supertest";
-import { app } from "../index";
-import { prisma } from "../db";
+import { describe, it, expect, beforeEach } from 'vitest';
+import request from 'supertest';
+import { app } from '../index';
+import { prisma } from '../db';
 
-describe("POST /api/automations", () => {
+describe('POST /api/automations', () => {
   let userId: string;
   let authCookie: string;
 
@@ -109,65 +110,60 @@ describe("POST /api/automations", () => {
     // Setup: Create test user and get auth cookie
     const user = await prisma.user.create({
       data: {
-        deviantartId: "123456",
-        deviantartUsername: "testuser",
-        accessToken: "encrypted_token",
-        refreshToken: "encrypted_refresh",
+        deviantartId: '123456',
+        deviantartUsername: 'testuser',
+        accessToken: 'encrypted_token',
+        refreshToken: 'encrypted_refresh',
         tokenExpiresAt: new Date(Date.now() + 3600000),
         refreshTokenExpiresAt: new Date(Date.now() + 86400000),
       },
     });
     userId = user.id;
 
-    const loginResponse = await request(app)
-      .post("/api/auth/mock-login")
-      .send({ userId });
-    authCookie = loginResponse.headers["set-cookie"][0];
+    const loginResponse = await request(app).post('/api/auth/mock-login').send({ userId });
+    authCookie = loginResponse.headers['set-cookie'][0];
   });
 
-  it("should create automation with schedule rules", async () => {
+  it('should create automation with schedule rules', async () => {
     const response = await request(app)
-      .post("/api/automations")
-      .set("Cookie", authCookie)
+      .post('/api/automations')
+      .set('Cookie', authCookie)
       .send({
-        name: "Test Automation",
+        name: 'Test Automation',
         enabled: true,
         scheduleRules: [
           {
-            type: "day_of_week",
-            daysOfWeek: ["monday", "wednesday", "friday"],
+            type: 'day_of_week',
+            daysOfWeek: ['monday', 'wednesday', 'friday'],
           },
         ],
       })
       .expect(201);
 
-    expect(response.body.automation.name).toBe("Test Automation");
+    expect(response.body.automation.name).toBe('Test Automation');
     expect(response.body.automation.scheduleRules).toHaveLength(1);
   });
 
-  it("should return 401 if not authenticated", async () => {
-    await request(app)
-      .post("/api/automations")
-      .send({ name: "Test Automation" })
-      .expect(401);
+  it('should return 401 if not authenticated', async () => {
+    await request(app).post('/api/automations').send({ name: 'Test Automation' }).expect(401);
   });
 
-  it("should validate schedule rule parameters", async () => {
+  it('should validate schedule rule parameters', async () => {
     const response = await request(app)
-      .post("/api/automations")
-      .set("Cookie", authCookie)
+      .post('/api/automations')
+      .set('Cookie', authCookie)
       .send({
-        name: "Test Automation",
+        name: 'Test Automation',
         scheduleRules: [
           {
-            type: "daily_quota",
+            type: 'daily_quota',
             // Missing dailyQuota parameter
           },
         ],
       })
       .expect(400);
 
-    expect(response.body.error).toContain("validation");
+    expect(response.body.error).toContain('validation');
   });
 });
 ```
@@ -180,38 +176,38 @@ describe("POST /api/automations", () => {
 
 ```typescript
 // db/user.test.ts
-import { describe, it, expect, beforeEach } from "vitest";
-import { prisma } from "./index";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { prisma } from './index';
 
-describe("User Model", () => {
+describe('User Model', () => {
   beforeEach(async () => {
     // Clean database before each test
     await prisma.user.deleteMany();
   });
 
-  it("should create user with encrypted tokens", async () => {
+  it('should create user with encrypted tokens', async () => {
     const user = await prisma.user.create({
       data: {
-        deviantartId: "123456",
-        deviantartUsername: "artist",
-        accessToken: "encrypted_token",
-        refreshToken: "encrypted_refresh",
+        deviantartId: '123456',
+        deviantartUsername: 'artist',
+        accessToken: 'encrypted_token',
+        refreshToken: 'encrypted_refresh',
         tokenExpiresAt: new Date(),
         refreshTokenExpiresAt: new Date(),
       },
     });
 
     expect(user.id).toBeDefined();
-    expect(user.deviantartId).toBe("123456");
+    expect(user.deviantartId).toBe('123456');
   });
 
-  it("should enforce unique deviantartId", async () => {
+  it('should enforce unique deviantartId', async () => {
     await prisma.user.create({
       data: {
-        deviantartId: "123456",
-        deviantartUsername: "artist",
-        accessToken: "token",
-        refreshToken: "refresh",
+        deviantartId: '123456',
+        deviantartUsername: 'artist',
+        accessToken: 'token',
+        refreshToken: 'refresh',
         tokenExpiresAt: new Date(),
         refreshTokenExpiresAt: new Date(),
       },
@@ -221,10 +217,10 @@ describe("User Model", () => {
     await expect(
       prisma.user.create({
         data: {
-          deviantartId: "123456", // Duplicate
-          deviantartUsername: "artist2",
-          accessToken: "token",
-          refreshToken: "refresh",
+          deviantartId: '123456', // Duplicate
+          deviantartUsername: 'artist2',
+          accessToken: 'token',
+          refreshToken: 'refresh',
           tokenExpiresAt: new Date(),
           refreshTokenExpiresAt: new Date(),
         },
@@ -241,7 +237,7 @@ describe("User Model", () => {
 ### Mock DeviantArt API
 
 ```typescript
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -250,9 +246,9 @@ beforeEach(() => {
   vi.mocked(fetch).mockResolvedValue({
     ok: true,
     json: async () => ({
-      userid: "123456",
-      username: "testuser",
-      usericon: "http://example.com/avatar.png",
+      userid: '123456',
+      username: 'testuser',
+      usericon: 'http://example.com/avatar.png',
     }),
   } as Response);
 });
@@ -269,22 +265,24 @@ afterEach(() => {
 **Common Edge Cases:**
 
 1. **Empty Lists**
+
    ```typescript
-   it("should handle empty deviation list", async () => {
+   it('should handle empty deviation list', async () => {
      const result = await prisma.deviation.findMany({
-       where: { userId: "nonexistent" },
+       where: { userId: 'nonexistent' },
      });
      expect(result).toEqual([]);
    });
    ```
 
 2. **Null/Undefined Values**
+
    ```typescript
-   it("should handle optional fields", async () => {
+   it('should handle optional fields', async () => {
      const deviation = await prisma.deviation.create({
        data: {
-         title: "Test",
-         userId: "user123",
+         title: 'Test',
+         userId: 'user123',
          // description is optional
        },
      });
@@ -293,20 +291,25 @@ afterEach(() => {
    ```
 
 3. **Boundary Conditions**
+
    ```typescript
-   it("should handle time range at midnight", () => {
-     const result = evaluateTimeRange({
-       timeStart: "23:00",
-       timeEnd: "01:00",
-     }, "00:30");
+   it('should handle time range at midnight', () => {
+     const result = evaluateTimeRange(
+       {
+         timeStart: '23:00',
+         timeEnd: '01:00',
+       },
+       '00:30'
+     );
      expect(result).toBe(true);
    });
    ```
 
 4. **Race Conditions**
+
    ```typescript
-   it("should prevent duplicate publishes with execution lock", async () => {
-     const deviationId = "dev123";
+   it('should prevent duplicate publishes with execution lock', async () => {
+     const deviationId = 'dev123';
 
      // Simulate two workers trying to lock same deviation
      const [result1, result2] = await Promise.all([
@@ -372,21 +375,21 @@ pnpm test:coverage
 ### API Endpoint Test Template
 
 ```typescript
-describe("POST /api/endpoint", () => {
-  it("should succeed with valid data", async () => {});
-  it("should return 401 if not authenticated", async () => {});
-  it("should return 400 if validation fails", async () => {});
-  it("should return 404 if resource not found", async () => {});
+describe('POST /api/endpoint', () => {
+  it('should succeed with valid data', async () => {});
+  it('should return 401 if not authenticated', async () => {});
+  it('should return 400 if validation fails', async () => {});
+  it('should return 404 if resource not found', async () => {});
 });
 ```
 
 ### Pure Function Test Template
 
 ```typescript
-describe("myFunction", () => {
-  it("should return expected output for valid input", () => {});
-  it("should handle edge cases", () => {});
-  it("should throw error for invalid input", () => {});
+describe('myFunction', () => {
+  it('should return expected output for valid input', () => {});
+  it('should handle edge cases', () => {});
+  it('should throw error for invalid input', () => {});
 });
 ```
 

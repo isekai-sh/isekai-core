@@ -22,9 +22,7 @@ import { ReviewHeader } from './ReviewHeader';
 
 vi.mock('@/components/TemplateSelector', () => ({
   TagTemplateSelector: ({ onSelect }: { onSelect: (tags: string[]) => void }) => (
-    <button onClick={() => onSelect(['tag1', 'tag2'])}>
-      Select Template
-    </button>
+    <button onClick={() => onSelect(['tag1', 'tag2'])}>Select Template</button>
   ),
 }));
 

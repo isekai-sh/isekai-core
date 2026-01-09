@@ -127,10 +127,7 @@ describe('lock-cleanup', () => {
     it('should schedule cron job to run every 5 minutes', () => {
       startLockCleanup();
 
-      expect(mockSchedule).toHaveBeenCalledWith(
-        '*/5 * * * *',
-        expect.any(Function)
-      );
+      expect(mockSchedule).toHaveBeenCalledWith('*/5 * * * *', expect.any(Function));
     });
 
     it('should log startup message', () => {

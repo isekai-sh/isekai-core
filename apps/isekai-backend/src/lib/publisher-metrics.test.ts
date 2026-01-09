@@ -162,9 +162,21 @@ describe('publisher-metrics', () => {
     it('should track errors by category', () => {
       const collector = new PublisherMetricsCollector(null);
 
-      collector.recordJobFailure('job-1', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 100);
-      collector.recordJobFailure('job-2', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 100);
-      collector.recordJobFailure('job-3', { category: ErrorCategory.NETWORK_ERROR, message: 'timeout' }, 100);
+      collector.recordJobFailure(
+        'job-1',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        100
+      );
+      collector.recordJobFailure(
+        'job-2',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        100
+      );
+      collector.recordJobFailure(
+        'job-3',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'timeout' },
+        100
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.errorsByCategory[ErrorCategory.RATE_LIMIT]).toBe(2);
@@ -245,7 +257,11 @@ describe('publisher-metrics', () => {
       collector.recordJobSuccess('job-1', 100);
       collector.recordJobSuccess('job-2', 100);
       collector.recordJobSuccess('job-3', 100);
-      collector.recordJobFailure('job-4', { category: ErrorCategory.NETWORK_ERROR, message: 'fail' }, 100);
+      collector.recordJobFailure(
+        'job-4',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'fail' },
+        100
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.totalJobs).toBe(4);
@@ -257,7 +273,11 @@ describe('publisher-metrics', () => {
 
       collector.recordJobSuccess('job-1', 100);
       collector.recordJobSuccess('job-2', 100);
-      collector.recordJobFailure('job-3', { category: ErrorCategory.NETWORK_ERROR, message: 'fail' }, 100);
+      collector.recordJobFailure(
+        'job-3',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'fail' },
+        100
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.successRate).toBe(66.67); // 2/3 rounded
@@ -347,7 +367,11 @@ describe('publisher-metrics', () => {
 
       collector.recordJobSuccess('job-1', 100);
       collector.recordJobSuccess('job-2', 200);
-      collector.recordJobFailure('job-3', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 150);
+      collector.recordJobFailure(
+        'job-3',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        150
+      );
 
       const output = collector.exportPrometheusFormat();
 
@@ -395,13 +419,23 @@ describe('publisher-metrics', () => {
     it('should handle multiple error categories', () => {
       const collector = new PublisherMetricsCollector(null);
 
-      collector.recordJobFailure('job-1', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 100);
-      collector.recordJobFailure('job-2', { category: ErrorCategory.NETWORK_ERROR, message: 'timeout' }, 100);
+      collector.recordJobFailure(
+        'job-1',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        100
+      );
+      collector.recordJobFailure(
+        'job-2',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'timeout' },
+        100
+      );
 
       const output = collector.exportPrometheusFormat();
 
       expect(output).toContain(`publisher_errors_total{category="${ErrorCategory.RATE_LIMIT}"} 1`);
-      expect(output).toContain(`publisher_errors_total{category="${ErrorCategory.NETWORK_ERROR}"} 1`);
+      expect(output).toContain(
+        `publisher_errors_total{category="${ErrorCategory.NETWORK_ERROR}"} 1`
+      );
     });
   });
 
@@ -472,7 +506,11 @@ describe('publisher-metrics', () => {
       const collector = new PublisherMetricsCollector(null);
 
       collector.recordJobSuccess('job-1', 100);
-      collector.recordJobFailure('job-2', { category: ErrorCategory.NETWORK_ERROR, message: 'fail' }, 200);
+      collector.recordJobFailure(
+        'job-2',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'fail' },
+        200
+      );
       collector.recordRateLimitHit('user-1', 1000);
       collector.recordCircuitBreakerOpen();
       collector.recordJobRetry('job-1');
@@ -519,7 +557,11 @@ describe('publisher-metrics', () => {
       const collector = new PublisherMetricsCollector(null);
 
       collector.recordJobSuccess('job-1', 100);
-      collector.recordJobFailure('job-2', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 200);
+      collector.recordJobFailure(
+        'job-2',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        200
+      );
       collector.recordJobSuccess('job-3', 150);
 
       const metrics = collector.getMetrics();
@@ -543,8 +585,16 @@ describe('publisher-metrics', () => {
     it('should handle all jobs failing', () => {
       const collector = new PublisherMetricsCollector(null);
 
-      collector.recordJobFailure('job-1', { category: ErrorCategory.NETWORK_ERROR, message: 'fail' }, 100);
-      collector.recordJobFailure('job-2', { category: ErrorCategory.NETWORK_ERROR, message: 'fail' }, 100);
+      collector.recordJobFailure(
+        'job-1',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'fail' },
+        100
+      );
+      collector.recordJobFailure(
+        'job-2',
+        { category: ErrorCategory.NETWORK_ERROR, message: 'fail' },
+        100
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.successRate).toBe(0);
@@ -557,7 +607,11 @@ describe('publisher-metrics', () => {
       // Simulate concurrent job completions
       collector.recordJobSuccess('job-1', 100);
       collector.recordJobSuccess('job-2', 200);
-      collector.recordJobFailure('job-3', { category: ErrorCategory.RATE_LIMIT, message: '429' }, 150);
+      collector.recordJobFailure(
+        'job-3',
+        { category: ErrorCategory.RATE_LIMIT, message: '429' },
+        150
+      );
 
       const metrics = collector.getMetrics();
       expect(metrics.totalJobs).toBe(3);

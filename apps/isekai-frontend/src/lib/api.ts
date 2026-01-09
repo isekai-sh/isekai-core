@@ -33,11 +33,11 @@ import type {
   ApiKey,
   CreateApiKeyRequest,
   CreateApiKeyResponse,
-} from "@isekai/shared";
+} from '@isekai/shared';
 
 // Runtime-only configuration - NO build-time environment variables
 // This ensures the same built image works across all environments
-const API_URL = (window as any).ISEKAI_CONFIG?.API_URL || "/api";
+const API_URL = (window as any).ISEKAI_CONFIG?.API_URL || '/api';
 
 class ApiError extends Error {
   constructor(
@@ -46,7 +46,7 @@ class ApiError extends Error {
     public upgradeRequired?: boolean
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
   }
 }
 
@@ -66,7 +66,7 @@ const defaultRetryConfig: RetryConfig = {
   maxDelayMs: 10000, // 10 seconds
   shouldRetry: (error: any, attempt: number) => {
     // Retry on network errors
-    if (error instanceof TypeError && error.message.includes("fetch")) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
       return true;
     }
 
@@ -102,28 +102,19 @@ function sleep(ms: number): Promise<void> {
 /**
  * Core request function without retry logic
  */
-async function requestCore<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function requestCore<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    credentials: "include",
+    credentials: 'include',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ message: "Request failed" }));
-    throw new ApiError(
-      response.status,
-      error.message || "Request failed",
-      error.upgradeRequired
-    );
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new ApiError(response.status, error.message || 'Request failed', error.upgradeRequired);
   }
 
   // Handle 204 No Content responses
@@ -138,24 +129,20 @@ async function requestCore<T>(
  * Request with automatic retry on transient errors
  * Automatically retries GET requests, opt-in for mutations
  */
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const method = options.method?.toUpperCase() || "GET";
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const method = options.method?.toUpperCase() || 'GET';
 
   // Always enable retry for GET requests (idempotent)
   // For mutations, only retry if explicitly enabled via x-retry-enabled header
-  const shouldEnableRetry =
-    method === "GET" || options.headers?.["x-retry-enabled"] === "true";
+  const shouldEnableRetry = method === 'GET' || options.headers?.['x-retry-enabled'] === 'true';
 
   if (!shouldEnableRetry) {
     return requestCore<T>(endpoint, options);
   }
 
   // Clean up custom header
-  if ((options.headers as any)?.["x-retry-enabled"]) {
-    const { "x-retry-enabled": _, ...restHeaders } = options.headers as any;
+  if ((options.headers as any)?.['x-retry-enabled']) {
+    const { 'x-retry-enabled': _, ...restHeaders } = options.headers as any;
     options.headers = restHeaders;
   }
 
@@ -198,8 +185,8 @@ async function request<T>(
 
 // Auth
 export const auth = {
-  getMe: () => request<User>("/auth/me"),
-  logout: () => request<void>("/auth/logout", { method: "POST" }),
+  getMe: () => request<User>('/auth/me'),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
   getDeviantArtAuthUrl: () => `${API_URL}/auth/deviantart`,
 };
 
@@ -207,67 +194,62 @@ export const auth = {
 export const deviations = {
   list: (params?: { status?: string; page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.page) searchParams.set("page", String(params.page));
-    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     const query = searchParams.toString();
     return request<{ deviations: Deviation[]; total: number }>(
-      `/deviations${query ? `?${query}` : ""}`
+      `/deviations${query ? `?${query}` : ''}`
     );
   },
   get: (id: string) => request<Deviation>(`/deviations/${id}`),
   create: (data: Partial<Deviation>) =>
-    request<Deviation>("/deviations", {
-      method: "POST",
+    request<Deviation>('/deviations', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
   update: (id: string, data: Partial<Deviation>) =>
     request<Deviation>(`/deviations/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/deviations/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/deviations/${id}`, { method: 'DELETE' }),
   schedule: (id: string, scheduledAt: string) =>
     request<Deviation>(`/deviations/${id}/schedule`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ scheduledAt }),
     }),
   publishNow: (id: string) =>
-    request<Deviation>(`/deviations/${id}/publish-now`, { method: "POST" }),
-  cancel: (id: string) =>
-    request<Deviation>(`/deviations/${id}/cancel`, { method: "POST" }),
+    request<Deviation>(`/deviations/${id}/publish-now`, { method: 'POST' }),
+  cancel: (id: string) => request<Deviation>(`/deviations/${id}/cancel`, { method: 'POST' }),
   reorderFiles: (id: string, fileIds: string[]) =>
     request<{ success: boolean }>(`/deviations/${id}/files/reorder`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify({ fileIds }),
     }),
   batchDelete: (deviationIds: string[]) =>
-    request<{ success: boolean; deletedCount: number }>(
-      "/deviations/batch-delete",
-      {
-        method: "POST",
-        body: JSON.stringify({ deviationIds }),
-      }
-    ),
+    request<{ success: boolean; deletedCount: number }>('/deviations/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ deviationIds }),
+    }),
   batchSchedule: (deviationIds: string[], scheduledAt: string) =>
-    request<{ deviations: Deviation[] }>("/deviations/batch-schedule", {
-      method: "POST",
+    request<{ deviations: Deviation[] }>('/deviations/batch-schedule', {
+      method: 'POST',
       body: JSON.stringify({ deviationIds, scheduledAt }),
     }),
   batchReschedule: (deviationIds: string[], scheduledAt: string) =>
-    request<{ deviations: Deviation[] }>("/deviations/batch-reschedule", {
-      method: "POST",
+    request<{ deviations: Deviation[] }>('/deviations/batch-reschedule', {
+      method: 'POST',
       body: JSON.stringify({ deviationIds, scheduledAt }),
     }),
   batchCancel: (deviationIds: string[]) =>
-    request<{ deviations: Deviation[] }>("/deviations/batch-cancel", {
-      method: "POST",
+    request<{ deviations: Deviation[] }>('/deviations/batch-cancel', {
+      method: 'POST',
       body: JSON.stringify({ deviationIds }),
     }),
   batchPublishNow: (deviationIds: string[]) =>
-    request<{ deviations: Deviation[] }>("/deviations/batch-publish-now", {
-      method: "POST",
+    request<{ deviations: Deviation[] }>('/deviations/batch-publish-now', {
+      method: 'POST',
       body: JSON.stringify({ deviationIds }),
     }),
 };
@@ -275,13 +257,10 @@ export const deviations = {
 // Uploads
 export const uploads = {
   getPresignedUrl: (filename: string, contentType: string, fileSize: number) =>
-    request<{ uploadUrl: string; fileId: string; storageKey: string }>(
-      "/uploads/presigned",
-      {
-        method: "POST",
-        body: JSON.stringify({ filename, contentType, fileSize }),
-      }
-    ),
+    request<{ uploadUrl: string; fileId: string; storageKey: string }>('/uploads/presigned', {
+      method: 'POST',
+      body: JSON.stringify({ filename, contentType, fileSize }),
+    }),
   complete: (
     fileId: string,
     deviationId: string,
@@ -293,8 +272,8 @@ export const uploads = {
     height?: number,
     duration?: number
   ) =>
-    request<void>("/uploads/complete", {
-      method: "POST",
+    request<void>('/uploads/complete', {
+      method: 'POST',
       body: JSON.stringify({
         fileId,
         deviationId,
@@ -307,38 +286,31 @@ export const uploads = {
         duration,
       }),
     }),
-  delete: (fileId: string) =>
-    request<void>(`/uploads/${fileId}`, { method: "DELETE" }),
+  delete: (fileId: string) => request<void>(`/uploads/${fileId}`, { method: 'DELETE' }),
   batchDelete: (fileIds: string[]) =>
-    request<{ success: boolean; deletedCount: number }>(
-      "/uploads/batch-delete",
-      {
-        method: "POST",
-        body: JSON.stringify({ fileIds }),
-      }
-    ),
+    request<{ success: boolean; deletedCount: number }>('/uploads/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ fileIds }),
+    }),
 };
 
 // DeviantArt
 export const deviantart = {
-  getGalleries: () =>
-    request<{ galleries: Gallery[] }>("/deviantart/galleries"),
+  getGalleries: () => request<{ galleries: Gallery[] }>('/deviantart/galleries'),
   getCategories: () =>
-    request<{ categories: { path: string; name: string }[] }>(
-      "/deviantart/categories"
-    ),
+    request<{ categories: { path: string; name: string }[] }>('/deviantart/categories'),
 };
 
 // Browse types
 // Only modes that exist in DeviantArt API v1.20240701
 export type BrowseMode =
-  | "home"
-  | "daily"
-  | "following"
-  | "tags"
-  | "topic"
-  | "user-gallery"
-  | "keyword-search";
+  | 'home'
+  | 'daily'
+  | 'following'
+  | 'tags'
+  | 'topic'
+  | 'user-gallery'
+  | 'keyword-search';
 
 export interface BrowseDeviation {
   deviationId: string;
@@ -360,7 +332,7 @@ export interface BrowseDeviation {
   isMature: boolean;
   category: string | null;
   // Premium/Exclusive content fields
-  tierAccess: "locked" | "unlocked" | "locked-subscribed" | null;
+  tierAccess: 'locked' | 'unlocked' | 'locked-subscribed' | null;
   isExclusive: boolean;
   isPremium: boolean;
   printId: string | null;
@@ -450,9 +422,7 @@ export const galleries = {
       galleries: DeviantArtGalleryFolder[];
       hasMore: boolean;
       nextOffset: number;
-    }>(
-      `/galleries/all?offset=${offset}&limit=${limit}&calculate_size=true&ext_preload=true`
-    ),
+    }>(`/galleries/all?offset=${offset}&limit=${limit}&calculate_size=true&ext_preload=true`),
   listAll: async function () {
     let allGalleries: DeviantArtGalleryFolder[] = [];
     let hasMore = true;
@@ -468,10 +438,7 @@ export const galleries = {
         hasMore = response.hasMore;
         offset = response.nextOffset;
       } catch (error) {
-        console.error(
-          "Error fetching a page of galleries, stopping pagination.",
-          error
-        );
+        console.error('Error fetching a page of galleries, stopping pagination.', error);
         hasMore = false; // Stop on error
       }
     }
@@ -480,47 +447,43 @@ export const galleries = {
   },
   get: (id: string, params?: { limit?: number; offset?: number }) => {
     const searchParams = new URLSearchParams();
-    searchParams.set("mature_content", "true");
-    searchParams.set("limit", String(params?.limit || 50));
-    searchParams.set("offset", String(params?.offset || 0));
+    searchParams.set('mature_content', 'true');
+    searchParams.set('limit', String(params?.limit || 50));
+    searchParams.set('offset', String(params?.offset || 0));
     const query = searchParams.toString();
     return request<{ results: any[]; hasMore: boolean; nextOffset: number }>(
       `/galleries/${id}?${query}`
     );
   },
   create: (data: CreateGalleryRequest) =>
-    request<DeviantArtGalleryFolder>("/galleries/folders/create", {
-      method: "POST",
+    request<DeviantArtGalleryFolder>('/galleries/folders/create', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
   update: (id: string, data: UpdateGalleryRequest) =>
     request<DeviantArtGalleryFolder>(`/galleries/folders/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/galleries/folders/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/galleries/folders/${id}`, { method: 'DELETE' }),
   addItems: (target_folderid: string, deviationids: string[]) =>
-    request<{ success: boolean }>("/galleries/folders/copy-deviations", {
-      method: "POST",
+    request<{ success: boolean }>('/galleries/folders/copy-deviations', {
+      method: 'POST',
       body: JSON.stringify({ target_folderid, deviationids }),
     }),
   removeItems: (folderId: string, deviationids: string[]) =>
     request<void>(`/galleries/folders/${folderId}/deviations`, {
-      method: "DELETE",
+      method: 'DELETE',
       body: JSON.stringify({ deviationids }),
     }),
   reorder: (folderId: string, deviationids: string[]) =>
-    request<{ success: boolean }>(
-      `/galleries/folders/${folderId}/deviation-order`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({ deviationids }),
-      }
-    ),
+    request<{ success: boolean }>(`/galleries/folders/${folderId}/deviation-order`, {
+      method: 'PATCH',
+      body: JSON.stringify({ deviationids }),
+    }),
   reorderFolders: (folderids: string[]) =>
-    request<{ success: boolean }>("/galleries/folders/order", {
-      method: "PATCH",
+    request<{ success: boolean }>('/galleries/folders/order', {
+      method: 'PATCH',
       body: JSON.stringify({ folderids }),
     }),
 };
@@ -529,106 +492,89 @@ export const galleries = {
 export const browse = {
   get: (mode: BrowseMode, params: BrowseParams = {}) => {
     const searchParams = new URLSearchParams();
-    if (params.offset !== undefined)
-      searchParams.set("offset", String(params.offset));
-    if (params.limit) searchParams.set("limit", String(params.limit));
-    if (params.tag) searchParams.set("tag", params.tag);
-    if (params.date) searchParams.set("date", params.date);
-    if (params.topic) searchParams.set("topic", params.topic);
-    if (params.username) searchParams.set("username", params.username);
-    if (params.keywords) searchParams.set("keywords", params.keywords);
-    if (params.mature_content) searchParams.set("mature_content", "true");
+    if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.tag) searchParams.set('tag', params.tag);
+    if (params.date) searchParams.set('date', params.date);
+    if (params.topic) searchParams.set('topic', params.topic);
+    if (params.username) searchParams.set('username', params.username);
+    if (params.keywords) searchParams.set('keywords', params.keywords);
+    if (params.mature_content) searchParams.set('mature_content', 'true');
     const query = searchParams.toString();
-    return request<BrowseResponse>(
-      `/browse/${mode}${query ? `?${query}` : ""}`
-    );
+    return request<BrowseResponse>(`/browse/${mode}${query ? `?${query}` : ''}`);
   },
 
   searchTags: (tagName: string) =>
-    request<{ tags: string[] }>(
-      `/browse/tags/search?tag_name=${encodeURIComponent(tagName)}`
-    ),
+    request<{ tags: string[] }>(`/browse/tags/search?tag_name=${encodeURIComponent(tagName)}`),
 
   moreLikeThis: (deviationId: string) =>
     request<MoreLikeThisResponse>(`/browse/morelikethis/${deviationId}`),
 
-  topics: () =>
-    request<{ topics: TopicItem[]; hasMore: boolean }>("/browse/topics/list"),
+  topics: () => request<{ topics: TopicItem[]; hasMore: boolean }>('/browse/topics/list'),
 
-  topTopics: () => request<{ topics: TopTopicItem[] }>("/browse/toptopics"),
+  topTopics: () => request<{ topics: TopTopicItem[] }>('/browse/toptopics'),
 
   getDeviation: (deviationId: string) =>
     request<DeviationDetail>(`/browse/deviation/${deviationId}`),
 
-  trendingTags: () => request<{ tags: TrendingTag[] }>("/browse/trendingtags"),
+  trendingTags: () => request<{ tags: TrendingTag[] }>('/browse/trendingtags'),
 };
 
 // Templates API
 export const templates = {
   list: (type?: TemplateType) => {
-    const query = type ? `?type=${type}` : "";
+    const query = type ? `?type=${type}` : '';
     return request<{ templates: Template[] }>(`/templates${query}`);
   },
   get: (id: string) => request<Template>(`/templates/${id}`),
   create: (data: CreateTemplateRequest) =>
-    request<Template>("/templates", {
-      method: "POST",
+    request<Template>('/templates', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
   update: (id: string, data: UpdateTemplateRequest) =>
     request<Template>(`/templates/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/templates/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/templates/${id}`, { method: 'DELETE' }),
 };
 
 // API Keys API
 export const apiKeys = {
-  list: () => request<{ apiKeys: ApiKey[] }>("/api-keys"),
+  list: () => request<{ apiKeys: ApiKey[] }>('/api-keys'),
   create: (data: CreateApiKeyRequest) =>
-    request<CreateApiKeyResponse>("/api-keys", {
-      method: "POST",
+    request<CreateApiKeyResponse>('/api-keys', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
-  revoke: (id: string) =>
-    request<void>(`/api-keys/${id}`, { method: "DELETE" }),
-  delete: (id: string) =>
-    request<void>(`/api-keys/${id}/permanent`, { method: "DELETE" }),
+  revoke: (id: string) => request<void>(`/api-keys/${id}`, { method: 'DELETE' }),
+  delete: (id: string) => request<void>(`/api-keys/${id}/permanent`, { method: 'DELETE' }),
 };
 
 // Review API
 export const review = {
   list: (params?: { page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", String(params.page));
-    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     const query = searchParams.toString();
     return request<{ deviations: Deviation[]; total: number }>(
-      `/review${query ? `?${query}` : ""}`
+      `/review${query ? `?${query}` : ''}`
     );
   },
-  approve: (id: string) =>
-    request<Deviation>(`/review/${id}/approve`, { method: "POST" }),
-  reject: (id: string) =>
-    request<void>(`/review/${id}/reject`, { method: "POST" }),
+  approve: (id: string) => request<Deviation>(`/review/${id}/approve`, { method: 'POST' }),
+  reject: (id: string) => request<void>(`/review/${id}/reject`, { method: 'POST' }),
   batchApprove: (deviationIds: string[]) =>
-    request<{ success: boolean; approvedCount: number }>(
-      "/review/batch-approve",
-      {
-        method: "POST",
-        body: JSON.stringify({ deviationIds }),
-      }
-    ),
+    request<{ success: boolean; approvedCount: number }>('/review/batch-approve', {
+      method: 'POST',
+      body: JSON.stringify({ deviationIds }),
+    }),
   batchReject: (deviationIds: string[]) =>
-    request<{ success: boolean; rejectedCount: number }>(
-      "/review/batch-reject",
-      {
-        method: "POST",
-        body: JSON.stringify({ deviationIds }),
-      }
-    ),
+    request<{ success: boolean; rejectedCount: number }>('/review/batch-reject', {
+      method: 'POST',
+      body: JSON.stringify({ deviationIds }),
+    }),
 };
 
 // Price Presets API
@@ -659,20 +605,19 @@ export interface CreatePricePresetRequest {
 }
 
 export const pricePresets = {
-  list: () => request<{ presets: PricePreset[] }>("/price-presets"),
+  list: () => request<{ presets: PricePreset[] }>('/price-presets'),
   get: (id: string) => request<PricePreset>(`/price-presets/${id}`),
   create: (data: CreatePricePresetRequest) =>
-    request<PricePreset>("/price-presets", {
-      method: "POST",
+    request<PricePreset>('/price-presets', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
   update: (id: string, data: Partial<CreatePricePresetRequest>) =>
     request<PricePreset>(`/price-presets/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/price-presets/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/price-presets/${id}`, { method: 'DELETE' }),
 };
 
 // Sale Queue API
@@ -681,7 +626,7 @@ export interface SaleQueueItem {
   userId: string;
   deviationId: string;
   pricePresetId: string;
-  status: "pending" | "processing" | "completed" | "failed" | "skipped";
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped';
   attempts: number;
   lastAttemptAt?: string;
   completedAt?: string;
@@ -712,130 +657,111 @@ export interface AddToSaleQueueRequest {
 export const saleQueue = {
   list: (params?: { status?: string; page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.page) searchParams.set("page", String(params.page));
-    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     const query = searchParams.toString();
     return request<{
       items: SaleQueueItem[];
       total: number;
       page: number;
       limit: number;
-    }>(`/sale-queue${query ? `?${query}` : ""}`);
+    }>(`/sale-queue${query ? `?${query}` : ''}`);
   },
   addToQueue: (data: AddToSaleQueueRequest) =>
-    request<{ created: number; skipped: number; message: string }>(
-      "/sale-queue",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    ),
-  remove: (id: string) =>
-    request<void>(`/sale-queue/${id}`, { method: "DELETE" }),
+    request<{ created: number; skipped: number; message: string }>('/sale-queue', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  remove: (id: string) => request<void>(`/sale-queue/${id}`, { method: 'DELETE' }),
   getNext: (clientId: string) =>
     request<{ item: SaleQueueItem | null; message: string }>(
       `/sale-queue/next?clientId=${clientId}`
     ),
   complete: (id: string) =>
-    request<SaleQueueItem>(`/sale-queue/${id}/complete`, { method: "POST" }),
-  fail: (
-    id: string,
-    errorMessage: string,
-    errorDetails?: any,
-    screenshotKey?: string
-  ) =>
-    request<{ item: SaleQueueItem; willRetry: boolean }>(
-      `/sale-queue/${id}/fail`,
-      {
-        method: "POST",
-        body: JSON.stringify({ errorMessage, errorDetails, screenshotKey }),
-      }
-    ),
+    request<SaleQueueItem>(`/sale-queue/${id}/complete`, { method: 'POST' }),
+  fail: (id: string, errorMessage: string, errorDetails?: any, screenshotKey?: string) =>
+    request<{ item: SaleQueueItem; willRetry: boolean }>(`/sale-queue/${id}/fail`, {
+      method: 'POST',
+      body: JSON.stringify({ errorMessage, errorDetails, screenshotKey }),
+    }),
 };
 
 // Automation Workflows
 export const automations = {
-  list: () => request<{ automations: any[] }>("/automations"),
+  list: () => request<{ automations: any[] }>('/automations'),
   get: (id: string) => request<{ automation: any }>(`/automations/${id}`),
   create: (data: any) =>
-    request<{ automation: any }>("/automations", {
-      method: "POST",
+    request<{ automation: any }>('/automations', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
   update: (id: string, data: any) =>
     request<{ automation: any }>(`/automations/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/automations/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/automations/${id}`, { method: 'DELETE' }),
   toggle: (id: string) =>
     request<{ automation: any }>(`/automations/${id}/toggle`, {
-      method: "POST",
+      method: 'POST',
     }),
   reorder: (automationIds: string[]) =>
-    request<{ success: boolean }>("/automations/reorder", {
-      method: "PATCH",
+    request<{ success: boolean }>('/automations/reorder', {
+      method: 'PATCH',
       body: JSON.stringify({ automationIds }),
     }),
   getLogs: (id: string, params?: { page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", String(params.page));
-    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     const query = searchParams.toString();
     return request<{ logs: any[]; pagination: any }>(
-      `/automations/${id}/logs${query ? `?${query}` : ""}`
+      `/automations/${id}/logs${query ? `?${query}` : ''}`
     );
   },
   test: (id: string) =>
     request<{ message: string; config: any }>(`/automations/${id}/test`, {
-      method: "POST",
+      method: 'POST',
     }),
 };
 
 export const automationScheduleRules = {
   list: (automationId: string) => {
     const searchParams = new URLSearchParams();
-    searchParams.set("automationId", automationId);
-    return request<{ rules: any[] }>(
-      `/automation-schedule-rules?${searchParams.toString()}`
-    );
+    searchParams.set('automationId', automationId);
+    return request<{ rules: any[] }>(`/automation-schedule-rules?${searchParams.toString()}`);
   },
   create: (automationId: string, data: any) =>
-    request<{ rule: any }>("/automation-schedule-rules", {
-      method: "POST",
+    request<{ rule: any }>('/automation-schedule-rules', {
+      method: 'POST',
       body: JSON.stringify({ ...data, automationId }),
     }),
   update: (id: string, data: any) =>
     request<{ rule: any }>(`/automation-schedule-rules/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/automation-schedule-rules/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/automation-schedule-rules/${id}`, { method: 'DELETE' }),
 };
 
 export const automationDefaultValues = {
   list: (automationId: string) => {
     const searchParams = new URLSearchParams();
-    searchParams.set("automationId", automationId);
-    return request<{ values: any[] }>(
-      `/automation-default-values?${searchParams.toString()}`
-    );
+    searchParams.set('automationId', automationId);
+    return request<{ values: any[] }>(`/automation-default-values?${searchParams.toString()}`);
   },
   create: (automationId: string, data: any) =>
-    request<{ value: any }>("/automation-default-values", {
-      method: "POST",
+    request<{ value: any }>('/automation-default-values', {
+      method: 'POST',
       body: JSON.stringify({ ...data, automationId }),
     }),
   update: (id: string, data: any) =>
     request<{ value: any }>(`/automation-default-values/${id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<void>(`/automation-default-values/${id}`, { method: "DELETE" }),
+  delete: (id: string) => request<void>(`/automation-default-values/${id}`, { method: 'DELETE' }),
 };
 
 // Admin API
@@ -844,14 +770,14 @@ export interface InstanceUser {
   daUserId: string;
   daUsername: string;
   daAvatar: string | null;
-  role: "admin" | "member";
+  role: 'admin' | 'member';
   createdAt: string;
   lastLoginAt: string | null;
 }
 
 export interface InstanceInfo {
   instanceId: string | null;
-  tier: "pro" | "agency" | "self-hosted";
+  tier: 'pro' | 'agency' | 'self-hosted';
   limits: {
     maxDaAccounts: number;
     currentDaAccounts: number;
@@ -873,18 +799,18 @@ export interface InstanceSettings {
 }
 
 export const admin = {
-  getTeam: () => request<{ users: InstanceUser[] }>("/admin/team"),
+  getTeam: () => request<{ users: InstanceUser[] }>('/admin/team'),
   removeTeamMember: (id: string) =>
     request<{
       success: boolean;
       message: string;
       cleanup: { jobsCancelled: number; filesQueued: number; cacheKeysDeleted: number } | null;
-    }>(`/admin/team/${id}`, { method: "DELETE" }),
-  getInstance: () => request<InstanceInfo>("/admin/instance"),
-  getSettings: () => request<InstanceSettings>("/admin/settings"),
+    }>(`/admin/team/${id}`, { method: 'DELETE' }),
+  getInstance: () => request<InstanceInfo>('/admin/instance'),
+  getSettings: () => request<InstanceSettings>('/admin/settings'),
   updateSettings: (data: Partial<InstanceSettings>) =>
-    request<InstanceSettings>("/admin/settings", {
-      method: "PATCH",
+    request<InstanceSettings>('/admin/settings', {
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
 };
@@ -907,10 +833,9 @@ export interface LimitsConfig {
 }
 
 export const config = {
-  getWhitelabel: () => request<WhitelabelConfig>("/config/whitelabel"),
-  getLimits: () => request<LimitsConfig>("/config/limits"),
-  getInstance: () =>
-    request<{ tier: string; productName: string }>("/config/instance"),
+  getWhitelabel: () => request<WhitelabelConfig>('/config/whitelabel'),
+  getLimits: () => request<LimitsConfig>('/config/limits'),
+  getInstance: () => request<{ tier: string; productName: string }>('/config/instance'),
 };
 
 export { ApiError };

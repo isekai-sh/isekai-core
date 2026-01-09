@@ -10,16 +10,19 @@
 **Purpose:** DeviantArt user authentication and profile data
 
 **Key Concepts:**
+
 - One user per DeviantArt account
 - OAuth tokens encrypted at rest (AES-256-GCM)
 - Timezone-aware scheduling
 
 **Token Lifecycle:**
+
 - **Access Token:** 1 hour expiry, used for API requests
 - **Refresh Token:** 90 days expiry, used to get new access tokens
 - **Proactive Refresh:** Token maintenance job refreshes 7 days before expiry
 
 **Email Warnings (v0.1.0-alpha.1+):**
+
 ```typescript
 if (daysUntilExpiry <= 7 && !user.refreshTokenWarningEmailSent) {
   await sendEmail('Token expiring in 7 days');
@@ -55,30 +58,35 @@ Used for automation scheduling - converts user's local time to UTC for `actualPu
 
 ```typescript
 // Prevents duplicate processing by multiple workers or automation runs
-executionLockId: UUID       // Unique lock identifier
-executionLockedAt: DateTime // When lock was acquired
-executionVersion: Int       // Optimistic locking counter
+executionLockId: UUID; // Unique lock identifier
+executionLockedAt: DateTime; // When lock was acquired
+executionVersion: Int; // Optimistic locking counter
 ```
 
 **Why Multiple Lock Fields:**
+
 - `executionLockId`: Primary lock (null = unlocked)
 - `executionLockedAt`: Detect stale locks (>1 hour old)
 - `executionVersion`: Prevent race conditions with optimistic locking
 
 **Post Count Guard:**
+
 ```typescript
-postCountIncremented: Boolean
+postCountIncremented: Boolean;
 ```
+
 Prevents double-incrementing user's post count on job retry.
 
 **Jitter System:**
+
 ```typescript
-scheduledAt: DateTime     // User-visible schedule time
-jitterSeconds: Int        // Random offset in seconds (±300)
-actualPublishAt: DateTime // scheduledAt + jitterSeconds (actual queue time)
+scheduledAt: DateTime; // User-visible schedule time
+jitterSeconds: Int; // Random offset in seconds (±300)
+actualPublishAt: DateTime; // scheduledAt + jitterSeconds (actual queue time)
 ```
 
 **Display Resolution Values:**
+
 - 0 = Original (no resize)
 - 1 = 400px max
 - 2 = 600px
@@ -99,6 +107,7 @@ PostgreSQL native array type (`String[]`), max 30 tags.
 **Purpose:** Individual files attached to deviation
 
 **Storage Integration (v0.1.0-alpha.3+):**
+
 ```typescript
 // Storage key with multi-tenant prefix
 const storageKey = `${S3_PATH_PREFIX || ''}deviations/${deviationId}/${filename}`;
@@ -108,10 +117,12 @@ const storageUrl = await storage.getPresignedUrl(storageKey, 'putObject', 3600);
 ```
 
 **MIME Type Support:**
+
 - Images: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
 - Videos: `video/mp4`, `video/quicktime`
 
 **Metadata Extraction:**
+
 - Images: `width`, `height` via Sharp
 - Videos: `width`, `height`, `duration` via ffprobe (planned)
 
@@ -128,18 +139,21 @@ For multiple files, determines display order (0-indexed).
 **Purpose:** Workflow that automatically schedules drafts based on rules
 
 **Draft Selection Methods:**
+
 - **random**: Random selection from available drafts
 - **fifo**: First In First Out (oldest drafts first)
 - **lifo**: Last In First Out (newest drafts first)
 
 **Execution Lock (Different from Deviation):**
+
 ```typescript
-lastExecutionLock: DateTime?
-isExecuting: Boolean
+lastExecutionLock: DateTime ? isExecuting : Boolean;
 ```
+
 Simpler lock - just prevents concurrent automation runs. Not as critical as deviation execution locks.
 
 **Jitter Configuration:**
+
 ```typescript
 jitterMinSeconds: Int @default(0)        // Minimum random offset
 jitterMaxSeconds: Int @default(300)      // Maximum random offset (±5 min default)
@@ -148,10 +162,12 @@ jitterMaxSeconds: Int @default(300)      // Maximum random offset (±5 min defau
 Applied to each scheduled deviation individually.
 
 **Sale Queue Integration:**
+
 ```typescript
 autoAddToSaleQueue: Boolean
 saleQueuePresetId: String?
 ```
+
 If enabled, automatically adds scheduled deviations to sale queue with specified price preset.
 
 **Color & Icon:**
@@ -166,6 +182,7 @@ UI customization for visual distinction between workflows (e.g., "Exclusive Post
 **Rule Types:**
 
 ### 1. Fixed Time
+
 Schedule at specific time(s) each day.
 
 ```json
@@ -179,6 +196,7 @@ Schedule at specific time(s) each day.
 Interprets `timeOfDay` in user's timezone (from `User.timezone`).
 
 ### 2. Fixed Interval
+
 Schedule every N minutes.
 
 ```json
@@ -192,6 +210,7 @@ Schedule every N minutes.
 Example: Every 4 hours, schedule 2 deviations.
 
 ### 3. Daily Quota
+
 Maximum posts per day (enforced by auto-scheduler).
 
 ```json
@@ -208,6 +227,7 @@ When multiple rules could trigger simultaneously, higher priority executes first
 
 **Days of Week Format:**
 JSON array of lowercase day names:
+
 ```json
 ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 ```
@@ -219,6 +239,7 @@ JSON array of lowercase day names:
 **Purpose:** Default metadata applied to scheduled deviations
 
 **Supported Fields:**
+
 - `description`: String
 - `tags`: Array of strings
 - `isMature`: Boolean
@@ -232,6 +253,7 @@ JSON array of lowercase day names:
 - `stashOnly`: Boolean
 
 **Apply Logic:**
+
 ```typescript
 if (applyIfEmpty && deviation[fieldName] != null) {
   // Field already has value, skip
@@ -252,12 +274,14 @@ Flexible storage allows any type (string, number, boolean, array, object).
 **Purpose:** Audit trail of automation runs
 
 **Tracked Information:**
+
 - When automation executed
 - How many deviations scheduled
 - Errors encountered
 - Which rule type triggered
 
 **Use Cases:**
+
 - Debugging automation issues
 - Analytics (posts per day, success rate)
 - User visibility into automation activity
@@ -271,22 +295,24 @@ Flexible storage allows any type (string, number, boolean, array, object).
 **Pricing Logic:**
 
 ### Fixed Price
+
 ```json
 {
   "name": "Standard",
-  "price": 5000,  // $50.00
+  "price": 5000, // $50.00
   "minPrice": null,
   "maxPrice": null
 }
 ```
 
 ### Random Range
+
 ```json
 {
   "name": "Variable",
-  "price": 5000,      // Fallback if random fails
-  "minPrice": 3000,   // $30.00
-  "maxPrice": 10000   // $100.00
+  "price": 5000, // Fallback if random fails
+  "minPrice": 3000, // $30.00
+  "maxPrice": 10000 // $100.00
 }
 ```
 
@@ -316,6 +342,7 @@ Avoids floating-point precision issues. Display: `price / 100`.
 5. **skipped**: User intentionally skipped
 
 **Processing Lock:**
+
 ```typescript
 processingBy: String?  // Worker ID processing this item
 lockedAt: DateTime?    // When lock acquired
@@ -324,6 +351,7 @@ lockedAt: DateTime?    // When lock acquired
 Simpler than deviation execution locks (no optimistic locking needed).
 
 **Retry Logic:**
+
 ```typescript
 attempts: Int
 lastAttemptAt: DateTime?
@@ -332,6 +360,7 @@ lastAttemptAt: DateTime?
 Max 3 attempts before marking as failed.
 
 **Screenshot Proof:**
+
 ```typescript
 screenshotKey: String?  // S3 key to screenshot
 ```
@@ -339,6 +368,7 @@ screenshotKey: String?  // S3 key to screenshot
 Stores proof that price was set correctly (for audit/dispute resolution).
 
 **Error Details:**
+
 ```typescript
 errorMessage: String?   // Human-readable error
 errorDetails: Json?     // Stack trace, context
@@ -354,11 +384,13 @@ errorDetails: Json?     // Stack trace, context
 DeviantArt API is slow (2-3 seconds per request) and has rate limits. Caching gallery structure improves UX.
 
 **Cache Invalidation:**
+
 - **Fresh**: < 5 minutes
 - **Stale**: 5 minutes to 2 hours (return but revalidate in background)
 - **Expired**: > 2 hours (force refresh)
 
 **Folder Hierarchy:**
+
 ```typescript
 parentId: String?  // null = root gallery
 ```
@@ -372,8 +404,9 @@ Allows building tree structure in frontend.
 **Purpose:** Cache DeviantArt browse results (popular, newest, daily-deviations)
 
 **Cache Key Format:**
+
 ```typescript
-`${mode}:${category}:${date}:${offset}`
+`${mode}:${category}:${date}:${offset}`;
 // Example: "popular:digitalart:2025-01-05:0"
 ```
 
@@ -392,12 +425,14 @@ Serialized JSON string (PostgreSQL TEXT column). Could be optimized to JSONB for
 **Current Status:** Database models exist, API routes incomplete.
 
 **Planned Features:**
+
 - Inbox/Sent/Drafts folders
 - Label system (like Gmail labels)
 - Note templates for quick replies
 - Search and filtering
 
 **Note Folder Types:**
+
 - inbox
 - unread
 - starred
@@ -412,11 +447,13 @@ Serialized JSON string (PostgreSQL TEXT column). Could be optimized to JSONB for
 **Purpose:** Reusable metadata templates
 
 **Template Types:**
+
 - **tag**: Pre-defined tag lists
 - **description**: Description templates with variables
 - **comment**: Quick reply templates
 
 **Content Structure (JSON):**
+
 ```json
 // Tag template
 {
@@ -440,17 +477,20 @@ User creates template "Fantasy Art Tags", applies to multiple deviations quickly
 **Purpose:** API keys for external integrations
 
 **Format:**
+
 ```
 isk_live_abc123def456ghi789...    (production)
 isk_test_abc123def456ghi789...    (testing)
 ```
 
 **Security:**
+
 - Only bcrypt hash stored in database
 - Plain key shown once on creation
 - `keyPrefix` stored for identification (first 8 chars)
 
 **Use Cases:**
+
 - ComfyUI integration (automated workflow triggers)
 - Mobile apps (future)
 - Third-party tools
@@ -465,11 +505,13 @@ Routes can accept both session cookies AND API keys via `hybridAuth` middleware.
 **Purpose:** Admin permissions (legacy - use InstanceUser for SaaS)
 
 **Roles:**
+
 - `super_admin`: Full system access
 - `admin`: Instance management
 - `support`: Read-only support access
 
 **Revocation:**
+
 ```typescript
 revokedAt: DateTime?
 revokedBy: String?
@@ -484,17 +526,20 @@ Tracks when and who revoked the role (audit trail).
 **Purpose:** Multi-tenant SaaS - which DeviantArt users can access this instance
 
 **Relationship to User:**
+
 ```typescript
-InstanceUser.daUserId == User.deviantartId
+InstanceUser.daUserId == User.deviantartId;
 ```
 
 Links to existing User records.
 
 **Roles:**
+
 - **admin**: Can manage instance settings, invite users
 - **member**: Standard user access
 
 **Use Case:**
+
 ```
 Instance: isekai-tenant-abc123
 ├── User: Alice (admin)
@@ -514,21 +559,25 @@ When instance first deployed, first user to log in becomes admin automatically.
 **Purpose:** Runtime-configurable instance settings
 
 **Singleton Pattern:**
+
 ```typescript
-id: "singleton"  // Only one row ever exists
+id: 'singleton'; // Only one row ever exists
 ```
 
 Always use:
+
 ```typescript
 const settings = await prisma.instanceSettings.findUnique({
-  where: { id: 'singleton' }
+  where: { id: 'singleton' },
 });
 ```
 
 **Settings:**
+
 - `teamInvitesEnabled`: Allow admin to invite additional users
 
 **Planned Settings:**
+
 - `customDomain`: Custom domain for this instance
 - `brandingLogo`: Custom logo URL
 - `maxUsers`: User limit
@@ -562,6 +611,7 @@ CREATE INDEX ON sale_queue(status, created_at);
 ```
 
 **Why These Indexes:**
+
 - `(user_id, status)`: "Show me my drafts" query
 - `(status, actual_publish_at)`: Past-due recovery job scans all scheduled deviations past their time
 - `(execution_lock_id, status)`: Lock cleanup finds all locked deviations
@@ -571,10 +621,12 @@ CREATE INDEX ON sale_queue(status, created_at);
 ## Data Retention
 
 **Cache Models:**
+
 - GalleryCache: Auto-purge after 7 days (planned)
 - BrowseCache: Auto-purge after 7 days (planned)
 
 **Logs:**
+
 - AutomationExecutionLog: Keep 90 days (planned)
 
 **Soft Deletes:**
@@ -585,6 +637,7 @@ No soft deletes currently. All deletes are hard deletes with cascades.
 ## Cascade Deletion Strategy
 
 **Cascade on User Delete:**
+
 - ✅ Deviations (and files via cascade)
 - ✅ Automations (and rules/defaults/logs)
 - ✅ PricePresets
@@ -595,6 +648,7 @@ No soft deletes currently. All deletes are hard deletes with cascades.
 - ❌ BrowseCache (orphaned - cleanup job needed)
 
 **SetNull on Soft References:**
+
 ```prisma
 Deviation.automationId → Automation (onDelete: SetNull)
 ```
@@ -606,6 +660,7 @@ If automation deleted, deviations keep their data but lose automation link.
 ## JSON Fields
 
 **Models Using JSON:**
+
 - AutomationScheduleRule.daysOfWeek: `["monday", "friday"]`
 - AutomationDefaultValue.value: Flexible storage for any type
 - Template.content: Template structure

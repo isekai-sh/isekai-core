@@ -15,32 +15,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { FileText, Tag, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { templates } from "@/lib/api";
-import type { Template, TagContent, DescriptionContent } from "@isekai/shared";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { FileText, Tag, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
+import { templates } from '@/lib/api';
+import type { Template, TagContent, DescriptionContent } from '@isekai/shared';
 
 interface TagTemplateSelectorProps {
   onSelect: (tags: string[]) => void;
   currentTags?: string[];
 }
 
-export function TagTemplateSelector({
-  onSelect,
-  currentTags = [],
-}: TagTemplateSelectorProps) {
+export function TagTemplateSelector({ onSelect, currentTags = [] }: TagTemplateSelectorProps) {
   const [open, setOpen] = useState(false);
   const { data } = useQuery({
-    queryKey: ["templates", "tag"],
-    queryFn: () => templates.list("tag"),
+    queryKey: ['templates', 'tag'],
+    queryFn: () => templates.list('tag'),
   });
 
   const templateList = data?.templates || [];
@@ -58,9 +51,7 @@ export function TagTemplateSelector({
         <div className="space-y-2">
           <h4 className="font-medium text-sm">Tag Templates</h4>
           {templateList.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No templates yet
-            </p>
+            <p className="text-sm text-muted-foreground py-4 text-center">No templates yet</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {templateList.map((template) => {
@@ -74,16 +65,10 @@ export function TagTemplateSelector({
                     }}
                     className="w-full text-left p-3 border rounded hover:bg-accent transition-colors"
                   >
-                    <div className="font-medium text-sm mb-1">
-                      {template.name}
-                    </div>
+                    <div className="font-medium text-sm mb-1">{template.name}</div>
                     <div className="flex flex-wrap gap-1">
                       {content.tags.map((tag, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="secondary"
-                          className="text-xs"
-                        >
+                        <Badge key={idx} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
@@ -103,13 +88,11 @@ interface DescriptionTemplateSelectorProps {
   onSelect: (text: string) => void;
 }
 
-export function DescriptionTemplateSelector({
-  onSelect,
-}: DescriptionTemplateSelectorProps) {
+export function DescriptionTemplateSelector({ onSelect }: DescriptionTemplateSelectorProps) {
   const [open, setOpen] = useState(false);
   const { data } = useQuery({
-    queryKey: ["templates", "description"],
-    queryFn: () => templates.list("description"),
+    queryKey: ['templates', 'description'],
+    queryFn: () => templates.list('description'),
   });
 
   const templateList = data?.templates || [];
@@ -127,9 +110,7 @@ export function DescriptionTemplateSelector({
         <div className="space-y-2">
           <h4 className="font-medium text-sm">Description Templates</h4>
           {templateList.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No templates yet
-            </p>
+            <p className="text-sm text-muted-foreground py-4 text-center">No templates yet</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {templateList.map((template) => {
@@ -143,12 +124,8 @@ export function DescriptionTemplateSelector({
                     }}
                     className="w-full text-left p-3 border rounded hover:bg-accent transition-colors"
                   >
-                    <div className="font-medium text-sm mb-1">
-                      {template.name}
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {content.text}
-                    </p>
+                    <div className="font-medium text-sm mb-1">{template.name}</div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{content.text}</p>
                   </button>
                 );
               })}

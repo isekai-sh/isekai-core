@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import cron from "node-cron";
-import { prisma } from "../db/index.js";
-import { scheduleDeviation } from "../queues/deviation-publisher.js";
-import { PublisherAlerts } from "../lib/alerting.js";
-import type { Deviation, User } from "../db/index.js";
+import cron from 'node-cron';
+import { prisma } from '../db/index.js';
+import { scheduleDeviation } from '../queues/deviation-publisher.js';
+import { PublisherAlerts } from '../lib/alerting.js';
+import type { Deviation, User } from '../db/index.js';
 
 /**
  * Stuck Job Recovery System
@@ -46,13 +46,9 @@ interface DeviationWithUser extends Deviation {
  * Always release the lock before attempting recovery to prevent race conditions.
  * This ensures the job can be re-queued or processed without lock conflicts.
  */
-async function releaseStaleLocksForRecovery(
-  deviation: DeviationWithUser
-): Promise<void> {
+async function releaseStaleLocksForRecovery(deviation: DeviationWithUser): Promise<void> {
   if (deviation.executionLockId) {
-    console.log(
-      `[Stuck Job Recovery] Releasing stale lock: ${deviation.executionLockId}`
-    );
+    console.log(`[Stuck Job Recovery] Releasing stale lock: ${deviation.executionLockId}`);
     await prisma.deviation.update({
       where: { id: deviation.id },
       data: {
@@ -80,26 +76,24 @@ async function recoverStuckJobs(): Promise<void> {
             executionLockedAt: { lt: cutoffTime },
           },
           // Legacy: Old statuses (backward compatibility during migration period)
-          { status: "uploading", updatedAt: { lt: cutoffTime } },
-          { status: "publishing", updatedAt: { lt: cutoffTime } },
+          { status: 'uploading', updatedAt: { lt: cutoffTime } },
+          { status: 'publishing', updatedAt: { lt: cutoffTime } },
         ],
       },
       include: { user: true },
       take: BATCH_SIZE,
       orderBy: [
-        { executionLockedAt: "asc" }, // Oldest locks first
-        { updatedAt: "asc" }, // Then by updatedAt for legacy cases
+        { executionLockedAt: 'asc' }, // Oldest locks first
+        { updatedAt: 'asc' }, // Then by updatedAt for legacy cases
       ],
     });
 
     if (stuckDeviations.length === 0) {
-      console.log("[Stuck Job Recovery] No stuck jobs found");
+      console.log('[Stuck Job Recovery] No stuck jobs found');
       return;
     }
 
-    console.log(
-      `[Stuck Job Recovery] Found ${stuckDeviations.length} stuck jobs, processing...`
-    );
+    console.log(`[Stuck Job Recovery] Found ${stuckDeviations.length} stuck jobs, processing...`);
 
     let recovered = 0;
     let failed = 0;
@@ -113,7 +107,7 @@ async function recoverStuckJobs(): Promise<void> {
           );
 
           // Queue storage cleanup for orphaned files before deleting
-          const { queueStorageCleanup } = await import("../queues/storage-cleanup.js");
+          const { queueStorageCleanup } = await import('../queues/storage-cleanup.js');
           await queueStorageCleanup(deviation.id, deviation.userId);
 
           // Delete orphaned deviation (files already queued for cleanup)
@@ -121,9 +115,7 @@ async function recoverStuckJobs(): Promise<void> {
             where: { id: deviation.id },
           });
 
-          console.log(
-            `[Stuck Job Recovery] Deleted orphaned deviation: ${deviation.id}`
-          );
+          console.log(`[Stuck Job Recovery] Deleted orphaned deviation: ${deviation.id}`);
           recovered++;
           continue;
         }
@@ -134,17 +126,13 @@ async function recoverStuckJobs(): Promise<void> {
         // Case 1: Ghost publish - has deviationId but stuck in 'publishing'
         if (deviation.deviationId) {
           await completeGhostPublish(deviation);
-          console.log(
-            `[Stuck Job Recovery] Completed ghost publish: ${deviation.id}`
-          );
+          console.log(`[Stuck Job Recovery] Completed ghost publish: ${deviation.id}`);
           recovered++;
         }
         // Case 2: Partial publish - has stashItemId but no deviationId
         else if (deviation.stashItemId && deviation.retryCount < 7) {
           await resetAndRetry(deviation);
-          console.log(
-            `[Stuck Job Recovery] Reset and queued retry: ${deviation.id}`
-          );
+          console.log(`[Stuck Job Recovery] Reset and queued retry: ${deviation.id}`);
           recovered++;
         }
         // Case 3: Failed upload - no external IDs
@@ -154,17 +142,12 @@ async function recoverStuckJobs(): Promise<void> {
           recovered++;
         }
       } catch (error) {
-        console.error(
-          `[Stuck Job Recovery] Failed to recover deviation ${deviation.id}:`,
-          error
-        );
+        console.error(`[Stuck Job Recovery] Failed to recover deviation ${deviation.id}:`, error);
         failed++;
       }
     }
 
-    console.log(
-      `[Stuck Job Recovery] Recovery complete: ${recovered} recovered, ${failed} failed`
-    );
+    console.log(`[Stuck Job Recovery] Recovery complete: ${recovered} recovered, ${failed} failed`);
 
     // Alert if recovery rate is high (indicates systemic issues)
     if (recovered > 0 && recovered / (recovered + failed) > 0.05) {
@@ -184,10 +167,7 @@ async function recoverStuckJobs(): Promise<void> {
       );
     }
   } catch (error) {
-    console.error(
-      "[Stuck Job Recovery] Critical error in recovery process:",
-      error
-    );
+    console.error('[Stuck Job Recovery] Critical error in recovery process:', error);
   }
 }
 
@@ -195,19 +175,15 @@ async function recoverStuckJobs(): Promise<void> {
  * Case 1: Complete a ghost publish
  * The deviation was published to DeviantArt but DB wasn't updated due to crash
  */
-async function completeGhostPublish(
-  deviation: DeviationWithUser
-): Promise<void> {
-  console.log(
-    `[Stuck Job Recovery] Completing ghost publish for ${deviation.id}`
-  );
+async function completeGhostPublish(deviation: DeviationWithUser): Promise<void> {
+  console.log(`[Stuck Job Recovery] Completing ghost publish for ${deviation.id}`);
 
   await prisma.$transaction(async (tx) => {
     // Mark as published
     await tx.deviation.update({
       where: { id: deviation.id },
       data: {
-        status: "published",
+        status: 'published',
         publishedAt: new Date(),
         errorMessage: null,
         updatedAt: new Date(),
@@ -220,7 +196,7 @@ async function completeGhostPublish(
       where: { deviationId: deviation.id },
     });
 
-    const postsIncrement = deviation.uploadMode === "multiple" ? fileCount : 1;
+    const postsIncrement = deviation.uploadMode === 'multiple' ? fileCount : 1;
 
     // Use updateMany with condition to ensure idempotency
     const incrementResult = await tx.deviation.updateMany({
@@ -236,18 +212,14 @@ async function completeGhostPublish(
     // Only increment counter if we successfully set the flag
     if (incrementResult.count > 0) {
       // Note: totalPosts tracking removed - add to schema in v0.2.0 if needed
-      console.log(
-        `[Stuck Job Recovery] Post count increment skipped (field not in schema)`
-      );
+      console.log(`[Stuck Job Recovery] Post count increment skipped (field not in schema)`);
     } else {
-      console.log(
-        `[Stuck Job Recovery] Post count already incremented, skipping`
-      );
+      console.log(`[Stuck Job Recovery] Post count already incremented, skipping`);
     }
   });
 
   // Queue storage cleanup
-  const { queueStorageCleanup } = await import("../queues/storage-cleanup.js");
+  const { queueStorageCleanup } = await import('../queues/storage-cleanup.js');
   await queueStorageCleanup(deviation.id, deviation.userId);
 
   console.log(
@@ -260,27 +232,20 @@ async function completeGhostPublish(
  * The deviation has stashItemId but failed to complete publish
  */
 async function resetAndRetry(deviation: DeviationWithUser): Promise<void> {
-  console.log(
-    `[Stuck Job Recovery] Resetting stuck job for retry: ${deviation.id}`
-  );
+  console.log(`[Stuck Job Recovery] Resetting stuck job for retry: ${deviation.id}`);
 
   await prisma.deviation.update({
     where: { id: deviation.id },
     data: {
-      status: "scheduled",
-      errorMessage: "Job was stuck and has been automatically retried",
+      status: 'scheduled',
+      errorMessage: 'Job was stuck and has been automatically retried',
       updatedAt: new Date(),
     },
   });
 
   // Re-queue job with 1 minute delay
   const retryAt = new Date(Date.now() + 60000);
-  await scheduleDeviation(
-    deviation.id,
-    deviation.userId,
-    retryAt,
-    deviation.uploadMode
-  );
+  await scheduleDeviation(deviation.id, deviation.userId, retryAt, deviation.uploadMode);
 
   console.log(`[Stuck Job Recovery] Retry queued for ${deviation.id}`);
 }
@@ -295,8 +260,8 @@ async function resetToDraft(deviation: DeviationWithUser): Promise<void> {
   await prisma.deviation.update({
     where: { id: deviation.id },
     data: {
-      status: "draft",
-      errorMessage: "Job failed after timeout. Please try scheduling again.",
+      status: 'draft',
+      errorMessage: 'Job failed after timeout. Please try scheduling again.',
       updatedAt: new Date(),
     },
   });
@@ -310,24 +275,21 @@ async function resetToDraft(deviation: DeviationWithUser): Promise<void> {
  */
 export function startStuckJobRecovery(): void {
   // Run every 15 minutes
-  cron.schedule("*/15 * * * *", async () => {
+  cron.schedule('*/15 * * * *', async () => {
     try {
       await recoverStuckJobs();
     } catch (error) {
-      console.error("[Stuck Job Recovery] Cron job failed:", error);
+      console.error('[Stuck Job Recovery] Cron job failed:', error);
     }
   });
 
-  console.log("[Stuck Job Recovery] Cron job started (runs every 15 minutes)");
+  console.log('[Stuck Job Recovery] Cron job started (runs every 15 minutes)');
 
   // Run once immediately on startup (helpful for catching issues after server restart)
   setTimeout(() => {
-    console.log("[Stuck Job Recovery] Running initial recovery check...");
+    console.log('[Stuck Job Recovery] Running initial recovery check...');
     recoverStuckJobs().catch((error) => {
-      console.error(
-        "[Stuck Job Recovery] Initial recovery check failed:",
-        error
-      );
+      console.error('[Stuck Job Recovery] Initial recovery check failed:', error);
     });
   }, 5000); // 5 second delay to allow server to fully start
 }

@@ -10,6 +10,7 @@
 Isekai Core uses **Vitest** for unit and integration testing with a **30% baseline coverage requirement** (v0.1.0-alpha.2+).
 
 **Test Types:**
+
 - Unit tests (functions, utilities)
 - Integration tests (API routes)
 - Database tests (Prisma queries)
@@ -33,7 +34,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      lines: 30,        // Baseline: 30% line coverage
+      lines: 30, // Baseline: 30% line coverage
       functions: 30,
       branches: 30,
       statements: 30,
@@ -85,6 +86,7 @@ pnpm test src/routes/auth.test.ts
 ### CI/CD Integration
 
 **GitHub Actions:**
+
 ```yaml
 - name: Run tests
   run: pnpm test:coverage
@@ -229,22 +231,24 @@ global.fetch = vi.fn((url) => {
   if (url.includes('deviantart.com/oauth2/token')) {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({
-        access_token: 'mock_token',
-        refresh_token: 'mock_refresh',
-        expires_in: 3600,
-      }),
+      json: () =>
+        Promise.resolve({
+          access_token: 'mock_token',
+          refresh_token: 'mock_refresh',
+          expires_in: 3600,
+        }),
     });
   }
 
   if (url.includes('/user/whoami')) {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({
-        userid: '123456',
-        username: 'testuser',
-        usericon: 'http://example.com/avatar.png',
-      }),
+      json: () =>
+        Promise.resolve({
+          userid: '123456',
+          username: 'testuser',
+          usericon: 'http://example.com/avatar.png',
+        }),
     });
   }
 
@@ -281,6 +285,7 @@ afterEach(async () => {
 ### Baseline: 30%
 
 **Enforced on:**
+
 - Lines
 - Functions
 - Branches
@@ -291,12 +296,14 @@ afterEach(async () => {
 ### Priority Areas
 
 **Must Have >50% Coverage:**
+
 - Authentication (`/routes/auth.ts`)
 - Publishing logic (`/queues/deviation-publisher.ts`)
 - Execution locks (any file with `executionLockId`)
 - Token refresh (`/lib/deviantart.ts`)
 
 **Can Have <30% Coverage:**
+
 - UI components (frontend)
 - Admin routes (low usage)
 - Legacy code (to be refactored)
@@ -397,10 +404,14 @@ it('should publish deviation', async () => {
 
 ```typescript
 // ❌ Bad
-it('test 1', () => { /* ... */ });
+it('test 1', () => {
+  /* ... */
+});
 
 // ✅ Good
-it('should reject schedule time less than 1 hour in future', () => { /* ... */ });
+it('should reject schedule time less than 1 hour in future', () => {
+  /* ... */
+});
 ```
 
 ### 4. Clean Up After Tests
@@ -427,6 +438,7 @@ afterEach(async () => {
 **Cause:** Tests depend on timing or external state.
 
 **Solution:**
+
 - Mock time: `vi.useFakeTimers()`
 - Mock random: `vi.spyOn(Math, 'random').mockReturnValue(0.5)`
 - Clean state between tests
@@ -436,6 +448,7 @@ afterEach(async () => {
 **Cause:** Untested code paths.
 
 **Solution:**
+
 1. Run `pnpm test:coverage`
 2. Open `coverage/index.html`
 3. Identify red (untested) lines

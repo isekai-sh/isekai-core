@@ -15,23 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Queue, Worker, Job, QueueEvents } from "bullmq";
-import { Redis } from "ioredis";
-import { prisma } from "../db/index.js";
-import { publishToDeviantArt } from "../lib/deviantart.js";
-import type { UploadMode } from "@isekai/shared";
-import { publishDeviationJob } from "@isekai/shared";
-import { ErrorCategorizer } from "../lib/error-categorizer.js";
-import { StructuredLogger } from "../lib/structured-logger.js";
-import { AdaptiveRateLimiter } from "../lib/rate-limiter.js";
-import { PublisherMetricsCollector } from "../lib/publisher-metrics.js";
-import { CircuitBreaker, withCircuitBreaker } from "../lib/circuit-breaker.js";
+import { Queue, Worker, Job, QueueEvents } from 'bullmq';
+import { Redis } from 'ioredis';
+import { prisma } from '../db/index.js';
+import { publishToDeviantArt } from '../lib/deviantart.js';
+import type { UploadMode } from '@isekai/shared';
+import { publishDeviationJob } from '@isekai/shared';
+import { ErrorCategorizer } from '../lib/error-categorizer.js';
+import { StructuredLogger } from '../lib/structured-logger.js';
+import { AdaptiveRateLimiter } from '../lib/rate-limiter.js';
+import { PublisherMetricsCollector } from '../lib/publisher-metrics.js';
+import { CircuitBreaker, withCircuitBreaker } from '../lib/circuit-breaker.js';
 
 const redisUrl = process.env.REDIS_URL!;
 
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: redisUrl.startsWith("rediss://")
+  tls: redisUrl.startsWith('rediss://')
     ? {
         rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
       }
@@ -51,13 +51,10 @@ const metricsCollector = new PublisherMetricsCollector(connection);
 
 // Custom backoff strategy that respects rate limit Retry-After headers
 function calculateBackoff(attemptsMade: number, err: Error): number {
-  const errorMessage = err?.message || "";
+  const errorMessage = err?.message || '';
 
   // Check if this is a rate limit error with explicit wait time
-  if (
-    errorMessage.includes("RATE_LIMITED") ||
-    errorMessage.includes("RATE_LIMIT")
-  ) {
+  if (errorMessage.includes('RATE_LIMITED') || errorMessage.includes('RATE_LIMIT')) {
     // Extract wait time from error message (format: "Wait Xms")
     const match = errorMessage.match(/Wait (\d+)ms/);
     if (match) {
@@ -72,7 +69,7 @@ function calculateBackoff(attemptsMade: number, err: Error): number {
   }
 
   // Check for circuit breaker open
-  if (errorMessage.includes("CIRCUIT_OPEN")) {
+  if (errorMessage.includes('CIRCUIT_OPEN')) {
     // Wait 30 seconds for circuit breaker to potentially close
     const waitMs = 30000;
     console.log(`[Backoff] Circuit breaker open - waiting ${waitMs}ms`);
@@ -83,36 +80,31 @@ function calculateBackoff(attemptsMade: number, err: Error): number {
   // 2s, 4s, 8s, 16s, 32s, 64s (max)
   const exponentialDelay = Math.min(2000 * Math.pow(2, attemptsMade), 64000);
   console.log(
-    `[Backoff] Using exponential backoff: ${exponentialDelay}ms (attempt ${
-      attemptsMade + 1
-    })`
+    `[Backoff] Using exponential backoff: ${exponentialDelay}ms (attempt ${attemptsMade + 1})`
   );
   return exponentialDelay;
 }
 
 // Queue for scheduling deviations
-export const deviationPublisherQueue = new Queue<DeviationPublishJobData>(
-  "deviation-publisher",
-  {
-    connection,
-    defaultJobOptions: {
-      attempts: parseInt(process.env.PUBLISHER_MAX_ATTEMPTS || "7"),
-      backoff: calculateBackoff as any, // BullMQ accepts function for custom backoff
-      removeOnComplete: {
-        age: 48 * 3600, // Keep completed jobs for 48 hours
-        count: 5000,
-      },
-      removeOnFail: {
-        age: 7 * 24 * 3600, // Keep failed jobs for 7 days
-        count: 1000, // Prevent Redis memory exhaustion
-      },
+export const deviationPublisherQueue = new Queue<DeviationPublishJobData>('deviation-publisher', {
+  connection,
+  defaultJobOptions: {
+    attempts: parseInt(process.env.PUBLISHER_MAX_ATTEMPTS || '7'),
+    backoff: calculateBackoff as any, // BullMQ accepts function for custom backoff
+    removeOnComplete: {
+      age: 48 * 3600, // Keep completed jobs for 48 hours
+      count: 5000,
     },
-  }
-);
+    removeOnFail: {
+      age: 7 * 24 * 3600, // Keep failed jobs for 7 days
+      count: 1000, // Prevent Redis memory exhaustion
+    },
+  },
+});
 
 // Worker to process publishing jobs using shared publisher core
 export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
-  "deviation-publisher",
+  'deviation-publisher',
   async (job: Job<DeviationPublishJobData>) => {
     // Use shared publisher core with BE-specific dependencies
     return await publishDeviationJob(job, {
@@ -124,7 +116,7 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
       withCircuitBreaker,
       publishToDeviantArt,
       queueStorageCleanup: async (deviationId: string, userId: string) => {
-        const { queueStorageCleanup } = await import("./storage-cleanup.js");
+        const { queueStorageCleanup } = await import('./storage-cleanup.js');
         await queueStorageCleanup(deviationId, userId);
       },
       errorCategorizer,
@@ -134,49 +126,50 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
     connection,
     // Lower concurrency to prevent multiple API calls at once
     // DeviantArt rate limits are per OAuth token (per user)
-    concurrency: parseInt(process.env.PUBLISHER_CONCURRENCY || "2"),
+    concurrency: parseInt(process.env.PUBLISHER_CONCURRENCY || '2'),
     // Lock duration (replaces timeout from Queue options)
-    lockDuration: parseInt(process.env.PUBLISHER_JOB_TIMEOUT_MS || "1200000"), // 20 minutes
+    lockDuration: parseInt(process.env.PUBLISHER_JOB_TIMEOUT_MS || '1200000'), // 20 minutes
     // Stalled job detection (moved from Queue settings)
-    stalledInterval: parseInt(
-      process.env.PUBLISHER_STALE_CHECK_INTERVAL_MS || "60000"
-    ),
-    maxStalledCount: parseInt(process.env.PUBLISHER_MAX_STALLED_COUNT || "2"),
+    stalledInterval: parseInt(process.env.PUBLISHER_STALE_CHECK_INTERVAL_MS || '60000'),
+    maxStalledCount: parseInt(process.env.PUBLISHER_MAX_STALLED_COUNT || '2'),
     limiter: {
       // Limit job pickup rate to space out API calls
       // 2 jobs per second = minimum 500ms between starts
-      max: parseInt(process.env.PUBLISHER_LIMITER_MAX || "2"),
+      max: parseInt(process.env.PUBLISHER_LIMITER_MAX || '2'),
       duration: 1000,
     },
   }
 );
 
 // Event handlers
-deviationPublisherWorker.on("completed", (job, result) => {
+deviationPublisherWorker.on('completed', (job, result) => {
   const logger = StructuredLogger.createJobLogger(job);
-  logger.info("Job completed successfully", { result });
+  logger.info('Job completed successfully', { result });
 });
 
-deviationPublisherWorker.on("failed", (job, err) => {
+deviationPublisherWorker.on('failed', (job, err) => {
   if (!job) return;
   const logger = StructuredLogger.createJobLogger(job);
-  logger.error("Job failed permanently", err);
+  logger.error('Job failed permanently', err);
 });
 
-deviationPublisherWorker.on("stalled", (jobId) => {
+deviationPublisherWorker.on('stalled', (jobId) => {
   console.error(`[Publisher] Job ${jobId} stalled - may be stuck`);
   metricsCollector.recordStalledJob(jobId);
 });
 
-deviationPublisherWorker.on("error", (err) => {
-  console.error("[Publisher] Worker error:", err);
+deviationPublisherWorker.on('error', (err) => {
+  console.error('[Publisher] Worker error:', err);
 });
 
 // Periodic metrics logging (every 5 minutes)
-setInterval(() => {
-  const metrics = metricsCollector.getMetrics("5min");
-  console.log("[Publisher] Metrics:", JSON.stringify(metrics, null, 2));
-}, 5 * 60 * 1000);
+setInterval(
+  () => {
+    const metrics = metricsCollector.getMetrics('5min');
+    console.log('[Publisher] Metrics:', JSON.stringify(metrics, null, 2));
+  },
+  5 * 60 * 1000
+);
 
 // Helper function to schedule a deviation with jitter
 export async function scheduleDeviation(
@@ -191,7 +184,7 @@ export async function scheduleDeviation(
   const existingJob = await deviationPublisherQueue.getJob(jobId);
   if (existingJob) {
     const state = await existingJob.getState();
-    if (state === "waiting" || state === "delayed" || state === "active") {
+    if (state === 'waiting' || state === 'delayed' || state === 'active') {
       console.log(
         `[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`
       );
@@ -204,7 +197,7 @@ export async function scheduleDeviation(
   const delay = actualPublishAt.getTime() - Date.now();
 
   await deviationPublisherQueue.add(
-    "publish-deviation",
+    'publish-deviation',
     { deviationId, userId, uploadMode },
     {
       delay: Math.max(0, delay),
@@ -229,7 +222,7 @@ export async function publishDeviationNow(
   const existingJob = await deviationPublisherQueue.getJob(jobId);
   if (existingJob) {
     const state = await existingJob.getState();
-    if (state === "waiting" || state === "delayed" || state === "active") {
+    if (state === 'waiting' || state === 'delayed' || state === 'active') {
       console.log(
         `[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`
       );
@@ -240,7 +233,7 @@ export async function publishDeviationNow(
   }
 
   await deviationPublisherQueue.add(
-    "publish-deviation",
+    'publish-deviation',
     { deviationId, userId, uploadMode },
     {
       jobId, // Use deviation ID as job ID for de-duplication
@@ -259,37 +252,29 @@ export async function cancelScheduledDeviation(deviationId: string) {
 
   if (job) {
     await job.remove();
-    console.log(
-      `[Deviation Publisher] Cancelled scheduled deviation ${deviationId}`
-    );
+    console.log(`[Deviation Publisher] Cancelled scheduled deviation ${deviationId}`);
     return true;
   }
 
-  console.log(
-    `[Deviation Publisher] No scheduled job found for deviation ${deviationId}`
-  );
+  console.log(`[Deviation Publisher] No scheduled job found for deviation ${deviationId}`);
   return false;
 }
 
 // Graceful shutdown
-process.on("SIGTERM", async () => {
-  console.log("[Publisher] Shutting down worker gracefully...");
+process.on('SIGTERM', async () => {
+  console.log('[Publisher] Shutting down worker gracefully...');
 
   // Stop accepting new jobs
   await deviationPublisherWorker.pause();
 
   // Wait for active jobs to complete (max 30s)
-  const activeJobs = await deviationPublisherQueue.getJobs(["active"]);
+  const activeJobs = await deviationPublisherQueue.getJobs(['active']);
   if (activeJobs.length > 0) {
-    console.log(
-      `[Publisher] Waiting for ${activeJobs.length} active jobs to complete...`
-    );
+    console.log(`[Publisher] Waiting for ${activeJobs.length} active jobs to complete...`);
     await Promise.race([
       Promise.all(
         activeJobs.map((job) =>
-          job.waitUntilFinished(
-            new QueueEvents(deviationPublisherQueue.name, { connection })
-          )
+          job.waitUntilFinished(new QueueEvents(deviationPublisherQueue.name, { connection }))
         )
       ),
       new Promise((resolve) => setTimeout(resolve, 30000)),
@@ -304,6 +289,6 @@ process.on("SIGTERM", async () => {
   await deviationPublisherQueue.close();
   await connection.quit();
 
-  console.log("[Publisher] Shutdown complete");
+  console.log('[Publisher] Shutdown complete');
   process.exit(0);
 });

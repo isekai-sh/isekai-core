@@ -37,7 +37,9 @@ import { prisma } from '../db/index.js';
 // Helper to call route handlers directly
 async function callRoute(method: string, path: string, req: any, res: any) {
   const routes = (templatesRouter as any).stack;
-  const route = routes.find((r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]);
+  const route = routes.find(
+    (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+  );
 
   if (!route) {
     throw new Error(`Route ${method} ${path} not found`);
@@ -216,7 +218,7 @@ describe('templates routes', () => {
       await expect(callRoute('GET', '/:id', req, res)).rejects.toThrow('Template not found');
     });
 
-    it('should not allow accessing another user\'s template', async () => {
+    it("should not allow accessing another user's template", async () => {
       const mockUser = { id: 'user-123' } as any;
       const req = createMockRequest({
         user: mockUser,
@@ -573,7 +575,7 @@ describe('templates routes', () => {
       await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('Template not found');
     });
 
-    it('should not allow deleting another user\'s template', async () => {
+    it("should not allow deleting another user's template", async () => {
       const mockUser = { id: 'user-123' } as any;
       const req = createMockRequest({
         user: mockUser,

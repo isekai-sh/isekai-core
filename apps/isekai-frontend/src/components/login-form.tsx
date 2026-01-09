@@ -15,48 +15,42 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useSearchParams } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { auth } from "@/lib/api";
+import { useSearchParams } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { auth } from '@/lib/api';
 
 const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
   account_limit_reached: {
-    title: "Account Limit Reached",
-    description: "This instance has reached its maximum number of DeviantArt accounts. Please contact the administrator.",
+    title: 'Account Limit Reached',
+    description:
+      'This instance has reached its maximum number of DeviantArt accounts. Please contact the administrator.',
   },
   team_invites_disabled: {
-    title: "Team Invites Disabled",
-    description: "New team members are not currently being accepted. Please contact the administrator for access.",
+    title: 'Team Invites Disabled',
+    description:
+      'New team members are not currently being accepted. Please contact the administrator for access.',
   },
   oauth_failed: {
-    title: "Authentication Failed",
-    description: "Failed to connect with DeviantArt. Please try again.",
+    title: 'Authentication Failed',
+    description: 'Failed to connect with DeviantArt. Please try again.',
   },
   session_failed: {
-    title: "Session Error",
-    description: "Failed to create a session. Please try again.",
+    title: 'Session Error',
+    description: 'Failed to create a session. Please try again.',
   },
   missing_code: {
-    title: "Authentication Error",
-    description: "Missing authorization code from DeviantArt. Please try again.",
+    title: 'Authentication Error',
+    description: 'Missing authorization code from DeviantArt. Please try again.',
   },
 };
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [searchParams] = useSearchParams();
-  const error = searchParams.get("error");
+  const error = searchParams.get('error');
   const errorInfo = error ? ERROR_MESSAGES[error] : null;
 
   const handleLogin = () => {
@@ -64,7 +58,7 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
       {errorInfo && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -76,9 +70,7 @@ export function LoginForm({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            An unexpected error occurred: {error}
-          </AlertDescription>
+          <AlertDescription>An unexpected error occurred: {error}</AlertDescription>
         </Alert>
       )}
       <Card>
@@ -90,11 +82,7 @@ export function LoginForm({
         <CardContent>
           <div className="grid gap-6">
             <Button onClick={handleLogin} className="w-full" size="lg">
-              <img
-                src="/deviantart.svg"
-                alt="DeviantArt"
-                className="mr-2 h-5 w-5"
-              />
+              <img src="/deviantart.svg" alt="DeviantArt" className="mr-2 h-5 w-5" />
               Continue with DeviantArt
             </Button>
           </div>

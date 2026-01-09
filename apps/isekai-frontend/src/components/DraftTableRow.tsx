@@ -15,31 +15,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileImage, Send, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import {
-  TagTemplateSelector,
-  DescriptionTemplateSelector,
-} from "@/components/TemplateSelector";
-import { GallerySelector } from "@/components/GallerySelector";
-import { deviations } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
-import type { Deviation } from "@isekai/shared";
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileImage, Send, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
+import { GallerySelector } from '@/components/GallerySelector';
+import { deviations } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import type { Deviation } from '@isekai/shared';
 
 interface DraftTableRowProps {
   draft: Deviation;
@@ -47,22 +40,14 @@ interface DraftTableRowProps {
   onSelect: () => void;
 }
 
-export function DraftTableRow({
-  draft,
-  isSelected,
-  onSelect,
-}: DraftTableRowProps) {
+export function DraftTableRow({ draft, isSelected, onSelect }: DraftTableRowProps) {
   const queryClient = useQueryClient();
   const titleRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tags, setTags] = useState<string[]>(draft.tags || []);
-  const [description, setDescription] = useState(draft.description || "");
-  const [galleryIds, setGalleryIds] = useState<string[]>(
-    draft.galleryIds || []
-  );
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    undefined
-  );
+  const [description, setDescription] = useState(draft.description || '');
+  const [galleryIds, setGalleryIds] = useState<string[]>(draft.galleryIds || []);
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -70,34 +55,33 @@ export function DraftTableRow({
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Deviation>) => deviations.update(draft.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
-      toast({ title: "Updated", description: "Draft updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
+      toast({ title: 'Updated', description: 'Draft updated successfully' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update draft",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to update draft',
+        variant: 'destructive',
       });
     },
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: (scheduledAt: string) =>
-      deviations.schedule(draft.id, scheduledAt),
+    mutationFn: (scheduledAt: string) => deviations.schedule(draft.id, scheduledAt),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
-      queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
       toast({
-        title: "Scheduled",
-        description: "Draft scheduled successfully",
+        title: 'Scheduled',
+        description: 'Draft scheduled successfully',
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule draft",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to schedule draft',
+        variant: 'destructive',
       });
     },
   });
@@ -105,7 +89,7 @@ export function DraftTableRow({
   const handleTitleBlur = () => {
     setIsEditingTitle(false);
     if (titleRef.current) {
-      const newTitle = titleRef.current.textContent || "";
+      const newTitle = titleRef.current.textContent || '';
       if (newTitle !== draft.title && newTitle.trim()) {
         updateMutation.mutate({ title: newTitle.trim() });
       }
@@ -113,11 +97,11 @@ export function DraftTableRow({
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       titleRef.current?.blur();
     }
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       if (titleRef.current) {
         titleRef.current.textContent = draft.title;
       }
@@ -174,29 +158,27 @@ export function DraftTableRow({
   // Sync local state with draft prop changes
   useEffect(() => {
     setTags(draft.tags || []);
-    setDescription(draft.description || "");
+    setDescription(draft.description || '');
     setGalleryIds(draft.galleryIds || []);
-    setScheduledDate(
-      draft.scheduledAt ? new Date(draft.scheduledAt) : undefined
-    );
+    setScheduledDate(draft.scheduledAt ? new Date(draft.scheduledAt) : undefined);
   }, [draft.tags, draft.description, draft.galleryIds, draft.scheduledAt]);
 
   // Handle ESC key to close lightbox and prevent body scroll
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
+      if (e.key === 'Escape' && lightboxOpen) {
         setLightboxOpen(false);
       }
     };
 
     if (lightboxOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [lightboxOpen]);
 
@@ -257,7 +239,7 @@ export function DraftTableRow({
           onBlur={handleTitleBlur}
           onKeyDown={handleTitleKeyDown}
           className={`font-medium cursor-text px-2 py-1 rounded text-sm truncate ${
-            isEditingTitle ? "bg-muted ring-2 ring-ring whitespace-normal" : "hover:bg-muted/50"
+            isEditingTitle ? 'bg-muted ring-2 ring-ring whitespace-normal' : 'hover:bg-muted/50'
           }`}
         >
           {draft.title}
@@ -269,18 +251,14 @@ export function DraftTableRow({
         <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
           <PopoverTrigger asChild>
             <button className="text-left text-xs text-muted-foreground transition-colors truncate block w-full">
-              {tags.length > 0
-                ? `${tags.length} tag${tags.length > 1 ? "s" : ""}`
-                : "—"}
+              {tags.length > 0 ? `${tags.length} tag${tags.length > 1 ? 's' : ''}` : '—'}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-80" align="start">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Tags</Label>
-                <TagTemplateSelector
-                  onSelect={(templateTags) => setTags(templateTags)}
-                />
+                <TagTemplateSelector onSelect={(templateTags) => setTags(templateTags)} />
               </div>
               <div className="flex flex-wrap gap-1">
                 {tags.map((tag, idx) => (
@@ -298,10 +276,10 @@ export function DraftTableRow({
               <Input
                 placeholder="Add tag and press Enter..."
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     addTag(e.currentTarget.value);
-                    e.currentTarget.value = "";
+                    e.currentTarget.value = '';
                   }
                 }}
               />
@@ -310,11 +288,7 @@ export function DraftTableRow({
                   Clear Tags
                 </Button>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTagsOpen(false)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setTagsOpen(false)}>
                     Cancel
                   </Button>
                   <Button size="sm" onClick={handleTagsApply}>
@@ -332,16 +306,14 @@ export function DraftTableRow({
         <Popover open={descOpen} onOpenChange={setDescOpen}>
           <PopoverTrigger asChild>
             <button className="text-left text-xs text-muted-foreground transition-colors truncate block w-full">
-              {description ? "Has desc" : "—"}
+              {description ? 'Has desc' : '—'}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-96" align="start">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Description</Label>
-                <DescriptionTemplateSelector
-                  onSelect={(text) => setDescription(text)}
-                />
+                <DescriptionTemplateSelector onSelect={(text) => setDescription(text)} />
               </div>
               <Textarea
                 value={description}
@@ -350,11 +322,7 @@ export function DraftTableRow({
                 rows={6}
               />
               <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDescOpen(false)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setDescOpen(false)}>
                   Cancel
                 </Button>
                 <Button size="sm" onClick={handleDescriptionApply}>
@@ -377,8 +345,8 @@ export function DraftTableRow({
           triggerButton={
             <button className="text-left text-xs text-muted-foreground transition-colors truncate block w-full">
               {galleryIds.length > 0
-                ? `${galleryIds.length} folder${galleryIds.length > 1 ? "s" : ""}`
-                : "—"}
+                ? `${galleryIds.length} folder${galleryIds.length > 1 ? 's' : ''}`
+                : '—'}
             </button>
           }
         />
@@ -390,13 +358,13 @@ export function DraftTableRow({
           <PopoverTrigger asChild>
             <button className="text-left text-xs text-muted-foreground transition-colors truncate block w-full">
               {scheduledDate
-                ? scheduledDate.toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
+                ? scheduledDate.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
                   })
-                : "—"}
+                : '—'}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-3" align="start">

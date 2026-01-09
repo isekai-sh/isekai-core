@@ -17,7 +17,11 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AppError, errorHandler } from './error.js';
-import { createMockRequest, createMockResponse, createMockNext } from '../test-helpers/express-mock.js';
+import {
+  createMockRequest,
+  createMockResponse,
+  createMockNext,
+} from '../test-helpers/express-mock.js';
 
 describe('AppError', () => {
   it('should create an AppError with status code and message', () => {

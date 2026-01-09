@@ -11,6 +11,7 @@
 Isekai Core is a DeviantArt automation platform built for digital artists. The decision was made to open-source the project.
 
 **Key Questions:**
+
 1. Which license should we use?
 2. Should we allow commercial usage?
 3. How do we prevent proprietary forks?
@@ -23,6 +24,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **We will release Isekai Core under the GNU Affero General Public License v3.0 (AGPL-3.0).**
 
 **Key Requirements:**
+
 - All source code modifications must be disclosed
 - Derivative works must also be AGPL-3.0
 - Network use triggers copyleft (SaaS loophole closed)
@@ -40,6 +42,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Solution:** AGPL requires derivative works to remain open source.
 
 **Example:**
+
 - Company X deploys Isekai Core as a SaaS
 - Company X adds proprietary features
 - AGPL requires Company X to release modifications
@@ -52,12 +55,14 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Problem:** GPL v3 only triggers on distribution (not network use).
 
 **Example (GPL v3):**
+
 - Company deploys modified Isekai Core as SaaS
 - Users access via web (no distribution)
 - GPL doesn't require source disclosure
 - Modifications remain proprietary
 
 **Solution (AGPL):**
+
 - Network use (SaaS) triggers copyleft
 - Company must disclose source to SaaS users
 - Modifications must be AGPL
@@ -71,6 +76,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Solution:** AGPL allows commercial use with disclosure.
 
 **Use Cases:**
+
 - **Agencies** can use Isekai Core for client work
 - **SaaS providers** can offer Isekai Core (if they disclose source)
 - **Freelancers** can charge for customizations
@@ -84,6 +90,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Solution:** AGPL ensures contributions benefit everyone.
 
 **Flow:**
+
 1. Developer A adds feature X
 2. Developer A releases under AGPL
 3. Community benefits from feature X
@@ -100,6 +107,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Solution:** AGPL ensures all forks are auditable.
 
 **Example:**
+
 - Someone deploys malicious fork
 - Source code available for inspection
 - Community identifies malware
@@ -167,11 +175,13 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ### Alternative 1: MIT License
 
 **Pros:**
+
 - Simplest license
 - Maximum adoption
 - No copyleft restrictions
 
 **Cons:**
+
 - Allows proprietary forks
 - No protection against closed-source SaaS
 - Company could build paid product without contributing back
@@ -183,11 +193,13 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ### Alternative 2: GPL v3 License
 
 **Pros:**
+
 - Strong copyleft
 - Well-understood
 - Large ecosystem
 
 **Cons:**
+
 - **SaaS loophole** - Network use doesn't trigger copyleft
 - Company could deploy modified SaaS without disclosure
 - Doesn't protect against most common use case
@@ -199,11 +211,13 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ### Alternative 3: Apache 2.0 License
 
 **Pros:**
+
 - Business-friendly
 - Patent grant
 - Widely adopted
 
 **Cons:**
+
 - Permissive (allows proprietary forks)
 - No copyleft protection
 - Company could build closed-source SaaS
@@ -215,11 +229,13 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ### Alternative 4: Business Source License (BSL)
 
 **Pros:**
+
 - Delays commercial competition (4 years)
 - Converts to GPL after delay
 - Used by HashiCorp, CockroachDB
 
 **Cons:**
+
 - Not truly open source (OSI-approved)
 - Complex terms
 - Confusing for users
@@ -233,10 +249,12 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 **Approach:** AGPL for open source, paid license for closed-source use.
 
 **Pros:**
+
 - Revenue stream
 - Balances openness and business
 
 **Cons:**
+
 - Requires copyright assignment
 - Complex to manage
 - May deter contributions
@@ -289,6 +307,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ## Dependency Audit
 
 **Compatible Licenses:**
+
 - MIT ✅
 - BSD 3-Clause ✅
 - Apache 2.0 ⚠️ (FSF recommends avoiding, but technically compatible)
@@ -296,6 +315,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 - CC0 ✅
 
 **Incompatible Licenses:**
+
 - Proprietary ❌
 - GPL v2 ❌ (without "or later" clause)
 - CC BY-NC ❌ (non-commercial)
@@ -307,11 +327,13 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 ## Contribution Policy
 
 **No CLA Required:**
+
 - Contributors retain copyright
 - Contributions automatically AGPL-3.0
 - No copyright assignment
 
 **Pull Request Checklist:**
+
 - [ ] License header included in new files
 - [ ] AGPL-3.0 compatible dependencies
 - [ ] No proprietary code included
@@ -328,6 +350,7 @@ Isekai Core is a DeviantArt automation platform built for digital artists. The d
 Isekai Core is licensed under AGPL-3.0.
 
 **What this means for you:**
+
 - ✅ Use for personal projects (free)
 - ✅ Use for commercial projects (free)
 - ✅ Modify and distribute (must share changes)
@@ -351,12 +374,14 @@ proprietary forks and ensures all improvements benefit the community.
 ## Success Metrics
 
 **Target Metrics:**
+
 - 100% of files include license header
 - Zero license violations detected
 - Clear license explanation in README
 - Community understands AGPL terms
 
 **Actual Results (v0.1.0-alpha.5):**
+
 - 95% of files have license header (working toward 100%)
 - Zero license violations
 - README includes clear explanation
@@ -369,6 +394,7 @@ proprietary forks and ensures all improvements benefit the community.
 ### Trademark
 
 **Consider registering "Isekai" trademark** to prevent:
+
 - Misleading forks claiming affiliation
 - Commercial exploitation of brand
 - Confusion in marketplace
@@ -378,6 +404,7 @@ proprietary forks and ensures all improvements benefit the community.
 ### Patents
 
 **AGPL includes implicit patent grant:**
+
 - Contributors grant patent license
 - Protects users from patent trolls
 - Covers software patents

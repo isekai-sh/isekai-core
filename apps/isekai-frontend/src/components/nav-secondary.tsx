@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
-import { Link } from "react-router-dom";
-import { LucideIcon } from "lucide-react";
+import * as React from 'react';
+import { Link } from 'react-router-dom';
+import { LucideIcon } from 'lucide-react';
 
 import {
   SidebarGroup,
@@ -25,7 +25,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export function NavSecondary({
   items,

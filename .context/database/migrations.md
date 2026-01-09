@@ -21,6 +21,7 @@
 **Location:** `packages/shared/prisma/schema.prisma`
 
 **Example Change:**
+
 ```prisma
 model Deviation {
   id     String @id @default(uuid())
@@ -47,12 +48,14 @@ pnpm prisma migrate dev --name add_tags_to_deviation
 ```
 
 **What Happens:**
+
 1. Prisma analyzes schema changes
 2. Generates SQL migration file in `prisma/migrations/`
 3. Applies migration to development database
 4. Regenerates Prisma Client
 
 **Generated File:**
+
 ```
 prisma/migrations/
 └── 20250105123456_add_tags_to_deviation/
@@ -60,6 +63,7 @@ prisma/migrations/
 ```
 
 **Example SQL:**
+
 ```sql
 -- AlterTable
 ALTER TABLE "deviations" ADD COLUMN "tags" TEXT[] DEFAULT ARRAY[]::TEXT[];
@@ -70,11 +74,12 @@ ALTER TABLE "deviations" ADD COLUMN "tags" TEXT[] DEFAULT ARRAY[]::TEXT[];
 **CRITICAL:** Always review the migration SQL before committing!
 
 **Check For:**
+
 - ✅ Correct column types
 - ✅ Default values provided for NOT NULL columns
 - ✅ Indexes added for frequently queried columns
-- ⚠️  Data loss (column drops, type changes)
-- ⚠️  Breaking changes affecting existing code
+- ⚠️ Data loss (column drops, type changes)
+- ⚠️ Breaking changes affecting existing code
 
 ### 4. Test Migration
 
@@ -103,23 +108,25 @@ All apps import `@isekai/shared`, which contains generated Prisma Client types. 
 ### 6. Update Application Code
 
 **TypeScript will catch breaking changes:**
+
 ```typescript
 // If you added non-nullable field without default
 const deviation = await prisma.deviation.create({
   data: {
-    title: "My Art",
+    title: 'My Art',
     // ERROR: tags is required!
-  }
+  },
 });
 ```
 
 **Fix:**
+
 ```typescript
 const deviation = await prisma.deviation.create({
   data: {
-    title: "My Art",
+    title: 'My Art',
     tags: [], // Provide default
-  }
+  },
 });
 ```
 
@@ -132,6 +139,7 @@ git commit -m "feat(db): add tags array to Deviation model"
 ```
 
 **Always commit:**
+
 - Schema file
 - Migration SQL files
 - Updated lockfile (if Prisma version changed)
@@ -143,6 +151,7 @@ git commit -m "feat(db): add tags array to Deviation model"
 ### Automatic Migration (Recommended)
 
 **Docker Compose:**
+
 ```yaml
 services:
   backend:
@@ -153,6 +162,7 @@ services:
 ```
 
 **What `migrate deploy` does:**
+
 1. Checks which migrations are applied (in `_prisma_migrations` table)
 2. Applies any pending migrations
 3. Does NOT prompt for input (non-interactive)
@@ -173,12 +183,15 @@ DATABASE_URL="postgresql://..." pnpm prisma migrate deploy
 **Prisma Migrate does NOT support rollback!**
 
 **Workaround:**
+
 1. **Create reversal migration:**
+
    ```bash
    pnpm prisma migrate dev --name revert_add_tags
    ```
 
 2. **Write reverse SQL manually:**
+
    ```sql
    -- Migration: revert_add_tags
    ALTER TABLE "deviations" DROP COLUMN "tags";
@@ -190,6 +203,7 @@ DATABASE_URL="postgresql://..." pnpm prisma migrate deploy
    ```
 
 **Better Approach:**
+
 - Test thoroughly before deploying
 - Use feature flags for schema-dependent features
 - Deploy migrations separately from code
@@ -208,6 +222,7 @@ model Deviation {
 ```
 
 **Generated SQL:**
+
 ```sql
 ALTER TABLE "deviations" ADD COLUMN "new_field" TEXT;
 ```
@@ -222,6 +237,7 @@ model Deviation {
 ```
 
 **Generated SQL:**
+
 ```sql
 ALTER TABLE "deviations" ADD COLUMN "new_field" TEXT NOT NULL DEFAULT 'default value';
 ```
@@ -239,16 +255,19 @@ model Deviation {
 Two-phase migration:
 
 **Phase 1:** Add nullable
+
 ```prisma
 newField String?
 ```
 
 **Phase 2:** Backfill data
+
 ```sql
 UPDATE "deviations" SET "new_field" = 'computed value' WHERE "new_field" IS NULL;
 ```
 
 **Phase 3:** Make non-nullable
+
 ```prisma
 newField String
 ```
@@ -266,16 +285,19 @@ model Deviation {
 ```
 
 **Then create migration:**
+
 ```bash
 pnpm prisma migrate dev --name rename_old_name_to_new_name
 ```
 
 **Prisma will generate:**
+
 ```sql
 -- No SQL needed! Just mapping changes
 ```
 
 **Manual rename (if needed):**
+
 ```sql
 ALTER TABLE "deviations" RENAME COLUMN "old_name" TO "new_name";
 ```
@@ -290,11 +312,12 @@ model Deviation {
 ```
 
 **Generated SQL:**
+
 ```sql
 ALTER TABLE "deviations" DROP COLUMN "old_field";
 ```
 
-**⚠️  WARNING:** Data lost permanently!
+**⚠️ WARNING:** Data lost permanently!
 
 ### Adding Index
 
@@ -308,6 +331,7 @@ model Deviation {
 ```
 
 **Generated SQL:**
+
 ```sql
 CREATE INDEX "deviations_user_id_status_idx" ON "deviations"("user_id", "status");
 ```
@@ -324,13 +348,15 @@ model Deviation {
 ```
 
 **Generated SQL:**
+
 ```sql
 CREATE UNIQUE INDEX "deviations_deviation_id_key" ON "deviations"("deviation_id");
 ```
 
-**⚠️  WARNING:** Will fail if duplicate values exist!
+**⚠️ WARNING:** Will fail if duplicate values exist!
 
 **Safe Approach:**
+
 ```sql
 -- Check for duplicates first
 SELECT "deviation_id", COUNT(*) FROM "deviations"
@@ -356,6 +382,7 @@ model Automation {
 ```
 
 **Generated SQL:**
+
 ```sql
 ALTER TABLE "deviations" ADD COLUMN "automation_id" TEXT;
 
@@ -367,6 +394,7 @@ FOREIGN KEY ("automation_id") REFERENCES "automations"("id") ON DELETE SET NULL;
 ```
 
 **Cascade Behaviors:**
+
 - `onDelete: Cascade`: Delete child when parent deleted
 - `onDelete: SetNull`: Set FK to null when parent deleted
 - `onDelete: Restrict`: Prevent parent deletion if children exist
@@ -426,11 +454,13 @@ pnpm prisma validate
 ## Environment Variables
 
 **Required for Migrations:**
+
 ```bash
 DATABASE_URL="postgresql://user:password@host:port/database"
 ```
 
 **Optional:**
+
 ```bash
 # Custom migrations directory
 PRISMA_MIGRATION_DIR="./custom_migrations"
@@ -448,6 +478,7 @@ PRISMA_MIGRATE_SKIP_SEED=true
 **Problem:** Migration partially applied, now stuck.
 
 **Solution:**
+
 ```bash
 # Mark as rolled back
 pnpm prisma migrate resolve --rolled-back <migration_name>
@@ -461,6 +492,7 @@ pnpm prisma migrate resolve --applied <migration_name>
 **Problem:** Database schema doesn't match Prisma schema.
 
 **Solution:**
+
 ```bash
 # Generate migration to sync
 pnpm prisma migrate dev
@@ -474,6 +506,7 @@ pnpm prisma migrate reset
 **Problem:** Two developers created migrations with same timestamp.
 
 **Solution:**
+
 1. Pull latest migrations
 2. Delete your local migration
 3. Regenerate: `pnpm prisma migrate dev`
@@ -484,6 +517,7 @@ pnpm prisma migrate reset
 **Problem:** TypeScript can't find `@prisma/client` types.
 
 **Solution:**
+
 ```bash
 # Regenerate client
 cd packages/shared
@@ -499,6 +533,7 @@ pnpm --filter @isekai/shared build
 **Problem:** Adding index on large table blocks for minutes.
 
 **Solution - Concurrent Index:**
+
 ```sql
 -- Instead of
 CREATE INDEX "idx_name" ON "table"("column");
@@ -514,14 +549,17 @@ CREATE INDEX CONCURRENTLY "idx_name" ON "table"("column");
 ## Best Practices
 
 ### 1. Small, Incremental Migrations
+
 ✅ Good: One logical change per migration
 ❌ Bad: 10 unrelated changes in one migration
 
 ### 2. Descriptive Names
+
 ✅ Good: `add_execution_lock_to_deviation`
 ❌ Bad: `update_schema`, `fix`
 
 ### 3. Test on Staging First
+
 ```bash
 # Staging database
 DATABASE_URL="postgresql://staging..." pnpm prisma migrate deploy
@@ -534,9 +572,11 @@ DATABASE_URL="postgresql://prod..." pnpm prisma migrate deploy
 ```
 
 ### 4. Never Edit Applied Migrations
+
 Once committed and applied, migrations are immutable. Create new migration to change.
 
 ### 5. Backup Before Major Changes
+
 ```bash
 # PostgreSQL backup
 pg_dump database_name > backup_2025-01-05.sql
@@ -549,13 +589,16 @@ psql database_name < backup_2025-01-05.sql
 ```
 
 ### 6. Use Transactions (Default)
+
 Prisma wraps migrations in transactions automatically. If migration fails, everything rolls back.
 
 **Exception:** Cannot use transactions for:
+
 - `CREATE INDEX CONCURRENTLY`
 - Some ALTER TYPE operations
 
 Mark as non-transactional:
+
 ```sql
 -- Migration: add_concurrent_index
 -- PRISMA_MIGRATE: non-transactional
@@ -564,6 +607,7 @@ CREATE INDEX CONCURRENTLY ...
 ```
 
 ### 7. Document Complex Migrations
+
 ```sql
 -- Migration: refactor_automation_rules
 --
@@ -581,6 +625,7 @@ ALTER TABLE ...
 ## CI/CD Integration
 
 **GitHub Actions Example:**
+
 ```yaml
 # .github/workflows/ci.yml
 jobs:
@@ -603,6 +648,7 @@ jobs:
 ## Prisma Studio
 
 **GUI for browsing database:**
+
 ```bash
 DATABASE_URL="postgresql://..." pnpm --filter @isekai/shared prisma:studio
 ```
@@ -610,12 +656,14 @@ DATABASE_URL="postgresql://..." pnpm --filter @isekai/shared prisma:studio
 Opens on http://localhost:5555
 
 **Features:**
+
 - Browse all tables
 - Edit records (with validation)
 - Run queries
 - View relations
 
 **Use Cases:**
+
 - Debug data issues
 - Test queries
 - Quick data edits
@@ -627,6 +675,7 @@ Opens on http://localhost:5555
 **Seed File:** `packages/shared/prisma/seed.ts` (if exists)
 
 **Run Seed:**
+
 ```bash
 DATABASE_URL="..." pnpm --filter @isekai/shared prisma:seed your@email.com
 ```

@@ -11,10 +11,12 @@
 **Background Jobs:** Scheduled tasks that run independently from queue workers
 
 **Difference from Queue Workers:**
+
 - **Queue Workers:** Process jobs from BullMQ queue (event-driven)
 - **Background Jobs:** Run on fixed schedule (time-driven)
 
 **Jobs:**
+
 1. Auto-Scheduler (every 5 minutes)
 2. Stuck Job Recovery (every 5 minutes)
 3. Past-Due Recovery (every 1 minute)
@@ -31,6 +33,7 @@
 **See:** `.context/features/automation.md` for complete workflow details
 
 **High-Level Flow:**
+
 ```
 1. Find all enabled automations (with active rules)
 2. For each automation:
@@ -48,6 +51,7 @@
 ```
 
 **Execution Lock Pattern:**
+
 ```typescript
 // Prevent concurrent automation execution
 const lockTimeout = 5 * 60 * 1000; // 5 minutes
@@ -59,13 +63,13 @@ const lockAcquired = await prisma.automation.updateMany({
     OR: [
       { isExecuting: false },
       { lastExecutionLock: null },
-      { lastExecutionLock: { lt: lockCutoff } } // Expired lock
-    ]
+      { lastExecutionLock: { lt: lockCutoff } }, // Expired lock
+    ],
   },
   data: {
     isExecuting: true,
-    lastExecutionLock: new Date()
-  }
+    lastExecutionLock: new Date(),
+  },
 });
 
 if (lockAcquired.count === 0) {
@@ -79,7 +83,7 @@ try {
   // Always release lock
   await prisma.automation.update({
     where: { id: automation.id },
-    data: { isExecuting: false }
+    data: { isExecuting: false },
   });
 }
 ```
@@ -87,6 +91,7 @@ try {
 **Schedule Rule Evaluation:**
 
 ### Fixed Time Rule
+
 ```typescript
 // Rule: Post at 14:00 on Monday, Wednesday, Friday
 {
@@ -107,6 +112,7 @@ const shouldTrigger =
 ```
 
 ### Fixed Interval Rule
+
 ```typescript
 // Rule: Every 4 hours, schedule 2 deviations
 {
@@ -130,6 +136,7 @@ if (minutesSinceLastExecution >= rule.intervalMinutes) {
 ```
 
 ### Daily Quota Rule
+
 ```typescript
 // Rule: Maximum 5 posts per day
 {
@@ -160,7 +167,7 @@ return Math.max(0, remaining);
 // Random
 const drafts = await prisma.deviation.findMany({
   where: { userId, status: 'draft' },
-  take: count * 2 // Get more, then shuffle
+  take: count * 2, // Get more, then shuffle
 });
 const selected = shuffleArray(drafts).slice(0, count);
 
@@ -168,18 +175,19 @@ const selected = shuffleArray(drafts).slice(0, count);
 const drafts = await prisma.deviation.findMany({
   where: { userId, status: 'draft' },
   orderBy: { createdAt: 'asc' },
-  take: count
+  take: count,
 });
 
 // LIFO (Last In First Out)
 const drafts = await prisma.deviation.findMany({
   where: { userId, status: 'draft' },
   orderBy: { createdAt: 'desc' },
-  take: count
+  take: count,
 });
 ```
 
 **Apply Default Values:**
+
 ```typescript
 for (const deviation of selectedDrafts) {
   for (const defaultValue of automation.defaultValues) {
@@ -196,19 +204,16 @@ for (const deviation of selectedDrafts) {
 ```
 
 **Calculate Schedule Time with Jitter:**
+
 ```typescript
 // Base schedule time (now or future based on rule)
 const scheduleTime = calculateScheduleTime(rule, user.timezone);
 
 // Add jitter (random offset)
 const jitterRange = automation.jitterMaxSeconds - automation.jitterMinSeconds;
-const jitterSeconds =
-  automation.jitterMinSeconds +
-  Math.floor(Math.random() * jitterRange);
+const jitterSeconds = automation.jitterMinSeconds + Math.floor(Math.random() * jitterRange);
 
-const actualPublishAt = new Date(
-  scheduleTime.getTime() + jitterSeconds * 1000
-);
+const actualPublishAt = new Date(scheduleTime.getTime() + jitterSeconds * 1000);
 
 await prisma.deviation.update({
   where: { id: deviation.id },
@@ -217,12 +222,13 @@ await prisma.deviation.update({
     scheduledAt: scheduleTime,
     jitterSeconds,
     actualPublishAt,
-    automationId: automation.id
-  }
+    automationId: automation.id,
+  },
 });
 ```
 
 **Error Handling:**
+
 ```typescript
 try {
   const scheduledCount = await executeAutomation(automation);
@@ -231,8 +237,8 @@ try {
     data: {
       automationId: automation.id,
       scheduledCount,
-      triggeredByRuleType: rule.type
-    }
+      triggeredByRuleType: rule.type,
+    },
   });
 } catch (error) {
   await prisma.automationExecutionLog.create({
@@ -240,8 +246,8 @@ try {
       automationId: automation.id,
       scheduledCount: 0,
       errorMessage: error.message,
-      triggeredByRuleType: rule.type
-    }
+      triggeredByRuleType: rule.type,
+    },
   });
   throw error;
 }
@@ -262,6 +268,7 @@ When worker crashes mid-job, BullMQ job stays in "active" state forever.
 Detect stalled jobs and reset them for retry.
 
 **Implementation:**
+
 ```typescript
 const JOB_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 const MAX_STALLED_COUNT = 2; // BullMQ setting
@@ -293,12 +300,12 @@ async function recoverStuckJobs() {
         await prisma.deviation.updateMany({
           where: {
             id: deviationId,
-            executionLockId: { not: null }
+            executionLockId: { not: null },
           },
           data: {
             executionLockId: null,
-            executionLockedAt: null
-          }
+            executionLockedAt: null,
+          },
         });
 
         // Move job to failed (BullMQ will retry if attempts remain)
@@ -327,6 +334,7 @@ async function recoverStuckJobs() {
 Publishing typically takes 5-15 seconds, but slow API responses or retries can extend to several minutes. 10 minutes is conservative safety margin.
 
 **BullMQ Stall Count:**
+
 ```typescript
 // Queue configuration
 const queue = new Queue('deviation-publisher', {
@@ -335,16 +343,16 @@ const queue = new Queue('deviation-publisher', {
     removeOnComplete: 100,
     removeOnFail: 100,
     attempts: 7,
-    backoff: { type: 'exponential', delay: 5000 }
-  }
+    backoff: { type: 'exponential', delay: 5000 },
+  },
 });
 
 const worker = new Worker('deviation-publisher', processor, {
   connection: redis,
   settings: {
     stalledInterval: 60000, // Check every minute
-    maxStalledCount: 2 // Move to failed after 2 stalls
-  }
+    maxStalledCount: 2, // Move to failed after 2 stalls
+  },
 });
 ```
 
@@ -362,6 +370,7 @@ Track recovery frequency - high recovery rate indicates worker stability issues.
 **Purpose:** Queue deviations whose `actualPublishAt` has passed
 
 **Problem:**
+
 - Worker downtime during scheduled time
 - Queue backlog causes delay
 - Clock skew between servers
@@ -371,6 +380,7 @@ Track recovery frequency - high recovery rate indicates worker stability issues.
 Scan for scheduled deviations past their time, queue immediately.
 
 **Implementation:**
+
 ```typescript
 const BATCH_SIZE = 50; // Process 50 at a time
 
@@ -385,10 +395,10 @@ async function recoverPastDue() {
       where: {
         status: 'scheduled',
         actualPublishAt: { lte: now },
-        executionLockId: null // Not currently being processed
+        executionLockId: null, // Not currently being processed
       },
       take: BATCH_SIZE,
-      orderBy: { actualPublishAt: 'asc' } // Oldest first
+      orderBy: { actualPublishAt: 'asc' }, // Oldest first
     });
 
     if (pastDue.length === 0) {
@@ -400,17 +410,23 @@ async function recoverPastDue() {
 
     for (const deviation of pastDue) {
       const delay = Date.now() - deviation.actualPublishAt.getTime();
-      console.log(`[Past-Due Recovery] Queueing ${deviation.id} (${Math.floor(delay / 1000)}s late)`);
+      console.log(
+        `[Past-Due Recovery] Queueing ${deviation.id} (${Math.floor(delay / 1000)}s late)`
+      );
 
       try {
         // Add to queue with high priority
-        await deviationQueue.add('publish', {
-          deviationId: deviation.id
-        }, {
-          priority: 1, // High priority (default is 0)
-          attempts: 7,
-          backoff: { type: 'exponential', delay: 5000 }
-        });
+        await deviationQueue.add(
+          'publish',
+          {
+            deviationId: deviation.id,
+          },
+          {
+            priority: 1, // High priority (default is 0)
+            attempts: 7,
+            backoff: { type: 'exponential', delay: 5000 },
+          }
+        );
       } catch (error) {
         console.error(`[Past-Due Recovery] Failed to queue ${deviation.id}:`, error);
       }
@@ -442,6 +458,7 @@ Limit to 50 to prevent overwhelming queue if large backlog exists.
 
 **Problem:**
 Execution locks not released due to:
+
 - Worker crash before lock release
 - Unexpected errors in try/finally block
 - Network partition during update
@@ -450,6 +467,7 @@ Execution locks not released due to:
 Periodically scan for old locks and clear them.
 
 **Implementation:**
+
 ```typescript
 const LOCK_TIMEOUT = 60 * 60 * 1000; // 1 hour
 
@@ -463,12 +481,12 @@ async function cleanupStaleLocks() {
     const result = await prisma.deviation.updateMany({
       where: {
         executionLockId: { not: null },
-        executionLockedAt: { lte: oneHourAgo }
+        executionLockedAt: { lte: oneHourAgo },
       },
       data: {
         executionLockId: null,
-        executionLockedAt: null
-      }
+        executionLockedAt: null,
+      },
     });
 
     if (result.count > 0) {
@@ -481,11 +499,11 @@ async function cleanupStaleLocks() {
     const automationResult = await prisma.automation.updateMany({
       where: {
         isExecuting: true,
-        lastExecutionLock: { lte: oneHourAgo }
+        lastExecutionLock: { lte: oneHourAgo },
       },
       data: {
-        isExecuting: false
-      }
+        isExecuting: false,
+      },
     });
 
     if (automationResult.count > 0) {
@@ -498,6 +516,7 @@ async function cleanupStaleLocks() {
 ```
 
 **Why 1-Hour Timeout:**
+
 - Publishing typically takes 5-15 seconds
 - With retries and rate limiting, could take several minutes
 - 1 hour is very conservative - anything longer is definitely stale
@@ -520,26 +539,33 @@ Query uses index on `executionLockId` + `executionLockedAt` for fast lookups.
 Uses BullMQ queue instead of direct cron execution.
 
 **Why Queue-Based:**
+
 - Retry capability if refresh fails
 - Better error handling
 - Distributed processing across workers
 
 **Schedule Setup:**
+
 ```typescript
 // In publisher startup
 async function scheduleTokenMaintenance() {
   const queue = new Queue('token-maintenance', { connection: redis });
 
   // Add repeatable job (every 6 hours)
-  await queue.add('refresh-tokens', {}, {
-    repeat: {
-      pattern: '0 */6 * * *' // At minute 0 of every 6th hour
+  await queue.add(
+    'refresh-tokens',
+    {},
+    {
+      repeat: {
+        pattern: '0 */6 * * *', // At minute 0 of every 6th hour
+      },
     }
-  });
+  );
 }
 ```
 
 **Processor:**
+
 ```typescript
 async function processTokenMaintenance() {
   console.log('[Token Maintenance] Checking tokens...');
@@ -549,8 +575,8 @@ async function processTokenMaintenance() {
 
   const users = await prisma.user.findMany({
     where: {
-      refreshTokenExpiresAt: { lte: sevenDaysFromNow }
-    }
+      refreshTokenExpiresAt: { lte: sevenDaysFromNow },
+    },
   });
 
   console.log(`[Token Maintenance] Found ${users.length} users needing refresh`);
@@ -573,8 +599,8 @@ async function refreshUserToken(user: User) {
       grant_type: 'refresh_token',
       client_id: DEVIANTART_CLIENT_ID,
       client_secret: DEVIANTART_CLIENT_SECRET,
-      refresh_token: decrypt(user.refreshToken, ENCRYPTION_KEY)
-    })
+      refresh_token: decrypt(user.refreshToken, ENCRYPTION_KEY),
+    }),
   });
 
   const tokens = await response.json();
@@ -585,8 +611,8 @@ async function refreshUserToken(user: User) {
     data: {
       accessToken: encrypt(tokens.access_token, ENCRYPTION_KEY),
       tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
-      lastRefreshTokenRefresh: new Date()
-    }
+      lastRefreshTokenRefresh: new Date(),
+    },
   });
 
   // Send email if within 7 days
@@ -597,12 +623,12 @@ async function refreshUserToken(user: User) {
     await sendEmail({
       to: user.email,
       subject: 'DeviantArt Token Expiring Soon',
-      body: `Your refresh token expires in ${Math.floor(daysUntilExpiry)} days.`
+      body: `Your refresh token expires in ${Math.floor(daysUntilExpiry)} days.`,
     });
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshTokenWarningEmailSent: true }
+      data: { refreshTokenWarningEmailSent: true },
     });
   }
 }
@@ -613,6 +639,7 @@ async function refreshUserToken(user: User) {
 ## Job Scheduling with node-cron
 
 **Setup (apps/isekai-publisher/src/index.ts):**
+
 ```typescript
 import cron from 'node-cron';
 import { startAutoScheduler } from './jobs/auto-scheduler.js';
@@ -624,16 +651,17 @@ async function startPublisher() {
   // ... Redis connection, health checks ...
 
   // Start cron jobs
-  startAutoScheduler();       // Every 5 minutes
-  startStuckJobRecovery();    // Every 5 minutes
-  startPastDueRecovery();     // Every 1 minute
-  startLockCleanup();         // Every 30 minutes
+  startAutoScheduler(); // Every 5 minutes
+  startStuckJobRecovery(); // Every 5 minutes
+  startPastDueRecovery(); // Every 1 minute
+  startLockCleanup(); // Every 30 minutes
 
   console.log('Publisher ready');
 }
 ```
 
 **Cron Pattern Syntax:**
+
 ```
 ┌───────────── minute (0 - 59)
 │ ┌───────────── hour (0 - 23)
@@ -645,13 +673,14 @@ async function startPublisher() {
 ```
 
 **Examples:**
+
 ```typescript
-'*/1 * * * *'    // Every 1 minute
-'*/5 * * * *'    // Every 5 minutes
-'*/30 * * * *'   // Every 30 minutes
-'0 */6 * * *'    // Every 6 hours (at minute 0)
-'0 0 * * *'      // Daily at midnight
-'0 0 * * 0'      // Weekly on Sunday at midnight
+'*/1 * * * *'; // Every 1 minute
+'*/5 * * * *'; // Every 5 minutes
+'*/30 * * * *'; // Every 30 minutes
+'0 */6 * * *'; // Every 6 hours (at minute 0)
+'0 0 * * *'; // Daily at midnight
+'0 0 * * 0'; // Weekly on Sunday at midnight
 ```
 
 ---
@@ -659,19 +688,23 @@ async function startPublisher() {
 ## Monitoring & Alerting
 
 **Log Patterns:**
+
 ```typescript
-console.log(JSON.stringify({
-  level: 'info',
-  job: 'auto-scheduler',
-  message: 'Scheduled 5 deviations',
-  automationId: automation.id,
-  userId: automation.userId,
-  scheduledCount: 5,
-  timestamp: new Date().toISOString()
-}));
+console.log(
+  JSON.stringify({
+    level: 'info',
+    job: 'auto-scheduler',
+    message: 'Scheduled 5 deviations',
+    automationId: automation.id,
+    userId: automation.userId,
+    scheduledCount: 5,
+    timestamp: new Date().toISOString(),
+  })
+);
 ```
 
 **Metrics to Track:**
+
 - Auto-scheduler: Executions per hour, deviations scheduled
 - Stuck job recovery: Recovery count (should be near 0)
 - Past-due recovery: Average delay, recovery count
@@ -679,6 +712,7 @@ console.log(JSON.stringify({
 - Token maintenance: Refresh success rate
 
 **Alerts:**
+
 - Stuck job recovery >10/hour → Worker stability issue
 - Past-due recovery >100 → Queue backlog
 - Lock cleanup >50 → Execution lock bugs

@@ -9,6 +9,7 @@ Thank you for your interest in contributing to Isekai! This document provides ba
 **For comprehensive contribution guidelines, see [`.context/guidelines.md`](.context/guidelines.md)**
 
 Documentation includes:
+
 - **[Pull Request Process](.context/guidelines.md)** - Complete PR workflow and checklist
 - **[Code Review Checklist](.context/guidelines.md)** - What reviewers look for
 - **[Development Workflow](.context/workflows.md)** - Local setup and testing

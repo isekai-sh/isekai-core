@@ -11,6 +11,7 @@
 Isekai Core (v0.1.0-alpha.1) originally used **Drizzle ORM** for database access.
 
 **Problems Encountered:**
+
 1. **Type Safety Issues** - Drizzle's type inference failed in complex queries
 2. **Relationship Handling** - Manual joins required for nested relations
 3. **Schema Synchronization** - No automatic migration generation
@@ -26,6 +27,7 @@ Isekai Core (v0.1.0-alpha.1) originally used **Drizzle ORM** for database access
 **We will migrate from Drizzle ORM to Prisma ORM** starting in v0.1.0-alpha.2.
 
 **Migration Scope:**
+
 - Replace Drizzle schema (`schema.ts`) with Prisma schema (`schema.prisma`)
 - Rewrite all queries to use Prisma Client
 - Update tests to use Prisma
@@ -99,12 +101,14 @@ const deviations = await prisma.deviation.findMany({
 **Problem:** Drizzle requires manual migration SQL.
 
 **Workflow (Drizzle):**
+
 1. Update schema.ts
 2. Manually write SQL migration
 3. Run migration
 4. Hope it matches schema
 
 **Workflow (Prisma):**
+
 1. Update schema.prisma
 2. Run `prisma migrate dev` (auto-generates migration)
 3. Review generated SQL
@@ -121,9 +125,7 @@ const deviations = await prisma.deviation.findMany({
 ```typescript
 // Drizzle: Update with relations
 await db.transaction(async (tx) => {
-  await tx.update(deviations)
-    .set({ status: "published" })
-    .where(eq(deviations.id, id));
+  await tx.update(deviations).set({ status: 'published' }).where(eq(deviations.id, id));
   await tx.insert(files).values(fileData);
 });
 
@@ -131,7 +133,7 @@ await db.transaction(async (tx) => {
 await prisma.deviation.update({
   where: { id },
   data: {
-    status: "published",
+    status: 'published',
     files: { create: fileData },
   },
 });
@@ -142,11 +144,13 @@ await prisma.deviation.update({
 ### 5. Ecosystem & Tooling
 
 **Drizzle:**
+
 - Small community
 - Limited third-party integrations
 - No official GUI
 
 **Prisma:**
+
 - Large community (100K+ GitHub stars)
 - Integrations with Next.js, NestJS, GraphQL
 - Prisma Studio (GUI for database)
@@ -200,11 +204,13 @@ await prisma.deviation.update({
 ### Alternative 1: Continue with Drizzle
 
 **Pros:**
+
 - No migration effort
 - Smaller bundle size
 - Closer to raw SQL
 
 **Cons:**
+
 - Type safety issues persist
 - Manual migration management
 - Limited ecosystem
@@ -216,11 +222,13 @@ await prisma.deviation.update({
 ### Alternative 2: Raw SQL with TypeScript
 
 **Pros:**
+
 - Full control
 - Maximum performance
 - No ORM overhead
 
 **Cons:**
+
 - No type safety
 - Manual migration management
 - SQL injection risk
@@ -233,10 +241,12 @@ await prisma.deviation.update({
 ### Alternative 3: TypeORM
 
 **Pros:**
+
 - Mature ecosystem
 - Active Record pattern
 
 **Cons:**
+
 - Decorator-based (not idiomatic TypeScript)
 - Slower than Prisma
 - Complex configuration
@@ -275,20 +285,17 @@ npx prisma db push
 **Before (Drizzle):**
 
 ```typescript
-import { db } from "./db";
-import { deviations, files } from "./schema";
-import { eq } from "drizzle-orm";
+import { db } from './db';
+import { deviations, files } from './schema';
+import { eq } from 'drizzle-orm';
 
-const result = await db
-  .select()
-  .from(deviations)
-  .where(eq(deviations.userId, userId));
+const result = await db.select().from(deviations).where(eq(deviations.userId, userId));
 ```
 
 **After (Prisma):**
 
 ```typescript
-import { prisma } from "./db";
+import { prisma } from './db';
 
 const result = await prisma.deviation.findMany({
   where: { userId },
@@ -324,12 +331,14 @@ pnpm test
 ## Migration Results
 
 **Before (v0.1.0-alpha.1 with Drizzle):**
+
 - Schema files: 1 (schema.ts)
 - Lines of query code: ~500
 - Type errors: 12
 - Developer feedback: "Verbose, confusing"
 
 **After (v0.1.0-alpha.2 with Prisma):**
+
 - Schema files: 1 (schema.prisma)
 - Lines of query code: ~350 (30% reduction)
 - Type errors: 0
@@ -340,6 +349,7 @@ pnpm test
 ## Success Metrics
 
 **Target Metrics:**
+
 - Zero TypeScript errors: ✅ Achieved
 - Migration time: < 3 days: ✅ Achieved (2 days)
 - Test coverage maintained: ✅ Achieved (30%)

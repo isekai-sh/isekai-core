@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { CacheStats } from "../lib/cache-stats.js";
-import { CircuitBreaker } from "../lib/circuit-breaker.js";
-import { RedisClientManager } from "../lib/redis-client.js";
-import { RedisCache } from "../lib/redis-cache.js";
+import { Router } from 'express';
+import { CacheStats } from '../lib/cache-stats.js';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
+import { RedisClientManager } from '../lib/redis-client.js';
+import { RedisCache } from '../lib/redis-cache.js';
 
 const router = Router();
 
@@ -27,7 +27,7 @@ const router = Router();
  * GET /cache/stats - Get detailed cache statistics
  * Returns comprehensive cache performance metrics
  */
-router.get("/stats", async (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
     const stats = CacheStats.getDetailedStats();
     const circuitStatuses = CircuitBreaker.getAllStatuses();
@@ -63,8 +63,8 @@ router.get("/stats", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Cache stats error:", error);
-    res.status(500).json({ error: "Failed to fetch cache statistics" });
+    console.error('Cache stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch cache statistics' });
   }
 });
 
@@ -72,17 +72,17 @@ router.get("/stats", async (req, res) => {
  * POST /cache/reset - Reset cache statistics
  * Admin endpoint to reset all cache metrics
  */
-router.post("/reset", (req, res) => {
+router.post('/reset', (req, res) => {
   try {
     CacheStats.reset();
     res.json({
       success: true,
-      message: "Cache statistics reset successfully",
+      message: 'Cache statistics reset successfully',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Cache reset error:", error);
-    res.status(500).json({ error: "Failed to reset cache statistics" });
+    console.error('Cache reset error:', error);
+    res.status(500).json({ error: 'Failed to reset cache statistics' });
   }
 });
 
@@ -93,12 +93,12 @@ router.post("/reset", (req, res) => {
  * Body: { pattern: string }
  * Example: { pattern: "isekai:v1:browse:user:123:*" }
  */
-router.post("/invalidate", async (req, res) => {
+router.post('/invalidate', async (req, res) => {
   try {
     const { pattern } = req.body;
 
-    if (!pattern || typeof pattern !== "string") {
-      return res.status(400).json({ error: "Pattern is required" });
+    if (!pattern || typeof pattern !== 'string') {
+      return res.status(400).json({ error: 'Pattern is required' });
     }
 
     const deletedCount = await RedisCache.invalidate(pattern);
@@ -110,8 +110,8 @@ router.post("/invalidate", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Cache invalidate error:", error);
-    res.status(500).json({ error: "Failed to invalidate cache" });
+    console.error('Cache invalidate error:', error);
+    res.status(500).json({ error: 'Failed to invalidate cache' });
   }
 });
 
@@ -122,12 +122,12 @@ router.post("/invalidate", async (req, res) => {
  * Body: { key: string }
  * Example: { key: "browse:tags" }
  */
-router.post("/circuit-breaker/reset", (req, res) => {
+router.post('/circuit-breaker/reset', (req, res) => {
   try {
     const { key } = req.body;
 
-    if (!key || typeof key !== "string") {
-      return res.status(400).json({ error: "Circuit key is required" });
+    if (!key || typeof key !== 'string') {
+      return res.status(400).json({ error: 'Circuit key is required' });
     }
 
     CircuitBreaker.reset(key);
@@ -138,8 +138,8 @@ router.post("/circuit-breaker/reset", (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Circuit breaker reset error:", error);
-    res.status(500).json({ error: "Failed to reset circuit breaker" });
+    console.error('Circuit breaker reset error:', error);
+    res.status(500).json({ error: 'Failed to reset circuit breaker' });
   }
 });
 
@@ -147,18 +147,18 @@ router.post("/circuit-breaker/reset", (req, res) => {
  * POST /cache/circuit-breaker/reset-all - Reset all circuit breakers
  * Admin endpoint to reset all circuit breakers
  */
-router.post("/circuit-breaker/reset-all", (req, res) => {
+router.post('/circuit-breaker/reset-all', (req, res) => {
   try {
     CircuitBreaker.resetAll();
 
     res.json({
       success: true,
-      message: "All circuit breakers reset successfully",
+      message: 'All circuit breakers reset successfully',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Circuit breaker reset all error:", error);
-    res.status(500).json({ error: "Failed to reset circuit breakers" });
+    console.error('Circuit breaker reset all error:', error);
+    res.status(500).json({ error: 'Failed to reset circuit breakers' });
   }
 });
 
@@ -166,7 +166,7 @@ router.post("/circuit-breaker/reset-all", (req, res) => {
  * GET /cache/summary - Log cache summary to console and return
  * Admin endpoint for quick overview
  */
-router.get("/summary", (req, res) => {
+router.get('/summary', (req, res) => {
   try {
     CacheStats.logSummary();
     const stats = CacheStats.getDetailedStats();
@@ -185,8 +185,8 @@ router.get("/summary", (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Cache summary error:", error);
-    res.status(500).json({ error: "Failed to fetch cache summary" });
+    console.error('Cache summary error:', error);
+    res.status(500).json({ error: 'Failed to fetch cache summary' });
   }
 });
 

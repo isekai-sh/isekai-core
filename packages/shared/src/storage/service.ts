@@ -15,13 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { S3Config, StorageService } from "./types.js";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { S3Config, StorageService } from './types.js';
 
 /**
  * S3-compatible storage service.
@@ -63,7 +59,7 @@ export class S3StorageService implements StorageService {
 
     this.bucket = config.bucket;
     this.publicUrl = config.publicUrl;
-    this.pathPrefix = config.pathPrefix || "";
+    this.pathPrefix = config.pathPrefix || '';
   }
 
   async upload(key: string, buffer: Buffer, contentType: string): Promise<void> {
@@ -103,12 +99,10 @@ export class S3StorageService implements StorageService {
 
   getPublicUrl(key: string): string {
     if (!this.publicUrl) {
-      throw new Error(
-        "Public URL not configured. Set S3_PUBLIC_URL environment variable."
-      );
+      throw new Error('Public URL not configured. Set S3_PUBLIC_URL environment variable.');
     }
     // Remove trailing slash from publicUrl if present
-    const baseUrl = this.publicUrl.replace(/\/$/, "");
+    const baseUrl = this.publicUrl.replace(/\/$/, '');
     return `${baseUrl}/${key}`;
   }
 
@@ -136,7 +130,7 @@ export function createStorageService(config: S3Config): StorageService {
 // Singleton helpers for apps that need direct S3 client access
 // ============================================
 
-import { getS3ConfigFromEnv } from "./config.js";
+import { getS3ConfigFromEnv } from './config.js';
 
 let _s3Client: S3Client | null = null;
 let _storageConfig: { bucketName: string; publicUrl?: string; pathPrefix: string } | null = null;
@@ -170,7 +164,7 @@ export function getStorageConfig(): { bucketName: string; publicUrl?: string; pa
     _storageConfig = {
       bucketName: config.bucket,
       publicUrl: config.publicUrl,
-      pathPrefix: config.pathPrefix || "",
+      pathPrefix: config.pathPrefix || '',
     };
   }
   return _storageConfig;

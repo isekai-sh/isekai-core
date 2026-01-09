@@ -6,11 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.{test,spec}.{js,ts}'],
-    exclude: [
-      'node_modules',
-      'dist',
-      'src/**/*.integration.test.{js,ts}'
-    ],
+    exclude: ['node_modules', 'dist', 'src/**/*.integration.test.{js,ts}'],
     setupFiles: ['./src/test-helpers/setup.ts'],
     onConsoleLog(log) {
       // Suppress known test noise
@@ -21,7 +17,7 @@ export default defineConfig({
         'Connection refused',
       ];
 
-      if (suppressPatterns.some(pattern => log.includes(pattern))) {
+      if (suppressPatterns.some((pattern) => log.includes(pattern))) {
         return false;
       }
     },
@@ -35,21 +31,21 @@ export default defineConfig({
         'src/test-helpers/**',
         'src/db/index.ts',
         'src/index.ts',
-        'dist/**'
+        'dist/**',
       ],
       thresholds: {
         lines: 85,
         functions: 85,
         branches: 75,
-        statements: 85
-      }
+        statements: 85,
+      },
     },
     testTimeout: 10000,
-    hookTimeout: 10000
+    hookTimeout: 10000,
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
-    }
-  }
+      '@': resolve(__dirname, './src'),
+    },
+  },
 });

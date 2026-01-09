@@ -15,14 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { prisma } from "../db/index.js";
-import { logger } from "./logger.js";
-import { env } from "./env.js";
+import { prisma } from '../db/index.js';
+import { logger } from './logger.js';
+import { env } from './env.js';
 
 interface HealthReport {
   instanceId: string;
   timestamp: string;
-  status: "healthy" | "degraded" | "unhealthy";
+  status: 'healthy' | 'degraded' | 'unhealthy';
   metrics: {
     accountCount: number;
     deviationCount: number;
@@ -33,7 +33,7 @@ interface HealthReport {
 /**
  * Collect health metrics from the instance
  */
-async function collectHealthMetrics(): Promise<HealthReport["metrics"]> {
+async function collectHealthMetrics(): Promise<HealthReport['metrics']> {
   const [accountCount, deviationCount, storageStats] = await Promise.all([
     prisma.user.count(),
     prisma.deviation.count(),
@@ -66,16 +66,16 @@ export async function reportHealth(): Promise<void> {
     const report: HealthReport = {
       instanceId: env.INSTANCE_ID,
       timestamp: new Date().toISOString(),
-      status: "healthy",
+      status: 'healthy',
       metrics,
     };
 
     const response = await fetch(
       `${env.CONTROL_PLANE_URL}/api/instances/${env.INSTANCE_ID}/health`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${env.CONTROL_PLANE_API_KEY}`,
         },
         body: JSON.stringify(report),
@@ -83,20 +83,20 @@ export async function reportHealth(): Promise<void> {
     );
 
     if (!response.ok) {
-      logger.warn("Health report rejected by control plane", {
+      logger.warn('Health report rejected by control plane', {
         status: response.status,
         instanceId: env.INSTANCE_ID,
       });
       return;
     }
 
-    logger.debug("Health report sent", {
+    logger.debug('Health report sent', {
       instanceId: env.INSTANCE_ID,
       metrics,
     });
   } catch (error) {
     // Log but don't throw - health reporting should not crash the app
-    logger.error("Failed to report health to control plane", {
+    logger.error('Failed to report health to control plane', {
       error: error instanceof Error ? error.message : String(error),
       instanceId: env.INSTANCE_ID,
     });
@@ -110,11 +110,11 @@ export async function reportHealth(): Promise<void> {
 export function startHealthReporter(): void {
   // Skip if not configured
   if (!env.CONTROL_PLANE_URL || !env.CONTROL_PLANE_API_KEY || !env.INSTANCE_ID) {
-    logger.debug("Health reporter disabled - control plane not configured");
+    logger.debug('Health reporter disabled - control plane not configured');
     return;
   }
 
-  logger.info("Health reporter started", {
+  logger.info('Health reporter started', {
     instanceId: env.INSTANCE_ID,
     controlPlane: env.CONTROL_PLANE_URL,
   });
@@ -125,7 +125,10 @@ export function startHealthReporter(): void {
   }, 30000);
 
   // Report every 5 minutes
-  setInterval(() => {
-    reportHealth();
-  }, 5 * 60 * 1000);
+  setInterval(
+    () => {
+      reportHealth();
+    },
+    5 * 60 * 1000
+  );
 }

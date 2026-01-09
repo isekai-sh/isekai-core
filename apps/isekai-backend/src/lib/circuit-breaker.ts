@@ -27,13 +27,13 @@
  * Features Redis persistence for state survival across worker restarts.
  */
 
-import { RedisClientManager } from "./redis-client.js";
-import { safeJsonParse } from "./safe-json-parse.js";
+import { RedisClientManager } from './redis-client.js';
+import { safeJsonParse } from './safe-json-parse.js';
 
 export enum CircuitState {
-  CLOSED = "CLOSED",
-  OPEN = "OPEN",
-  HALF_OPEN = "HALF_OPEN",
+  CLOSED = 'CLOSED',
+  OPEN = 'OPEN',
+  HALF_OPEN = 'HALF_OPEN',
 }
 
 export interface CircuitBreakerConfig {
@@ -126,9 +126,7 @@ export class CircuitBreaker {
 
     // If half-open, transition to closed
     if (circuit.state === CircuitState.HALF_OPEN) {
-      console.log(
-        `[CircuitBreaker] ${key}: Success in HALF_OPEN, transitioning to CLOSED`
-      );
+      console.log(`[CircuitBreaker] ${key}: Success in HALF_OPEN, transitioning to CLOSED`);
       circuit.state = CircuitState.CLOSED;
       circuit.halfOpenAttempts = 0;
     }
@@ -157,9 +155,7 @@ export class CircuitBreaker {
 
     if (circuit.state === CircuitState.HALF_OPEN) {
       // Failure in half-open, go back to open
-      console.log(
-        `[CircuitBreaker] ${key}: Failure in HALF_OPEN, returning to OPEN`
-      );
+      console.log(`[CircuitBreaker] ${key}: Failure in HALF_OPEN, returning to OPEN`);
       circuit.state = CircuitState.OPEN;
       circuit.halfOpenAttempts = 0;
     } else if (circuit.state === CircuitState.CLOSED) {
@@ -196,8 +192,7 @@ export class CircuitBreaker {
     return {
       state: circuit.state,
       failures: circuit.failures,
-      lastFailureTime:
-        circuit.lastFailureTime > 0 ? new Date(circuit.lastFailureTime) : null,
+      lastFailureTime: circuit.lastFailureTime > 0 ? new Date(circuit.lastFailureTime) : null,
       nextAttemptTime,
     };
   }
@@ -237,7 +232,7 @@ export class CircuitBreaker {
    */
   static resetAll(): void {
     this.circuits.clear();
-    console.log("[CircuitBreaker] All circuits reset");
+    console.log('[CircuitBreaker] All circuits reset');
   }
 
   /**
@@ -285,9 +280,7 @@ export class CircuitBreaker {
   /**
    * Get circuit state from Redis
    */
-  private static async getCircuitFromRedis(
-    key: string
-  ): Promise<CircuitBreakerState | null> {
+  private static async getCircuitFromRedis(key: string): Promise<CircuitBreakerState | null> {
     try {
       const redis = await RedisClientManager.getClient();
       if (!redis) return null;
@@ -297,7 +290,7 @@ export class CircuitBreaker {
 
       return safeJsonParse<CircuitBreakerState>(data, null as any);
     } catch (error) {
-      console.error("[CircuitBreaker] Error loading from Redis:", error);
+      console.error('[CircuitBreaker] Error loading from Redis:', error);
       return null;
     }
   }
@@ -317,7 +310,7 @@ export class CircuitBreaker {
 
       await redis.setex(`circuit:${key}`, ttl, JSON.stringify(circuit));
     } catch (error) {
-      console.error("[CircuitBreaker] Error saving to Redis:", error);
+      console.error('[CircuitBreaker] Error saving to Redis:', error);
     }
   }
 
@@ -326,7 +319,7 @@ export class CircuitBreaker {
    */
   private static isPersistenceEnabled(): boolean {
     const enabled = process.env.CIRCUIT_BREAKER_PERSIST_TO_REDIS?.toLowerCase();
-    return enabled !== "false" && enabled !== "0";
+    return enabled !== 'false' && enabled !== '0';
   }
 
   /**
@@ -334,17 +327,14 @@ export class CircuitBreaker {
    */
   static isEnabled(): boolean {
     const enabled = process.env.CIRCUIT_BREAKER_ENABLED?.toLowerCase();
-    return enabled !== "false" && enabled !== "0";
+    return enabled !== 'false' && enabled !== '0';
   }
 
   /**
    * Get configured failure threshold
    */
   static getFailureThreshold(): number {
-    const threshold = parseInt(
-      process.env.CIRCUIT_BREAKER_THRESHOLD || "3",
-      10
-    );
+    const threshold = parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD || '3', 10);
     return isNaN(threshold) ? 3 : threshold;
   }
 }
@@ -402,8 +392,8 @@ export async function withCircuitBreaker<T>(
     const is429 =
       error?.status === 429 ||
       error?.statusCode === 429 ||
-      error?.message?.toLowerCase().includes("rate limit") ||
-      error?.message?.toLowerCase().includes("429");
+      error?.message?.toLowerCase().includes('rate limit') ||
+      error?.message?.toLowerCase().includes('429');
 
     if (is429) {
       // Record failure for circuit breaker

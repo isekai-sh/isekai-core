@@ -190,9 +190,7 @@ describe('alerting', () => {
 
         await AlertManager.critical('Test', 'Message');
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          '[Alert] Failed to send alert: Bad Request'
-        );
+        expect(consoleErrorSpy).toHaveBeenCalledWith('[Alert] Failed to send alert: Bad Request');
       });
 
       it('should handle fetch errors gracefully', async () => {

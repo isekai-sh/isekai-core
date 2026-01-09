@@ -16,7 +16,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createMockRequest, createMockResponse, createMockNext } from '../test-helpers/express-mock.js';
+import {
+  createMockRequest,
+  createMockResponse,
+  createMockNext,
+} from '../test-helpers/express-mock.js';
 
 // Mock Prisma
 vi.mock('../db/index.js', () => ({
@@ -44,8 +48,8 @@ describe('apiKeyAuthMiddleware', () => {
 
     // Restore default mock implementations after clearing
     (hashApiKey as any).mockImplementation((key: string) => `hashed_${key}`);
-    (isValidApiKeyFormat as any).mockImplementation((key: string) =>
-      key.startsWith('isk_') && key.length === 68
+    (isValidApiKeyFormat as any).mockImplementation(
+      (key: string) => key.startsWith('isk_') && key.length === 68
     );
   });
 
@@ -361,7 +365,7 @@ describe('apiKeyAuthMiddleware', () => {
       await apiKeyAuthMiddleware(req as any, res as any, next);
 
       // Wait a bit for the async update
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(prisma.apiKey.update).toHaveBeenCalledWith({
         where: { id: 'key-123' },
@@ -394,8 +398,8 @@ describe('apiKeyAuthMiddleware', () => {
 
       (prisma.apiKey.findFirst as any).mockResolvedValue(mockApiKeyRecord);
       // Make update slow
-      (prisma.apiKey.update as any).mockImplementation(() =>
-        new Promise(resolve => setTimeout(resolve, 100))
+      (prisma.apiKey.update as any).mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
       const startTime = Date.now();

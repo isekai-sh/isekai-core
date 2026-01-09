@@ -426,9 +426,7 @@ describe('validateEnv', () => {
       const { validateEnv } = await import('./env.js');
       validateEnv();
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('DATABASE_URL')
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('DATABASE_URL'));
     });
   });
 

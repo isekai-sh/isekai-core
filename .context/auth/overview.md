@@ -10,10 +10,12 @@
 Isekai Core uses **DeviantArt OAuth 2.0** for user authentication. Users log in with their DeviantArt accounts, and the system stores access/refresh tokens for API access.
 
 **Authentication Methods:**
+
 1. **Session Authentication** - Cookie-based for web frontend
 2. **API Key Authentication** - Token-based for ComfyUI and integrations
 
 **Session Storage:**
+
 - **Redis** (preferred) - If `REDIS_URL` is set
 - **PostgreSQL** (fallback) - Auto-detected if Redis unavailable
 
@@ -24,18 +26,20 @@ Isekai Core uses **DeviantArt OAuth 2.0** for user authentication. Users log in 
 ### Step 1: User Clicks "Login with DeviantArt"
 
 **Frontend:**
+
 ```typescript
-window.location.href = "http://localhost:4000/api/auth/deviantart";
+window.location.href = 'http://localhost:4000/api/auth/deviantart';
 ```
 
 **Backend Redirect:**
+
 ```typescript
 // GET /api/auth/deviantart
 const params = new URLSearchParams({
-  response_type: "code",
+  response_type: 'code',
   client_id: process.env.DEVIANTART_CLIENT_ID!,
   redirect_uri: process.env.DEVIANTART_REDIRECT_URI!,
-  scope: "user browse stash publish note message gallery",
+  scope: 'user browse stash publish note message gallery',
 });
 
 const authUrl = `https://www.deviantart.com/oauth2/authorize?${params}`;
@@ -45,10 +49,12 @@ res.redirect(authUrl); // Redirect to DeviantArt
 ### Step 2: User Authorizes on DeviantArt
 
 **DeviantArt OAuth Page:**
+
 - Shows app name, requested scopes
 - User clicks "Authorize"
 
 **Scopes Requested:**
+
 - `user` - Basic user info
 - `browse` - Browse content
 - `stash` - Upload files to stash
@@ -60,21 +66,23 @@ res.redirect(authUrl); // Redirect to DeviantArt
 ### Step 3: DeviantArt Redirects to Callback
 
 **Callback URL:**
+
 ```
 http://localhost:4000/api/auth/deviantart/callback?code=ABC123
 ```
 
 **Backend Handler:**
+
 ```typescript
 // GET /api/auth/deviantart/callback
 const { code } = req.query;
 
 // Exchange authorization code for tokens
-const tokenResponse = await fetch("https://www.deviantart.com/oauth2/token", {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+const tokenResponse = await fetch('https://www.deviantart.com/oauth2/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
-    grant_type: "authorization_code",
+    grant_type: 'authorization_code',
     client_id: process.env.DEVIANTART_CLIENT_ID!,
     client_secret: process.env.DEVIANTART_CLIENT_SECRET!,
     redirect_uri: process.env.DEVIANTART_REDIRECT_URI!,
@@ -89,8 +97,9 @@ const tokenData = await tokenResponse.json();
 ### Step 4: Fetch User Info
 
 **Using Access Token:**
+
 ```typescript
-const userResponse = await fetch("https://www.deviantart.com/api/v1/oauth2/user/whoami", {
+const userResponse = await fetch('https://www.deviantart.com/api/v1/oauth2/user/whoami', {
   headers: { Authorization: `Bearer ${access_token}` },
 });
 
@@ -101,6 +110,7 @@ const userData = await userResponse.json();
 ### Step 5: Create or Update User
 
 **New User:**
+
 ```typescript
 const user = await prisma.user.create({
   data: {
@@ -117,6 +127,7 @@ const user = await prisma.user.create({
 ```
 
 **Existing User:**
+
 ```typescript
 const user = await prisma.user.update({
   where: { deviantartId: userData.userid },
@@ -133,6 +144,7 @@ const user = await prisma.user.update({
 ### Step 6: Create Session
 
 **Set Session Cookie:**
+
 ```typescript
 req.session.user = {
   id: user.id,
@@ -145,6 +157,7 @@ res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
 ```
 
 **Session Cookie:**
+
 ```
 connect.sid=s%3AabcdefXYZ...; Path=/; HttpOnly; SameSite=Lax
 ```
@@ -160,17 +173,18 @@ connect.sid=s%3AabcdefXYZ...; Path=/; HttpOnly; SameSite=Lax
 **Storage:** Encrypted in database (AES-256-GCM)
 
 **Refresh Logic:**
+
 ```typescript
 // Check if token expires in next 5 minutes
 const expiresIn5Min = new Date(Date.now() + 5 * 60 * 1000);
 
 if (user.tokenExpiresAt < expiresIn5Min) {
   // Refresh access token
-  const tokenResponse = await fetch("https://www.deviantart.com/oauth2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const tokenResponse = await fetch('https://www.deviantart.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
       client_id: process.env.DEVIANTART_CLIENT_ID!,
       client_secret: process.env.DEVIANTART_CLIENT_SECRET!,
       refresh_token: decrypt(user.refreshToken),
@@ -240,6 +254,7 @@ for (const user of users) {
 ```
 
 **Email Warnings:**
+
 - **7 days before expiry:** Warning email sent
 - **1 day before expiry:** Urgent email sent
 - **On expiry:** All scheduled posts paused, user must re-login
@@ -279,26 +294,28 @@ export async function createSessionStore() {
     try {
       const redisClient = new Redis(process.env.REDIS_URL);
       await redisClient.ping();
-      console.log("Using Redis for session storage");
+      console.log('Using Redis for session storage');
       return new RedisStore({ client: redisClient });
     } catch (error) {
-      console.warn("Redis unavailable, falling back to PostgreSQL");
+      console.warn('Redis unavailable, falling back to PostgreSQL');
     }
   }
 
   // Fall back to PostgreSQL
-  console.log("Using PostgreSQL for session storage");
+  console.log('Using PostgreSQL for session storage');
   return new PrismaSessionStore(prisma);
 }
 ```
 
 **Redis Store:**
+
 - Fast (in-memory)
 - Scales horizontally
 - Sessions survive server restart
 - TTL-based automatic cleanup
 
 **PostgreSQL Store:**
+
 - Reliable fallback
 - No additional infrastructure
 - Manual cleanup recommended (cron job)
@@ -306,29 +323,32 @@ export async function createSessionStore() {
 ### Session Configuration
 
 ```typescript
-app.use(session({
-  store: sessionStore,
-  secret: env.SESSION_SECRET,      // 32+ character random string
-  resave: false,                   // Don't save unchanged sessions
-  saveUninitialized: false,        // Don't create session until data stored
-  cookie: {
-    secure: env.NODE_ENV === "production",  // HTTPS only in production
-    httpOnly: true,                 // Not accessible via JavaScript
-    sameSite: "lax",               // CSRF protection
-    domain: env.COOKIE_DOMAIN,     // e.g., ".yourdomain.com" for subdomains
-    maxAge: 30 * 24 * 60 * 60 * 1000,  // 30 days
-  },
-}));
+app.use(
+  session({
+    store: sessionStore,
+    secret: env.SESSION_SECRET, // 32+ character random string
+    resave: false, // Don't save unchanged sessions
+    saveUninitialized: false, // Don't create session until data stored
+    cookie: {
+      secure: env.NODE_ENV === 'production', // HTTPS only in production
+      httpOnly: true, // Not accessible via JavaScript
+      sameSite: 'lax', // CSRF protection
+      domain: env.COOKIE_DOMAIN, // e.g., ".yourdomain.com" for subdomains
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    },
+  })
+);
 ```
 
 ### Session Data
 
 **Stored in Session:**
+
 ```typescript
 req.session.user = {
-  id: "user-uuid",
-  deviantartId: "123456",
-  deviantartUsername: "artist",
+  id: 'user-uuid',
+  deviantartId: '123456',
+  deviantartUsername: 'artist',
 };
 ```
 
@@ -341,15 +361,17 @@ req.session.user = {
 **Renewal:** Session renewed on each request (sliding expiration).
 
 **Expiration:**
+
 - **Idle timeout:** 30 days without activity
 - **Absolute timeout:** None (slides indefinitely while active)
 
 **Destruction:**
+
 ```typescript
 // GET /api/auth/logout
 req.session.destroy((err) => {
   res.clearCookie('connect.sid');
-  res.json({ message: "Logged out successfully" });
+  res.json({ message: 'Logged out successfully' });
 });
 ```
 
@@ -362,6 +384,7 @@ req.session.destroy((err) => {
 **Purpose:** Track which DeviantArt users can access this instance.
 
 **Fields:**
+
 ```typescript
 {
   id: string,
@@ -374,11 +397,12 @@ req.session.destroy((err) => {
 ```
 
 **First User = Admin:**
+
 ```typescript
 const instanceUserCount = await prisma.instanceUser.count();
 const isFirstUser = instanceUserCount === 0;
 
-const role = isFirstUser ? "admin" : "member";
+const role = isFirstUser ? 'admin' : 'member';
 
 await prisma.instanceUser.create({
   data: {
@@ -406,11 +430,13 @@ if (!isFirstUser && !instanceSettings?.teamInvitesEnabled) {
 ### Max DeviantArt Accounts
 
 **Environment Variable:**
+
 ```bash
 MAX_DA_ACCOUNTS=5  # 0 = unlimited
 ```
 
 **Enforcement:**
+
 ```typescript
 if (env.MAX_DA_ACCOUNTS > 0) {
   const currentAccountCount = await prisma.user.count();
@@ -429,12 +455,13 @@ if (env.MAX_DA_ACCOUNTS > 0) {
 ### Session Auth Middleware
 
 **Applied to most routes:**
+
 ```typescript
 export function authMiddleware(req, res, next) {
   if (!req.session?.user) {
     return res.status(401).json({
-      error: "Unauthorized",
-      code: "UNAUTHORIZED",
+      error: 'Unauthorized',
+      code: 'UNAUTHORIZED',
     });
   }
 
@@ -445,7 +472,7 @@ export function authMiddleware(req, res, next) {
 
   if (!user) {
     req.session.destroy();
-    return res.status(401).json({ error: "User not found" });
+    return res.status(401).json({ error: 'User not found' });
   }
 
   req.user = user;
@@ -456,14 +483,15 @@ export function authMiddleware(req, res, next) {
 ### API Key Auth Middleware
 
 **Applied to ComfyUI routes:**
+
 ```typescript
 export async function apiKeyAuthMiddleware(req, res, next) {
   const apiKey = req.headers['x-api-key'];
 
   if (!apiKey || typeof apiKey !== 'string') {
     return res.status(401).json({
-      error: "Missing API key",
-      code: "UNAUTHORIZED",
+      error: 'Missing API key',
+      code: 'UNAUTHORIZED',
     });
   }
 
@@ -475,13 +503,13 @@ export async function apiKeyAuthMiddleware(req, res, next) {
   });
 
   if (!apiKeyRecord) {
-    return res.status(401).json({ error: "Invalid API key" });
+    return res.status(401).json({ error: 'Invalid API key' });
   }
 
   // Verify full key
   const isValid = await bcrypt.compare(apiKey, apiKeyRecord.keyHash);
   if (!isValid) {
-    return res.status(401).json({ error: "Invalid API key" });
+    return res.status(401).json({ error: 'Invalid API key' });
   }
 
   // Update last used
@@ -498,6 +526,7 @@ export async function apiKeyAuthMiddleware(req, res, next) {
 ### Hybrid Auth Middleware
 
 **Tries session, falls back to API key:**
+
 ```typescript
 export async function hybridAuthMiddleware(req, res, next) {
   // Try session first
@@ -517,7 +546,7 @@ export async function hybridAuthMiddleware(req, res, next) {
     return apiKeyAuthMiddleware(req, res, next);
   }
 
-  return res.status(401).json({ error: "Unauthorized" });
+  return res.status(401).json({ error: 'Unauthorized' });
 }
 ```
 
@@ -532,9 +561,10 @@ export async function hybridAuthMiddleware(req, res, next) {
 **Cause:** Missing `credentials: "include"` in frontend fetch.
 
 **Solution:**
+
 ```typescript
-fetch("http://localhost:4000/api/auth/me", {
-  credentials: "include",  // Send cookies
+fetch('http://localhost:4000/api/auth/me', {
+  credentials: 'include', // Send cookies
 });
 ```
 
@@ -549,6 +579,7 @@ fetch("http://localhost:4000/api/auth/me", {
 **Cause:** DeviantArt API rate limited.
 
 **Error:**
+
 ```
 DeviantArt API rate limit reached. Please wait a few minutes and try logging in again.
 ```

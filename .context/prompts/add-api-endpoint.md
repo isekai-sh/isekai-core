@@ -7,6 +7,7 @@
 ## Prerequisites
 
 Before starting, ensure you have:
+
 - [ ] Local development environment running
 - [ ] Database schema updated (if new models needed)
 - [ ] Prisma client generated
@@ -17,6 +18,7 @@ Before starting, ensure you have:
 ## Step 1: Define Requirements
 
 **Questions to Answer:**
+
 1. What is the endpoint's purpose?
 2. What HTTP method (GET, POST, PUT, DELETE, PATCH)?
 3. What are the request parameters?
@@ -25,6 +27,7 @@ Before starting, ensure you have:
 6. What are the validation rules?
 
 **Example:**
+
 ```
 Purpose: Get all automations for authenticated user
 Method: GET
@@ -51,11 +54,11 @@ Response: { automations: Automation[] }
  * (at your option) any later version.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db";
-import { asyncHandler } from "../middleware/async-handler";
-import { requireAuth } from "../middleware/auth";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db';
+import { asyncHandler } from '../middleware/async-handler';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -70,14 +73,14 @@ const createRequestSchema = z.object({
  * Get all items for authenticated user
  */
 router.get(
-  "/",
+  '/',
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.session.user!.id;
 
     const items = await prisma.myModel.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
 
     res.json({ items });
@@ -89,7 +92,7 @@ router.get(
  * Create a new item
  */
 router.post(
-  "/",
+  '/',
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.session.user!.id;
@@ -114,7 +117,7 @@ router.post(
  * Get a single item by ID
  */
 router.get(
-  "/:id",
+  '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.session.user!.id;
@@ -125,7 +128,7 @@ router.get(
     });
 
     if (!item) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(404).json({ error: 'Item not found' });
     }
 
     res.json({ item });
@@ -137,7 +140,7 @@ router.get(
  * Update an item
  */
 router.put(
-  "/:id",
+  '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.session.user!.id;
@@ -152,7 +155,7 @@ router.put(
     });
 
     if (!existing) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(404).json({ error: 'Item not found' });
     }
 
     // Update item
@@ -170,7 +173,7 @@ router.put(
  * Delete an item
  */
 router.delete(
-  "/:id",
+  '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.session.user!.id;
@@ -182,7 +185,7 @@ router.delete(
     });
 
     if (!existing) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(404).json({ error: 'Item not found' });
     }
 
     // Delete item
@@ -204,10 +207,10 @@ export default router;
 **File:** `apps/isekai-backend/src/index.ts`
 
 ```typescript
-import myEndpointRoutes from "./routes/my-endpoint";
+import myEndpointRoutes from './routes/my-endpoint';
 
 // Register routes
-app.use("/api/my-endpoint", myEndpointRoutes);
+app.use('/api/my-endpoint', myEndpointRoutes);
 ```
 
 ---
@@ -217,40 +220,37 @@ app.use("/api/my-endpoint", myEndpointRoutes);
 **Location:** `apps/isekai-backend/src/routes/my-endpoint.test.ts`
 
 ```typescript
-import { describe, it, expect, beforeEach } from "vitest";
-import request from "supertest";
-import { app } from "../index";
-import { prisma } from "../db";
+import { describe, it, expect, beforeEach } from 'vitest';
+import request from 'supertest';
+import { app } from '../index';
+import { prisma } from '../db';
 
-describe("POST /api/my-endpoint", () => {
+describe('POST /api/my-endpoint', () => {
   beforeEach(async () => {
     // Clean database
     await prisma.myModel.deleteMany();
   });
 
-  it("should create an item", async () => {
+  it('should create an item', async () => {
     const response = await request(app)
-      .post("/api/my-endpoint")
-      .send({ name: "Test Item" })
+      .post('/api/my-endpoint')
+      .send({ name: 'Test Item' })
       .expect(201);
 
-    expect(response.body.item.name).toBe("Test Item");
+    expect(response.body.item.name).toBe('Test Item');
   });
 
-  it("should return 401 if not authenticated", async () => {
-    await request(app)
-      .post("/api/my-endpoint")
-      .send({ name: "Test Item" })
-      .expect(401);
+  it('should return 401 if not authenticated', async () => {
+    await request(app).post('/api/my-endpoint').send({ name: 'Test Item' }).expect(401);
   });
 
-  it("should validate request body", async () => {
+  it('should validate request body', async () => {
     const response = await request(app)
-      .post("/api/my-endpoint")
-      .send({ name: "" }) // Invalid: empty name
+      .post('/api/my-endpoint')
+      .send({ name: '' }) // Invalid: empty name
       .expect(400);
 
-    expect(response.body.error).toContain("validation");
+    expect(response.body.error).toContain('validation');
   });
 });
 ```
@@ -263,7 +263,7 @@ describe("POST /api/my-endpoint", () => {
 
 Add new endpoint to API documentation:
 
-```markdown
+````markdown
 ### POST /api/my-endpoint
 
 Create a new item.
@@ -271,14 +271,17 @@ Create a new item.
 **Authentication:** Required (session)
 
 **Request Body:**
+
 ```json
 {
   "name": "Item Name",
   "enabled": true
 }
 ```
+````
 
 **Response (201):**
+
 ```json
 {
   "item": {
@@ -290,7 +293,8 @@ Create a new item.
   }
 }
 ```
-```
+
+````
 
 ---
 
@@ -307,7 +311,7 @@ curl -X POST http://localhost:4000/api/my-endpoint \
 
 # Run tests
 pnpm --filter isekai-backend test
-```
+````
 
 ---
 

@@ -69,11 +69,7 @@ vi.mock('../db/index.js', async () => {
 });
 
 // Import deviantart functions AFTER mocks are set up
-import {
-  refreshTokenIfNeeded,
-  getRefreshTokenStatus,
-  publishToDeviantArt,
-} from './deviantart';
+import { refreshTokenIfNeeded, getRefreshTokenStatus, publishToDeviantArt } from './deviantart';
 import { prisma } from '../db/index.js';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 
@@ -215,7 +211,9 @@ describe('deviantart', () => {
         text: async () => 'Server error',
       });
 
-      await expect(refreshTokenIfNeeded(mockUser)).rejects.toThrow('Failed to refresh DeviantArt token');
+      await expect(refreshTokenIfNeeded(mockUser)).rejects.toThrow(
+        'Failed to refresh DeviantArt token'
+      );
     });
 
     it('should update both access and refresh tokens', async () => {
@@ -328,7 +326,9 @@ describe('deviantart', () => {
       const expectedExpiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
       // Allow 1 second tolerance
-      expect(Math.abs(refreshTokenExpiresAt.getTime() - expectedExpiry.getTime())).toBeLessThan(1000);
+      expect(Math.abs(refreshTokenExpiresAt.getTime() - expectedExpiry.getTime())).toBeLessThan(
+        1000
+      );
     });
 
     it('should update lastRefreshTokenRefresh timestamp', async () => {
@@ -400,9 +400,9 @@ describe('deviantart', () => {
           files: [],
         };
 
-        await expect(
-          publishToDeviantArt(deviationNoFiles, mockUser, 'single')
-        ).rejects.toThrow('No files to upload');
+        await expect(publishToDeviantArt(deviationNoFiles, mockUser, 'single')).rejects.toThrow(
+          'No files to upload'
+        );
       });
 
       it('should sort files by sortOrder before uploading', async () => {

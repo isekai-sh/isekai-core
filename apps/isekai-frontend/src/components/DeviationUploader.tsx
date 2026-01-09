@@ -15,32 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
-import {
-  SortableContext,
-  rectSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { Upload, Calendar, Send } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from "@/hooks/use-toast";
-import { formatScheduleDateTime } from "@/lib/timezone";
-import { FilePreview } from "@/components/FilePreview";
-import { deviations, uploads } from "@/lib/api";
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { Upload, Calendar, Send } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from '@/hooks/use-toast';
+import { formatScheduleDateTime } from '@/lib/timezone';
+import { FilePreview } from '@/components/FilePreview';
+import { deviations, uploads } from '@/lib/api';
 
 interface FileWithPreview {
   id: string;
@@ -53,11 +43,11 @@ interface FileWithPreview {
 export function DeviationUploader() {
   const queryClient = useQueryClient();
   const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [uploadMode, setUploadMode] = useState<'single' | 'multiple'>('single');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -72,8 +62,8 @@ export function DeviationUploader() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp"],
-      "video/*": [".mp4", ".webm"],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp'],
+      'video/*': ['.mp4', '.webm'],
     },
     maxSize: 30 * 1024 * 1024, // 30MB
   });
@@ -104,9 +94,7 @@ export function DeviationUploader() {
       const fileData = files[i];
       try {
         // Update progress
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileData.id ? { ...f, progress: 0 } : f))
-        );
+        setFiles((prev) => prev.map((f) => (f.id === fileData.id ? { ...f, progress: 0 } : f)));
 
         // Get presigned URL
         const { uploadUrl, fileId, storageKey } = await uploads.getPresignedUrl(
@@ -118,25 +106,21 @@ export function DeviationUploader() {
         // Upload to storage
         const xhr = new XMLHttpRequest();
         await new Promise((resolve, reject) => {
-          xhr.upload.addEventListener("progress", (e) => {
+          xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
               const progress = Math.round((e.loaded / e.total) * 100);
-              setFiles((prev) =>
-                prev.map((f) => (f.id === fileData.id ? { ...f, progress } : f))
-              );
+              setFiles((prev) => prev.map((f) => (f.id === fileData.id ? { ...f, progress } : f)));
             }
           });
 
-          xhr.addEventListener("load", () => {
+          xhr.addEventListener('load', () => {
             if (xhr.status === 200) resolve(xhr.response);
             else reject(new Error(`Upload failed: ${xhr.status}`));
           });
 
-          xhr.addEventListener("error", () =>
-            reject(new Error("Upload failed"))
-          );
-          xhr.open("PUT", uploadUrl);
-          xhr.setRequestHeader("Content-Type", fileData.file.type);
+          xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+          xhr.open('PUT', uploadUrl);
+          xhr.setRequestHeader('Content-Type', fileData.file.type);
           xhr.send(fileData.file);
         });
 
@@ -145,7 +129,7 @@ export function DeviationUploader() {
         let height: number | undefined;
         let duration: number | undefined;
 
-        if (fileData.file.type.startsWith("image/")) {
+        if (fileData.file.type.startsWith('image/')) {
           const img = new Image();
           await new Promise((resolve) => {
             img.onload = () => {
@@ -155,8 +139,8 @@ export function DeviationUploader() {
             };
             img.src = fileData.preview;
           });
-        } else if (fileData.file.type.startsWith("video/")) {
-          const video = document.createElement("video");
+        } else if (fileData.file.type.startsWith('video/')) {
+          const video = document.createElement('video');
           await new Promise((resolve) => {
             video.onloadedmetadata = () => {
               width = video.videoWidth;
@@ -182,15 +166,11 @@ export function DeviationUploader() {
         );
 
         // Mark as complete
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileData.id ? { ...f, progress: 100 } : f))
-        );
+        setFiles((prev) => prev.map((f) => (f.id === fileData.id ? { ...f, progress: 100 } : f)));
       } catch (error: any) {
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === fileData.id
-              ? { ...f, error: error.message, progress: undefined }
-              : f
+            f.id === fileData.id ? { ...f, error: error.message, progress: undefined } : f
           )
         );
         throw error;
@@ -214,35 +194,33 @@ export function DeviationUploader() {
 
       // Schedule if date/time provided
       if (scheduleDate && scheduleTime) {
-        const scheduledAt = new Date(
-          `${scheduleDate}T${scheduleTime}`
-        ).toISOString();
+        const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
         await deviations.schedule(deviation.id, scheduledAt);
       }
 
       return deviation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
       toast({
-        title: "Success",
+        title: 'Success',
         description:
           scheduleDate && scheduleTime
-            ? "Deviation scheduled successfully"
-            : "Draft created successfully",
+            ? 'Deviation scheduled successfully'
+            : 'Draft created successfully',
       });
       // Reset form
       setFiles([]);
-      setTitle("");
-      setDescription("");
-      setScheduleDate("");
-      setScheduleTime("");
+      setTitle('');
+      setDescription('');
+      setScheduleDate('');
+      setScheduleTime('');
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create deviation",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create deviation',
+        variant: 'destructive',
       });
     },
   });
@@ -265,23 +243,23 @@ export function DeviationUploader() {
       return deviation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
       toast({
-        title: "Publishing",
-        description: "Your deviation is being published to DeviantArt",
+        title: 'Publishing',
+        description: 'Your deviation is being published to DeviantArt',
       });
       // Reset form
       setFiles([]);
-      setTitle("");
-      setDescription("");
-      setScheduleDate("");
-      setScheduleTime("");
+      setTitle('');
+      setDescription('');
+      setScheduleDate('');
+      setScheduleTime('');
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to publish deviation",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to publish deviation',
+        variant: 'destructive',
       });
     },
   });
@@ -293,9 +271,7 @@ export function DeviationUploader() {
     <Card>
       <CardHeader>
         <CardTitle>Create New Deviation</CardTitle>
-        <CardDescription>
-          Upload files and schedule your DeviantArt deviation
-        </CardDescription>
+        <CardDescription>Upload files and schedule your DeviantArt deviation</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Dropzone */}
@@ -303,8 +279,8 @@ export function DeviationUploader() {
           {...getRootProps()}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
             isDragActive
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-primary/50"
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-primary/50'
           }`}
         >
           <input {...getInputProps()} />
@@ -314,12 +290,9 @@ export function DeviationUploader() {
           ) : (
             <div>
               <p className="text-lg font-medium mb-2">Drag & drop files here</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                or click to browse
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">or click to browse</p>
               <p className="text-xs text-muted-foreground">
-                Supports images (PNG, JPG, GIF, BMP) and videos (MP4, WebM) up
-                to 30MB
+                Supports images (PNG, JPG, GIF, BMP) and videos (MP4, WebM) up to 30MB
               </p>
             </div>
           )}
@@ -329,21 +302,11 @@ export function DeviationUploader() {
         {files.length > 0 && (
           <div>
             <Label className="mb-3 block">Files ({files.length})</Label>
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={files.map((f) => f.id)}
-                strategy={rectSortingStrategy}
-              >
+            <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={files.map((f) => f.id)} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {files.map((fileData) => (
-                    <FilePreview
-                      key={fileData.id}
-                      fileData={fileData}
-                      onRemove={removeFile}
-                    />
+                    <FilePreview key={fileData.id} fileData={fileData} onRemove={removeFile} />
                   ))}
                 </div>
               </SortableContext>
@@ -357,9 +320,7 @@ export function DeviationUploader() {
             <Label>Upload Mode</Label>
             <RadioGroup
               value={uploadMode}
-              onValueChange={(v: string) =>
-                setUploadMode(v as "single" | "multiple")
-              }
+              onValueChange={(v: string) => setUploadMode(v as 'single' | 'multiple')}
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="single" id="single" />
@@ -369,10 +330,7 @@ export function DeviationUploader() {
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="multiple" id="multiple" />
-                <Label
-                  htmlFor="multiple"
-                  className="font-normal cursor-pointer"
-                >
+                <Label htmlFor="multiple" className="font-normal cursor-pointer">
                   Multiple deviations (one per file)
                 </Label>
               </div>
@@ -390,9 +348,7 @@ export function DeviationUploader() {
             placeholder="Enter deviation title"
             maxLength={50}
           />
-          <p className="text-xs text-muted-foreground">
-            {title.length}/50 characters
-          </p>
+          <p className="text-xs text-muted-foreground">{title.length}/50 characters</p>
         </div>
 
         {/* Description */}
@@ -416,7 +372,7 @@ export function DeviationUploader() {
               type="date"
               value={scheduleDate}
               onChange={(e) => setScheduleDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
+              min={new Date().toISOString().split('T')[0]}
             />
           </div>
           <div className="space-y-2">
@@ -432,8 +388,7 @@ export function DeviationUploader() {
 
         {scheduleDate && scheduleTime && (
           <p className="text-sm text-muted-foreground">
-            Will be published on{" "}
-            {formatScheduleDateTime(`${scheduleDate}T${scheduleTime}`)}
+            Will be published on {formatScheduleDateTime(`${scheduleDate}T${scheduleTime}`)}
           </p>
         )}
 
@@ -446,21 +401,21 @@ export function DeviationUploader() {
             size="lg"
           >
             <Send className="h-5 w-5 mr-2" />
-            {publishNow.isPending ? "Publishing..." : "Publish Now"}
+            {publishNow.isPending ? 'Publishing...' : 'Publish Now'}
           </Button>
           <Button
             onClick={() => createAndSchedule.mutate()}
             disabled={!canSubmit || createAndSchedule.isPending}
-            variant={hasScheduleTime ? "default" : "outline"}
+            variant={hasScheduleTime ? 'default' : 'outline'}
             className="flex-1"
             size="lg"
           >
             <Calendar className="h-5 w-5 mr-2" />
             {createAndSchedule.isPending
-              ? "Saving..."
+              ? 'Saving...'
               : hasScheduleTime
-              ? "Schedule"
-              : "Save as Draft"}
+                ? 'Schedule'
+                : 'Save as Draft'}
           </Button>
         </div>
       </CardContent>

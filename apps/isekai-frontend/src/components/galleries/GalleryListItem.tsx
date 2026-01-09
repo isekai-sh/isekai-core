@@ -15,18 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { MoreVertical, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { DeviantArtGalleryFolder } from "@isekai/shared";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MoreVertical, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { DeviantArtGalleryFolder } from '@isekai/shared';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,10 +36,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { galleries } from "@/lib/api";
-import { EditGalleryDialog } from "./EditGalleryDialog";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { galleries } from '@/lib/api';
+import { EditGalleryDialog } from './EditGalleryDialog';
 
 interface GalleryListItemProps {
   gallery: DeviantArtGalleryFolder;
@@ -54,17 +54,17 @@ export function GalleryListItem({ gallery }: GalleryListItemProps) {
   const deleteMutation = useMutation({
     mutationFn: () => galleries.delete(gallery.folderid),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      queryClient.invalidateQueries({ queryKey: ['galleries'] });
       toast({
-        title: "Gallery deleted",
-        description: "The gallery has been deleted successfully.",
+        title: 'Gallery deleted',
+        description: 'The gallery has been deleted successfully.',
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete gallery. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete gallery. Please try again.',
+        variant: 'destructive',
       });
     },
   });
@@ -84,11 +84,8 @@ export function GalleryListItem({ gallery }: GalleryListItemProps) {
                 alt={gallery.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error(
-                    "Failed to load image:",
-                    gallery.thumb?.preview?.src
-                  );
-                  (e.target as HTMLImageElement).style.display = "none";
+                  console.error('Failed to load image:', gallery.thumb?.preview?.src);
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
@@ -140,7 +137,7 @@ export function GalleryListItem({ gallery }: GalleryListItemProps) {
             )}
 
             <div className="text-sm text-muted-foreground">
-              {gallery.size || 0} {gallery.size === 1 ? "post" : "posts"}
+              {gallery.size || 0} {gallery.size === 1 ? 'post' : 'posts'}
             </div>
           </div>
         </div>
@@ -159,8 +156,8 @@ export function GalleryListItem({ gallery }: GalleryListItemProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Gallery?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{gallery.name}"? This action
-              cannot be undone. Posts in this gallery will not be deleted.
+              Are you sure you want to delete "{gallery.name}"? This action cannot be undone. Posts
+              in this gallery will not be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

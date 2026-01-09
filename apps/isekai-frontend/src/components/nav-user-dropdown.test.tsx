@@ -143,10 +143,7 @@ describe('NavUserDropdown', () => {
     render(<NavUserDropdown />);
 
     const daLink = screen.getByText('Open DeviantArt').closest('a');
-    expect(daLink).toHaveAttribute(
-      'href',
-      'https://www.deviantart.com/testuser'
-    );
+    expect(daLink).toHaveAttribute('href', 'https://www.deviantart.com/testuser');
     expect(daLink).toHaveAttribute('target', '_blank');
   });
 

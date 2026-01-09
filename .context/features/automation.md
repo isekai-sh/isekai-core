@@ -10,12 +10,14 @@
 The **Automation Workflow System** allows users to create workflows that automatically schedule draft deviations based on customizable rules. This is the most complex feature in Isekai Core.
 
 **Use Cases:**
+
 - "Schedule 1 post every day at 2pm"
 - "Schedule 2 posts every 4 hours"
 - "Schedule random drafts throughout the week"
 - "Auto-add scheduled posts to exclusives queue with pricing"
 
 **Architecture:**
+
 ```
 Auto-Scheduler Job (every 5 min)
     ↓
@@ -32,6 +34,7 @@ For Each Automation:
 ```
 
 **Related Files:**
+
 - `/apps/isekai-publisher/src/jobs/auto-scheduler.ts` - Execution logic
 - `/apps/isekai-backend/src/routes/automations.ts` - API routes
 - `/apps/isekai-backend/src/routes/automation-schedule-rules.ts` - Rule management
@@ -52,6 +55,7 @@ A workflow consists of:
 5. **Sale Queue Integration** - Auto-add to exclusives (optional)
 
 **Example:**
+
 ```typescript
 {
   name: "Daily Art Posts",
@@ -77,13 +81,14 @@ A workflow consists of:
 
 Three rule types determine **when** the automation triggers:
 
-| Rule Type | Description | Trigger Logic |
-|-----------|-------------|---------------|
-| `fixed_time` | Specific time each day | Triggers at timeOfDay (with 7-min window) |
-| `fixed_interval` | Every N minutes | Triggers if intervalMinutes elapsed since last execution |
-| `daily_quota` | Max posts per day | Triggers if scheduled count < dailyQuota today |
+| Rule Type        | Description            | Trigger Logic                                            |
+| ---------------- | ---------------------- | -------------------------------------------------------- |
+| `fixed_time`     | Specific time each day | Triggers at timeOfDay (with 7-min window)                |
+| `fixed_interval` | Every N minutes        | Triggers if intervalMinutes elapsed since last execution |
+| `daily_quota`    | Max posts per day      | Triggers if scheduled count < dailyQuota today           |
 
 **All rules support:**
+
 - `daysOfWeek` filter - Optional array like `["monday", "friday"]` (uses user's timezone)
 - `enabled` flag - Can disable without deleting
 - `priority` - Higher priority rules execute first
@@ -93,6 +98,7 @@ Three rule types determine **when** the automation triggers:
 Metadata applied to scheduled deviations:
 
 **Supported Fields:**
+
 - `description` (string)
 - `tags` (array of strings)
 - `isMature` (boolean)
@@ -108,14 +114,15 @@ Metadata applied to scheduled deviations:
 - `stashOnly` (boolean)
 
 **Application Logic:**
+
 ```typescript
 for (const defaultValue of automation.defaultValues) {
   const fieldName = defaultValue.fieldName;
   const currentValue = draft[fieldName];
 
   const shouldApply = defaultValue.applyIfEmpty
-    ? isEmpty(currentValue)  // Only if field is empty
-    : true;                  // Always apply
+    ? isEmpty(currentValue) // Only if field is empty
+    : true; // Always apply
 
   if (shouldApply) {
     draft[fieldName] = defaultValue.value;
@@ -124,6 +131,7 @@ for (const defaultValue of automation.defaultValues) {
 ```
 
 **isEmpty Logic:**
+
 ```typescript
 function isEmpty(value: any): boolean {
   if (value === null || value === undefined) return true;
@@ -151,6 +159,7 @@ cron.schedule('*/5 * * * *', async () => {
 ```
 
 **Startup Behavior:**
+
 - Also runs once 30 seconds after server start
 - Ensures automations aren't delayed by up to 5 minutes on deploy
 
@@ -203,6 +212,7 @@ if (lockAcquired.count === 0) {
 ```
 
 **Lock Release:**
+
 ```typescript
 finally {
   await prisma.automation.update({
@@ -213,6 +223,7 @@ finally {
 ```
 
 **Why Simpler Lock?**
+
 - Unlike deviation execution locks (UUID + optimistic locking), automation locks are simpler
 - Only one cron job runs globally, less concurrency risk
 - Stale lock detection (5-minute timeout) handles crashes
@@ -227,7 +238,9 @@ All time/day calculations use **user's timezone** from `User.timezone` field.
 // Get current time in user's timezone
 const nowInUserTz = dateFnsTz.toZonedTime(new Date(), userTimezone);
 const currentTime = `${nowInUserTz.getHours().toString().padStart(2, '0')}:${nowInUserTz.getMinutes().toString().padStart(2, '0')}`;
-const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][nowInUserTz.getDay()];
+const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
+  nowInUserTz.getDay()
+];
 ```
 
 **Rule Evaluation:**
@@ -430,6 +443,7 @@ for (const candidate of orderedCandidates) {
 ```
 
 **Why Optimistic Locking?**
+
 - Multiple automations may run concurrently
 - Prevents same draft from being scheduled twice
 - Uses `executionVersion` counter for conflict detection
@@ -443,9 +457,7 @@ for (const defaultValue of automation.defaultValues) {
   const fieldName = defaultValue.fieldName;
   const currentValue = draft[fieldName];
 
-  const shouldApply = defaultValue.applyIfEmpty
-    ? isEmpty(currentValue)
-    : true;
+  const shouldApply = defaultValue.applyIfEmpty ? isEmpty(currentValue) : true;
 
   if (shouldApply) {
     updates[fieldName] = defaultValue.value;
@@ -485,6 +497,7 @@ const actualPublishAt = new Date(now.getTime() + jitterSeconds * 1000);
 ```
 
 **Example:**
+
 - `jitterMinSeconds: 0`, `jitterMaxSeconds: 300` (5 min)
 - Random jitter: 0-300 seconds
 - If jitter=173, actualPublishAt = now + 173 seconds
@@ -531,6 +544,7 @@ await prisma.automationExecutionLog.create({
 ```
 
 **Use Cases:**
+
 - Debugging ("Why didn't my automation run?")
 - Analytics (posts per day, success rate)
 - User visibility (automation history)
@@ -542,36 +556,44 @@ await prisma.automationExecutionLog.create({
 ### API Validation
 
 **Create Automation:**
+
 ```typescript
-const createAutomationSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  draftSelectionMethod: z.enum(["random", "fifo", "lifo"]).default("fifo"),
-  jitterMinSeconds: z.number().int().min(0).max(3600).default(0),
-  jitterMaxSeconds: z.number().int().min(0).max(3600).default(300),
-  autoAddToSaleQueue: z.boolean().default(false),
-  saleQueuePresetId: z.string().uuid().optional(),
-}).refine(
-  (data) => {
-    // If sale queue enabled, must have preset
-    if (data.autoAddToSaleQueue && !data.saleQueuePresetId) {
-      return false;
-    }
-    return true;
-  },
-  { message: "Must select price preset when sale queue is enabled" }
-);
+const createAutomationSchema = z
+  .object({
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional(),
+    color: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .optional(),
+    draftSelectionMethod: z.enum(['random', 'fifo', 'lifo']).default('fifo'),
+    jitterMinSeconds: z.number().int().min(0).max(3600).default(0),
+    jitterMaxSeconds: z.number().int().min(0).max(3600).default(300),
+    autoAddToSaleQueue: z.boolean().default(false),
+    saleQueuePresetId: z.string().uuid().optional(),
+  })
+  .refine(
+    (data) => {
+      // If sale queue enabled, must have preset
+      if (data.autoAddToSaleQueue && !data.saleQueuePresetId) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'Must select price preset when sale queue is enabled' }
+  );
 ```
 
 **Jitter Range Validation:**
+
 ```typescript
 if (data.jitterMinSeconds > data.jitterMaxSeconds) {
-  throw new AppError(400, "jitterMinSeconds cannot be greater than jitterMaxSeconds");
+  throw new AppError(400, 'jitterMinSeconds cannot be greater than jitterMaxSeconds');
 }
 ```
 
 **Enable Automation:**
+
 ```typescript
 if (data.enabled === true) {
   const ruleCount = await prisma.automationScheduleRule.count({
@@ -579,15 +601,19 @@ if (data.enabled === true) {
   });
 
   if (ruleCount === 0) {
-    throw new AppError(400, "Cannot enable automation without at least one active schedule rule");
+    throw new AppError(400, 'Cannot enable automation without at least one active schedule rule');
   }
 }
 ```
 
 **Concurrent Modification:**
+
 ```typescript
 if (automation.isExecuting) {
-  throw new AppError(409, "Cannot update automation while it is executing. Please try again in a moment.");
+  throw new AppError(
+    409,
+    'Cannot update automation while it is executing. Please try again in a moment.'
+  );
 }
 ```
 
@@ -600,6 +626,7 @@ if (automation.isExecuting) {
 **Goal:** Schedule 1 post at 2pm and 1 post at 8pm, Monday-Friday.
 
 **Automation Config:**
+
 ```json
 {
   "name": "Weekday Posts",
@@ -624,6 +651,7 @@ if (automation.isExecuting) {
 ```
 
 **Behavior:**
+
 - At 2:00pm (±10 min jitter), schedules 1 random draft (Monday-Friday)
 - At 8:00pm (±10 min jitter), schedules 1 random draft (Monday-Friday)
 - User's timezone used for "2pm" and "8pm"
@@ -633,6 +661,7 @@ if (automation.isExecuting) {
 **Goal:** Schedule 2 posts every 4 hours, max 10 per day.
 
 **Automation Config:**
+
 ```json
 {
   "name": "Frequent Posts",
@@ -656,6 +685,7 @@ if (automation.isExecuting) {
 ```
 
 **Behavior:**
+
 - Every 4 hours, schedules 2 oldest drafts (FIFO)
 - Daily quota rule prevents scheduling if already scheduled 10 today
 - If 8 scheduled today at 11pm, interval rule won't trigger (blocked by quota)
@@ -665,6 +695,7 @@ if (automation.isExecuting) {
 **Goal:** Random exclusive posts 3x/day, auto-priced at $30-$100.
 
 **Automation Config:**
+
 ```json
 {
   "name": "Exclusive Art",
@@ -691,6 +722,7 @@ if (automation.isExecuting) {
 ```
 
 **Price Preset:**
+
 ```json
 {
   "name": "Variable Pricing",
@@ -702,6 +734,7 @@ if (automation.isExecuting) {
 ```
 
 **Behavior:**
+
 - Schedules up to 3 random drafts per day (spread throughout day)
 - Each scheduled deviation:
   - Has `displayResolution: 8` (1920px, forced)
@@ -728,16 +761,19 @@ if (automation.isExecuting) {
 **FIFO/LIFO:** `count * 3` drafts
 
 **Why Random Needs Large Pool?**
+
 - Ensures randomness across entire draft library
 - Without large pool, would only randomize first 10 drafts
 
 **Why FIFO/LIFO Use 3x?**
+
 - Extra candidates in case of lock failures
 - If 5 needed, fetch 15, handle concurrent automation conflicts
 
 ### Database Queries
 
 **Optimization:**
+
 ```sql
 -- Index for draft selection
 CREATE INDEX idx_deviations_user_status_scheduled ON deviations(user_id, status, scheduled_at);
@@ -747,6 +783,7 @@ CREATE INDEX idx_automation_logs_automation_executed ON automation_execution_log
 ```
 
 **Query Count per Run:**
+
 - 1 query: Find enabled automations
 - N queries: Process each automation (N = automation count)
 - Per automation: ~5-10 queries (evaluate rules, select drafts, schedule, log)
@@ -760,6 +797,7 @@ CREATE INDEX idx_automation_logs_automation_executed ON automation_execution_log
 ### "Automation not triggering"
 
 **Check:**
+
 1. Is automation enabled? (`enabled: true`)
 2. Are schedule rules enabled? (`scheduleRules[].enabled: true`)
 3. Are there available drafts? (status='draft', has files, scheduledAt=null)
@@ -767,6 +805,7 @@ CREATE INDEX idx_automation_logs_automation_executed ON automation_execution_log
 5. Is automation execution locked? (check `isExecuting`, `lastExecutionLock`)
 
 **Debug:**
+
 ```typescript
 // Check execution logs
 const logs = await prisma.automationExecutionLog.findMany({
@@ -784,8 +823,9 @@ const logs = await prisma.automationExecutionLog.findMany({
 **Cause:** Drafts have same `createdAt` timestamp (bulk upload).
 
 **Fix:** Add sort by `id` as tiebreaker:
+
 ```typescript
-orderBy: [{ createdAt: 'asc' }, { id: 'asc' }]
+orderBy: [{ createdAt: 'asc' }, { id: 'asc' }];
 ```
 
 ### "Daily quota not working"
@@ -793,6 +833,7 @@ orderBy: [{ createdAt: 'asc' }, { id: 'asc' }]
 **Cause:** User timezone mismatch.
 
 **Check:**
+
 ```typescript
 const user = await prisma.user.findUnique({
   where: { id: userId },
@@ -809,6 +850,7 @@ const user = await prisma.user.findUnique({
 **Cause:** Small jitter range (e.g., 0-30 seconds).
 
 **Recommendation:** Use 0-1800 seconds (30 min) for natural spread:
+
 ```json
 {
   "jitterMinSeconds": 0,
@@ -831,6 +873,7 @@ const user = await prisma.user.findUnique({
 ## Future Enhancements
 
 **Planned Features:**
+
 - **Time ranges:** "Schedule between 2pm-8pm"
 - **Weighted selection:** "70% random, 30% oldest"
 - **Conditional rules:** "Only if no posts in last 6 hours"
@@ -838,5 +881,6 @@ const user = await prisma.user.findUnique({
 - **Retry failed scheduling:** Auto-retry if queue fails
 
 **Not Planned:**
+
 - AI-powered scheduling (out of scope for Core)
 - External calendar integration (use API instead)

@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuthStore } from "@/stores/auth";
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuthStore } from '@/stores/auth';
 
 export function Callback() {
   const navigate = useNavigate();
@@ -25,15 +25,15 @@ export function Callback() {
   const { fetchUser } = useAuthStore();
 
   useEffect(() => {
-    const error = searchParams.get("error");
+    const error = searchParams.get('error');
     if (error) {
-      navigate("/login?error=" + encodeURIComponent(error));
+      navigate('/login?error=' + encodeURIComponent(error));
       return;
     }
 
     // Fetch user data after OAuth callback
     fetchUser().then(() => {
-      navigate("/dashboard");
+      navigate('/dashboard');
     });
   }, [searchParams, navigate, fetchUser]);
 

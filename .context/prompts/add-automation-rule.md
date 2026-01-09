@@ -15,12 +15,14 @@
 ## Step 1: Define Rule Type
 
 **Questions to Answer:**
+
 1. What scheduling behavior does this rule provide?
 2. What parameters does it need?
 3. How does it evaluate (boolean logic)?
 4. Does it conflict with existing rules?
 
 **Example:**
+
 ```
 Type: Weekly Quota
 Purpose: Limit posts per week (e.g., max 10 per week)
@@ -59,20 +61,31 @@ model AutomationScheduleRule {
 
 ```typescript
 // Zod schema for API validation
-const scheduleRuleSchema = z.object({
-  type: z.enum(["day_of_week", "time_range", "daily_quota", "weekly_quota"]),
-  daysOfWeek: z.array(z.enum(["monday", "tuesday", /* ... */])).optional(),
-  timeStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  timeEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  dailyQuota: z.number().int().positive().optional(),
-  maxPostsPerWeek: z.number().int().positive().optional(), // NEW
-}).refine((data) => {
-  // Validate weekly_quota has required fields
-  if (data.type === "weekly_quota") {
-    return data.maxPostsPerWeek !== undefined;
-  }
-  return true;
-}, { message: "weekly_quota requires maxPostsPerWeek" });
+const scheduleRuleSchema = z
+  .object({
+    type: z.enum(['day_of_week', 'time_range', 'daily_quota', 'weekly_quota']),
+    daysOfWeek: z.array(z.enum(['monday', 'tuesday' /* ... */])).optional(),
+    timeStart: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .optional(),
+    timeEnd: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .optional(),
+    dailyQuota: z.number().int().positive().optional(),
+    maxPostsPerWeek: z.number().int().positive().optional(), // NEW
+  })
+  .refine(
+    (data) => {
+      // Validate weekly_quota has required fields
+      if (data.type === 'weekly_quota') {
+        return data.maxPostsPerWeek !== undefined;
+      }
+      return true;
+    },
+    { message: 'weekly_quota requires maxPostsPerWeek' }
+  );
 ```
 
 ---
@@ -123,23 +136,25 @@ async function evaluateScheduleRules(
 
 ```tsx
 // Add UI for new rule type
-{ruleType === "weekly_quota" && (
-  <div>
-    <Label htmlFor="maxPostsPerWeek">Max Posts Per Week</Label>
-    <Input
-      id="maxPostsPerWeek"
-      type="number"
-      min={1}
-      value={rule.maxPostsPerWeek || ""}
-      onChange={(e) =>
-        updateRule(index, {
-          ...rule,
-          maxPostsPerWeek: parseInt(e.target.value),
-        })
-      }
-    />
-  </div>
-)}
+{
+  ruleType === 'weekly_quota' && (
+    <div>
+      <Label htmlFor="maxPostsPerWeek">Max Posts Per Week</Label>
+      <Input
+        id="maxPostsPerWeek"
+        type="number"
+        min={1}
+        value={rule.maxPostsPerWeek || ''}
+        onChange={(e) =>
+          updateRule(index, {
+            ...rule,
+            maxPostsPerWeek: parseInt(e.target.value),
+          })
+        }
+      />
+    </div>
+  );
+}
 ```
 
 ---
@@ -149,10 +164,10 @@ async function evaluateScheduleRules(
 **Location:** `apps/isekai-publisher/src/jobs/auto-scheduler.test.ts`
 
 ```typescript
-describe("Weekly Quota Rule", () => {
-  it("should allow post if under weekly quota", async () => {
+describe('Weekly Quota Rule', () => {
+  it('should allow post if under weekly quota', async () => {
     const automation = await createAutomation({
-      rules: [{ type: "weekly_quota", maxPostsPerWeek: 10 }],
+      rules: [{ type: 'weekly_quota', maxPostsPerWeek: 10 }],
     });
 
     // Simulate 5 posts this week
@@ -161,15 +176,15 @@ describe("Weekly Quota Rule", () => {
     const canSchedule = await evaluateScheduleRules(
       automation,
       automation.rules,
-      "America/New_York"
+      'America/New_York'
     );
 
     expect(canSchedule).toBe(true);
   });
 
-  it("should block post if weekly quota reached", async () => {
+  it('should block post if weekly quota reached', async () => {
     const automation = await createAutomation({
-      rules: [{ type: "weekly_quota", maxPostsPerWeek: 10 }],
+      rules: [{ type: 'weekly_quota', maxPostsPerWeek: 10 }],
     });
 
     // Simulate 10 posts this week (quota reached)
@@ -178,7 +193,7 @@ describe("Weekly Quota Rule", () => {
     const canSchedule = await evaluateScheduleRules(
       automation,
       automation.rules,
-      "America/New_York"
+      'America/New_York'
     );
 
     expect(canSchedule).toBe(false);
@@ -192,7 +207,7 @@ describe("Weekly Quota Rule", () => {
 
 **File:** `.context/features/automation.md`
 
-```markdown
+````markdown
 ### Weekly Quota Rule
 
 **Type:** `weekly_quota`
@@ -200,25 +215,31 @@ describe("Weekly Quota Rule", () => {
 **Purpose:** Limit the number of posts per calendar week.
 
 **Parameters:**
+
 - `maxPostsPerWeek` (number) - Maximum posts allowed per week
 
 **Evaluation:**
+
 - Counts posts in current week (Sunday to Saturday)
 - Timezone-aware (uses user's timezone)
 - Allows scheduling if count < maxPostsPerWeek
 
 **Example:**
+
 ```json
 {
   "type": "weekly_quota",
   "maxPostsPerWeek": 10
 }
 ```
+````
 
 **Use Cases:**
+
 - Prevent overwhelming followers with too many posts
 - Spread content evenly across weeks
 - Comply with platform limits
+
 ```
 
 ---
@@ -260,3 +281,4 @@ describe("Weekly Quota Rule", () => {
 - `.context/features/automation.md`
 - `.context/database/models.md`
 - `.context/testing.md`
+```

@@ -15,16 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import {
   CreditCardIcon,
   ExternalLinkIcon,
   LogOutIcon,
   MoreVerticalIcon,
   SettingsIcon,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,14 +33,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { useAuthStore } from "@/stores/auth";
+} from '@/components/ui/sidebar';
+import { useAuthStore } from '@/stores/auth';
 
 export function NavUser({
   user,
@@ -57,16 +57,16 @@ export function NavUser({
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    window.location.href = '/login';
   };
 
   const initials =
     user.name
-      .split(" ")
+      .split(' ')
       .map((n) => n[0])
-      .join("")
+      .join('')
       .toUpperCase()
-      .slice(0, 2) || "U";
+      .slice(0, 2) || 'U';
 
   return (
     <SidebarMenu>
@@ -85,20 +85,14 @@ export function NavUser({
                   className="flex items-center gap-2 px-3 h-8 rounded-lg hover:bg-sidebar-accent transition-colors text-sm text-muted-foreground hover:text-sidebar-accent-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <img
-                    src="/deviantart.svg"
-                    alt="DeviantArt"
-                    className="h-4 w-4"
-                  />
+                  <img src="/deviantart.svg" alt="DeviantArt" className="h-4 w-4" />
                   <span>Open DeviantArt</span>
                   <ExternalLinkIcon className="h-3 w-3" />
                 </a>
               )}
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -111,7 +105,7 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
           >
@@ -119,9 +113,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>

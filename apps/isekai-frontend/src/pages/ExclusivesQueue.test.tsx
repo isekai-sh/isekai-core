@@ -244,22 +244,22 @@ describe('ExclusivesQueue', () => {
     render(<ExclusivesQueue />);
 
     // Check status summary cards show correct counts
-    const statusCards = screen.getAllByRole('generic').filter((el) =>
-      el.textContent?.includes('Pending') ||
-      el.textContent?.includes('Processing') ||
-      el.textContent?.includes('Completed') ||
-      el.textContent?.includes('Failed')
-    );
+    const statusCards = screen
+      .getAllByRole('generic')
+      .filter(
+        (el) =>
+          el.textContent?.includes('Pending') ||
+          el.textContent?.includes('Processing') ||
+          el.textContent?.includes('Completed') ||
+          el.textContent?.includes('Failed')
+      );
 
     expect(statusCards.length).toBeGreaterThan(0);
   });
 
   it('should filter queue by status', async () => {
     const user = userEvent.setup();
-    const items = [
-      createMockQueueItem('1', 'pending'),
-      createMockQueueItem('2', 'completed'),
-    ];
+    const items = [createMockQueueItem('1', 'pending'), createMockQueueItem('2', 'completed')];
 
     vi.mocked(useQuery).mockImplementation((options: any) => {
       if (options.queryKey[0] === 'saleQueue') {
@@ -320,7 +320,9 @@ describe('ExclusivesQueue', () => {
 
     const removeButtons = screen.getAllByRole('button').filter((button) => {
       const svg = button.querySelector('svg');
-      return svg?.classList.contains('lucide-trash-2') || svg?.getAttribute('class')?.includes('trash');
+      return (
+        svg?.classList.contains('lucide-trash-2') || svg?.getAttribute('class')?.includes('trash')
+      );
     });
 
     if (removeButtons.length > 0) {
@@ -589,7 +591,9 @@ describe('ExclusivesQueue', () => {
     await waitFor(() => {
       const deleteButtons = screen.getAllByRole('button').filter((button) => {
         const svg = button.querySelector('svg');
-        return svg?.classList.contains('lucide-trash-2') || svg?.getAttribute('class')?.includes('trash');
+        return (
+          svg?.classList.contains('lucide-trash-2') || svg?.getAttribute('class')?.includes('trash')
+        );
       });
 
       if (deleteButtons.length > 0) {

@@ -21,23 +21,19 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { FileImage, Images } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { FileImage, Images } from 'lucide-react';
 
 interface UploadModeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onModeSelected: (mode: "single" | "multiple") => void;
+  onModeSelected: (mode: 'single' | 'multiple') => void;
 }
 
-export function UploadModeDialog({
-  open,
-  onOpenChange,
-  onModeSelected,
-}: UploadModeDialogProps) {
-  const handleModeSelect = (mode: "single" | "multiple") => {
+export function UploadModeDialog({ open, onOpenChange, onModeSelected }: UploadModeDialogProps) {
+  const handleModeSelect = (mode: 'single' | 'multiple') => {
     onModeSelected(mode);
   };
 
@@ -47,15 +43,14 @@ export function UploadModeDialog({
         <DialogHeader>
           <DialogTitle>How would you like to upload?</DialogTitle>
           <DialogDescription>
-            Choose whether to create a single artwork with multiple files or
-            separate artworks
+            Choose whether to create a single artwork with multiple files or separate artworks
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-4">
           <Card
             className="p-4 cursor-pointer hover:bg-accent transition-colors border-2 hover:border-primary group"
-            onClick={() => handleModeSelect("multiple")}
+            onClick={() => handleModeSelect('multiple')}
           >
             <div className="flex items-start gap-4">
               <div className="flex-1">
@@ -69,8 +64,7 @@ export function UploadModeDialog({
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground group-hover:text-accent-foreground">
-                  Each file becomes its own deviation. Great for batch uploading
-                  individual pieces.
+                  Each file becomes its own deviation. Great for batch uploading individual pieces.
                 </p>
               </div>
             </div>
@@ -78,7 +72,7 @@ export function UploadModeDialog({
 
           <Card
             className="p-4 cursor-pointer hover:bg-accent transition-colors border-2 hover:border-primary group"
-            onClick={() => handleModeSelect("single")}
+            onClick={() => handleModeSelect('single')}
           >
             <div className="flex items-start gap-4">
               <div className="flex-1">
@@ -92,8 +86,8 @@ export function UploadModeDialog({
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground group-hover:text-accent-foreground">
-                  Perfect for galleries, photo sets, or multi-page artworks. All
-                  files will be part of one deviation.
+                  Perfect for galleries, photo sets, or multi-page artworks. All files will be part
+                  of one deviation.
                 </p>
               </div>
             </div>

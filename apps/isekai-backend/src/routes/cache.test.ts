@@ -60,7 +60,9 @@ import { RedisCache } from '../lib/redis-cache.js';
 // Helper to call route handlers directly
 async function callRoute(method: string, path: string, req: any, res: any) {
   const routes = (cacheRouter as any).stack;
-  const route = routes.find((r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]);
+  const route = routes.find(
+    (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+  );
 
   if (!route) {
     throw new Error(`Route ${method} ${path} not found`);

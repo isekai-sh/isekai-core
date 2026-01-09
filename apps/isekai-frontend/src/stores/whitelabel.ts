@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { create } from "zustand";
-import { config, type WhitelabelConfig } from "@/lib/api";
+import { create } from 'zustand';
+import { config, type WhitelabelConfig } from '@/lib/api';
 
 interface WhitelabelState {
   config: WhitelabelConfig | null;
@@ -26,7 +26,7 @@ interface WhitelabelState {
   applyBranding: () => void;
 }
 
-const DEFAULT_PRODUCT_NAME = "Isekai";
+const DEFAULT_PRODUCT_NAME = 'Isekai';
 
 export const useWhitelabelStore = create<WhitelabelState>((set, get) => ({
   config: null,
@@ -65,14 +65,12 @@ export const useWhitelabelStore = create<WhitelabelState>((set, get) => ({
 
     // Update favicon if custom one is provided
     if (whitelabelConfig.faviconUrl) {
-      const existingFavicon = document.querySelector(
-        'link[rel="icon"]'
-      ) as HTMLLinkElement;
+      const existingFavicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
       if (existingFavicon) {
         existingFavicon.href = whitelabelConfig.faviconUrl;
       } else {
-        const favicon = document.createElement("link");
-        favicon.rel = "icon";
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
         favicon.href = whitelabelConfig.faviconUrl;
         document.head.appendChild(favicon);
       }
@@ -82,7 +80,7 @@ export const useWhitelabelStore = create<WhitelabelState>((set, get) => ({
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
-        "content",
+        'content',
         `${productName} - Schedule and manage your DeviantArt posts`
       );
     }

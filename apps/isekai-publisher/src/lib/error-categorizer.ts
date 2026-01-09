@@ -6,15 +6,15 @@
  */
 
 export enum ErrorCategory {
-  RATE_LIMIT = 'RATE_LIMIT',           // 429 - Use circuit breaker + adaptive backoff
-  AUTH_ERROR = 'AUTH_ERROR',           // 401, 403 - Refresh token, then retry
-  NETWORK_ERROR = 'NETWORK_ERROR',     // Timeout, connection errors
+  RATE_LIMIT = 'RATE_LIMIT', // 429 - Use circuit breaker + adaptive backoff
+  AUTH_ERROR = 'AUTH_ERROR', // 401, 403 - Refresh token, then retry
+  NETWORK_ERROR = 'NETWORK_ERROR', // Timeout, connection errors
   VALIDATION_ERROR = 'VALIDATION_ERROR', // 400 - No retry, move to DLQ
-  SERVER_ERROR = 'SERVER_ERROR',       // 500-504 - Retry with backoff
-  TOKEN_EXPIRED = 'TOKEN_EXPIRED',     // Access token refresh needed
+  SERVER_ERROR = 'SERVER_ERROR', // 500-504 - Retry with backoff
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED', // Access token refresh needed
   REFRESH_TOKEN_EXPIRED = 'REFRESH_TOKEN_EXPIRED', // Refresh token expired, user must re-auth
-  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',   // API quota exhausted
-  UNKNOWN = 'UNKNOWN',                 // Unknown error - conservative retry
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED', // API quota exhausted
+  UNKNOWN = 'UNKNOWN', // Unknown error - conservative retry
 }
 
 export interface RetryStrategy {
@@ -93,10 +93,16 @@ export class ErrorCategorizer {
     if (status === 401) {
       // Check if token expired specifically
       const message = error.message?.toLowerCase() || '';
-      if (message.includes('refresh token') && (message.includes('expired') || message.includes('invalid'))) {
+      if (
+        message.includes('refresh token') &&
+        (message.includes('expired') || message.includes('invalid'))
+      ) {
         return ErrorCategory.REFRESH_TOKEN_EXPIRED;
       }
-      if (message.includes('token') && (message.includes('expired') || message.includes('invalid'))) {
+      if (
+        message.includes('token') &&
+        (message.includes('expired') || message.includes('invalid'))
+      ) {
         return ErrorCategory.TOKEN_EXPIRED;
       }
       return ErrorCategory.AUTH_ERROR;
@@ -125,7 +131,10 @@ export class ErrorCategorizer {
       return ErrorCategory.QUOTA_EXCEEDED;
     }
 
-    if (message.includes('refresh token') && (message.includes('expired') || message.includes('invalid'))) {
+    if (
+      message.includes('refresh token') &&
+      (message.includes('expired') || message.includes('invalid'))
+    ) {
       return ErrorCategory.REFRESH_TOKEN_EXPIRED;
     }
 
@@ -321,10 +330,7 @@ export class ErrorCategorizer {
    */
   static formatError(categorized: CategorizedError): string {
     const { category, errorContext } = categorized;
-    const parts = [
-      `[${category}]`,
-      errorContext.message,
-    ];
+    const parts = [`[${category}]`, errorContext.message];
 
     if (errorContext.status) {
       parts.push(`(HTTP ${errorContext.status})`);

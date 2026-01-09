@@ -15,15 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import rateLimit from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
-import { RedisClientManager } from "../lib/redis-client.js";
+import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import { RedisClientManager } from '../lib/redis-client.js';
 
 // ComfyUI upload rate limit - 100 requests per 15 minutes
 export const comfyUIUploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
-  message: "Too many upload requests, please try again later",
+  message: 'Too many upload requests, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -32,7 +32,7 @@ export const comfyUIUploadLimiter = rateLimit({
 export const apiKeyCreationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
-  message: "Too many API key creation attempts",
+  message: 'Too many API key creation attempts',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -52,10 +52,10 @@ export const scheduleRateLimit = rateLimit({
       const redis = await RedisClientManager.getClient();
       return redis.call(...args) as any;
     },
-    prefix: "rl:schedule:",
+    prefix: 'rl:schedule:',
   }),
-  message: "Too many scheduling requests. Please try again later.",
-  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
+  message: 'Too many scheduling requests. Please try again later.',
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 // Batch operations rate limit - 30 operations per 5 minutes
@@ -73,8 +73,8 @@ export const batchRateLimit = rateLimit({
       const redis = await RedisClientManager.getClient();
       return redis.call(...args) as any;
     },
-    prefix: "rl:batch:",
+    prefix: 'rl:batch:',
   }),
-  message: "Too many batch requests. Please try again in a few minutes.",
-  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
+  message: 'Too many batch requests. Please try again in a few minutes.',
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });

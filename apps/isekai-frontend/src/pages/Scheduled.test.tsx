@@ -74,10 +74,7 @@ describe('Scheduled', () => {
     cancelQueries: vi.fn(),
   };
 
-  const createMockScheduledDeviation = (
-    id: string,
-    overrides?: Partial<Deviation>
-  ): Deviation => ({
+  const createMockScheduledDeviation = (id: string, overrides?: Partial<Deviation>): Deviation => ({
     id,
     title: `Scheduled ${id}`,
     status: 'scheduled',
@@ -202,10 +199,7 @@ describe('Scheduled', () => {
 
   it('should handle select all functionality', async () => {
     const user = userEvent.setup();
-    const deviations = [
-      createMockScheduledDeviation('1'),
-      createMockScheduledDeviation('2'),
-    ];
+    const deviations = [createMockScheduledDeviation('1'), createMockScheduledDeviation('2')];
 
     vi.mocked(useQuery).mockReturnValue({
       data: { deviations, total: 2 },
@@ -357,9 +351,7 @@ describe('Scheduled', () => {
 
   it('should show past due badge for overdue deviations', () => {
     const pastDate = new Date(Date.now() - 7200000);
-    const deviations = [
-      createMockScheduledDeviation('1', { scheduledAt: pastDate.toISOString() }),
-    ];
+    const deviations = [createMockScheduledDeviation('1', { scheduledAt: pastDate.toISOString() })];
 
     vi.mocked(useQuery).mockReturnValue({
       data: { deviations, total: 1 },

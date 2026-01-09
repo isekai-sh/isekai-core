@@ -9,6 +9,7 @@
 ## [0.1.0-alpha.5] - 2026-01-05
 
 ### Added
+
 - Substrate Methodology documentation (`.context/` directory with 30+ files)
 - Comprehensive API documentation
 - Complete authentication flow documentation
@@ -16,6 +17,7 @@
 - Error codes catalog
 
 ### Changed
+
 - Improved documentation structure for AI-assisted development
 
 ---
@@ -23,11 +25,13 @@
 ## [0.1.0-alpha.4] - 2025-12-30
 
 ### Added
+
 - Session store auto-detection (Redis → PostgreSQL fallback)
 - Token maintenance email warnings (7 days, 1 day before expiry)
 - Improved error handling for expired tokens
 
 ### Fixed
+
 - Session persistence issues in production
 - Token refresh edge cases
 
@@ -36,6 +40,7 @@
 ## [0.1.0-alpha.3] - 2025-12-28
 
 ### Added
+
 - **Storage Abstraction Layer:** Support for multiple S3-compatible providers
   - Cloudflare R2 (recommended for production)
   - AWS S3
@@ -50,6 +55,7 @@
   - Team invite system
 
 ### Changed
+
 - MinIO now default storage provider (easier local setup)
 - Storage service abstracted behind interface
 - Session storage auto-detection improved
@@ -59,6 +65,7 @@
 ## [0.1.0-alpha.2] - 2025-12-22
 
 ### Added
+
 - **Docker Support:**
   - Pre-built Docker images on GitHub Container Registry
   - `docker-compose.yml` for easy local setup
@@ -70,10 +77,12 @@
   - GitHub Actions CI with test coverage
 
 ### Changed
+
 - Migrated from Drizzle to Prisma ORM
 - Improved build process with Docker caching
 
 ### Known Issues
+
 - Low coverage in frontend tests
 - Linting warnings not addressed
 
@@ -86,12 +95,14 @@
 ### Features
 
 #### Authentication & Core
+
 - DeviantArt OAuth 2.0 authentication
 - Session-based user management
 - API key system for external integrations (ComfyUI)
 - AES-256-GCM encryption for tokens
 
 #### Deviation Management
+
 - Draft system for unpublished work
 - Scheduled queue with jitter for natural timing
 - Published history with activity tracking
@@ -100,6 +111,7 @@
 - Upload modes: single file, multiple files
 
 #### Automation System
+
 - **Workflow Automation:**
   - Fixed time rules (e.g., "2pm daily")
   - Fixed interval rules (e.g., "every 4 hours")
@@ -118,6 +130,7 @@
   - Health check endpoints
 
 #### Exclusives & Sales
+
 - **Sales Queue:**
   - Batch-process exclusive content pricing
   - Price preset system (fixed or variable pricing)
@@ -129,12 +142,14 @@
   - Default preset selection
 
 #### Organization
+
 - Gallery management with drag-and-drop
 - Gallery folder synchronization with DeviantArt
 - Template system for reusable metadata
 - Tag templates, description templates
 
 #### Browse - Inspiration
+
 - **6 Browse Modes:**
   - Home feed (personalized)
   - Daily deviations (staff picks)
@@ -153,6 +168,7 @@
   - Circuit breaker pattern for rate limit protection
 
 #### Technical Infrastructure
+
 - **Backend:**
   - Express.js REST API
   - PostgreSQL database
@@ -172,6 +188,7 @@
   - Shared package for types & Prisma client
 
 #### Resilience & Reliability
+
 - **Execution Locks:**
   - UUID-based optimistic locking
   - Prevents duplicate publishes
@@ -192,6 +209,7 @@
   - Token maintenance (every 6 hours)
 
 #### Security
+
 - OAuth-only authentication (no passwords)
 - AES-256-GCM token encryption
 - API key bcrypt hashing
@@ -200,6 +218,7 @@
 - HTTPS enforcement (production)
 
 ### Known Issues
+
 - Limited test coverage (working toward 30%)
 - Linting warnings throughout codebase
 - Chrome extension for exclusive sales not yet developed
@@ -210,6 +229,7 @@
 ## Versioning Scheme
 
 ### Pre-1.0.0 (Current)
+
 - **v0.x.x:** Development versions
 - **Breaking changes may occur** between minor versions
 - **alpha:** Early development, expect bugs
@@ -217,6 +237,7 @@
 - **rc:** Release candidate, final testing
 
 ### Post-1.0.0 (Future)
+
 - **Major (x.0.0):** Breaking changes
 - **Minor (0.x.0):** New features, backward compatible
 - **Patch (0.0.x):** Bug fixes, backward compatible
@@ -226,6 +247,7 @@
 ## Release Process
 
 ### Alpha Releases
+
 1. Tag version: `git tag v0.1.0-alpha.X`
 2. Push tag: `git push origin v0.1.0-alpha.X`
 3. GitHub Actions builds Docker images
@@ -233,6 +255,7 @@
 5. Create GitHub release with notes
 
 ### Future Stable Releases (1.0.0+)
+
 1. Create release branch: `release/v1.0.0`
 2. Update version in `package.json`
 3. Update changelog
@@ -250,10 +273,12 @@
 **Breaking Changes:** None
 
 **New Features:**
+
 - Multi-tenant support (optional)
 - Storage abstraction (transparent upgrade)
 
 **Action Required:**
+
 - Update `.env` with MinIO settings (or keep existing R2/S3)
 - Rebuild Docker images: `docker-compose build`
 
@@ -262,6 +287,7 @@
 **Breaking Changes:** ORM migration (Drizzle → Prisma)
 
 **Action Required:**
+
 1. Backup database
 2. Run Prisma migrations: `pnpm prisma migrate deploy`
 3. Regenerate client: `pnpm prisma generate`

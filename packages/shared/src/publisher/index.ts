@@ -25,5 +25,5 @@
  * use identical publishing behavior.
  */
 
-export * from "./types.js";
-export * from "./core.js";
+export * from './types.js';
+export * from './core.js';

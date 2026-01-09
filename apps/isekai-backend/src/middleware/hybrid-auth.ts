@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Request, Response, NextFunction } from "express";
-import { prisma } from "../db/index.js";
-import { hashApiKey, isValidApiKeyFormat } from "../lib/api-key-utils.js";
-import type { User } from "../db/index.js";
+import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../db/index.js';
+import { hashApiKey, isValidApiKeyFormat } from '../lib/api-key-utils.js';
+import type { User } from '../db/index.js';
 
 /**
  * Hybrid authentication middleware
@@ -26,15 +26,11 @@ import type { User } from "../db/index.js";
  * 1. Session authentication (for web frontend)
  * 2. API key authentication (for API access)
  */
-export async function hybridAuthMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function hybridAuthMiddleware(req: Request, res: Response, next: NextFunction) {
   // Try API key authentication first (Authorization header)
   const authHeader = req.headers.authorization;
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     return await apiKeyAuth(req, res, next);
   }
 
@@ -52,8 +48,8 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
   // Validate format
   if (!isValidApiKeyFormat(apiKey)) {
     return res.status(401).json({
-      error: "Unauthorized",
-      message: "Invalid API key format",
+      error: 'Unauthorized',
+      message: 'Invalid API key format',
     });
   }
 
@@ -73,8 +69,8 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
 
     if (!apiKeyRecord || !apiKeyRecord.user) {
       return res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid or revoked API key",
+        error: 'Unauthorized',
+        message: 'Invalid or revoked API key',
       });
     }
 
@@ -84,7 +80,7 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
         where: { id: apiKeyRecord.id },
         data: { lastUsedAt: new Date() },
       })
-      .catch((err) => console.error("Failed to update lastUsedAt:", err));
+      .catch((err) => console.error('Failed to update lastUsedAt:', err));
 
     // Attach user to request (same as session auth)
     req.user = apiKeyRecord.user;
@@ -95,8 +91,8 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
-    console.error("API key auth error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('API key auth error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 
@@ -108,8 +104,8 @@ async function sessionAuth(req: Request, res: Response, next: NextFunction) {
 
   if (!userId) {
     return res.status(401).json({
-      error: "Unauthorized",
-      message: "Please log in or provide an API key",
+      error: 'Unauthorized',
+      message: 'Please log in or provide an API key',
     });
   }
 
@@ -120,18 +116,18 @@ async function sessionAuth(req: Request, res: Response, next: NextFunction) {
 
     if (!user) {
       req.session.destroy((err) => {
-        if (err) console.error("[Auth] Session destroy error:", err);
+        if (err) console.error('[Auth] Session destroy error:', err);
       });
       return res.status(401).json({
-        error: "Unauthorized",
-        message: "User not found",
+        error: 'Unauthorized',
+        message: 'User not found',
       });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error("Session auth error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('Session auth error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

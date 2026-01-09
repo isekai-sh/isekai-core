@@ -15,13 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { Login } from "./Login";
-export { Callback } from "./Callback";
-export { Dashboard } from "./Dashboard";
-export { Inspiration } from "./Inspiration";
-export { Schedule } from "./Schedule";
-export { EditDeviation } from "./EditDeviation";
-export { Settings } from "./Settings";
-export { Galleries } from "./Galleries";
-export { GalleryDetail } from "./GalleryDetail";
-export { Templates } from "./Templates";
+export { Login } from './Login';
+export { Callback } from './Callback';
+export { Dashboard } from './Dashboard';
+export { Inspiration } from './Inspiration';
+export { Schedule } from './Schedule';
+export { EditDeviation } from './EditDeviation';
+export { Settings } from './Settings';
+export { Galleries } from './Galleries';
+export { GalleryDetail } from './GalleryDetail';
+export { Templates } from './Templates';

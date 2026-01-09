@@ -15,16 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { prisma } from "../db/index.js";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import type { User, Deviation, DeviationFile } from "../db/index.js";
-import type { UploadMode } from "@isekai/shared";
-import { getS3Client, getStorageConfig } from "@isekai/shared/storage";
-import { logger } from "./logger.js";
-import { env } from "./env.js";
+import { prisma } from '../db/index.js';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import type { User, Deviation, DeviationFile } from '../db/index.js';
+import type { UploadMode } from '@isekai/shared';
+import { getS3Client, getStorageConfig } from '@isekai/shared/storage';
+import { logger } from './logger.js';
+import { env } from './env.js';
 
-const DEVIANTART_TOKEN_URL = "https://www.deviantart.com/oauth2/token";
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_TOKEN_URL = 'https://www.deviantart.com/oauth2/token';
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
 // Get S3 client and config from shared storage module
 const s3Client = getS3Client();
@@ -37,9 +37,9 @@ export async function refreshTokenIfNeeded(user: User): Promise<string> {
   // Check if refresh token itself is expired
   if (user.refreshTokenExpiresAt && user.refreshTokenExpiresAt <= now) {
     const error: any = new Error(
-      "REFRESH_TOKEN_EXPIRED: DeviantArt refresh token has expired. User must re-authenticate."
+      'REFRESH_TOKEN_EXPIRED: DeviantArt refresh token has expired. User must re-authenticate.'
     );
-    error.code = "REFRESH_TOKEN_EXPIRED";
+    error.code = 'REFRESH_TOKEN_EXPIRED';
     error.userId = user.id;
     error.username = user.username;
     throw error;
@@ -50,13 +50,13 @@ export async function refreshTokenIfNeeded(user: User): Promise<string> {
     return user.accessToken;
   }
 
-  logger.info("Refreshing DeviantArt access token", { userId: user.id });
+  logger.info('Refreshing DeviantArt access token', { userId: user.id });
 
   const response = await fetch(DEVIANTART_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
       client_id: process.env.DEVIANTART_CLIENT_ID!,
       client_secret: process.env.DEVIANTART_CLIENT_SECRET!,
       refresh_token: user.refreshToken,
@@ -65,7 +65,7 @@ export async function refreshTokenIfNeeded(user: User): Promise<string> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    logger.error("DeviantArt token refresh failed", {
+    logger.error('DeviantArt token refresh failed', {
       userId: user.id,
       status: response.status,
       error: errorText,
@@ -74,19 +74,19 @@ export async function refreshTokenIfNeeded(user: User): Promise<string> {
     // Check if refresh token is invalid/expired
     if (
       response.status === 401 ||
-      errorText.toLowerCase().includes("invalid") ||
-      errorText.toLowerCase().includes("expired")
+      errorText.toLowerCase().includes('invalid') ||
+      errorText.toLowerCase().includes('expired')
     ) {
       const expiredError: any = new Error(
-        "REFRESH_TOKEN_EXPIRED: DeviantArt refresh token is invalid. User must re-authenticate."
+        'REFRESH_TOKEN_EXPIRED: DeviantArt refresh token is invalid. User must re-authenticate.'
       );
-      expiredError.code = "REFRESH_TOKEN_EXPIRED";
+      expiredError.code = 'REFRESH_TOKEN_EXPIRED';
       expiredError.userId = user.id;
       expiredError.username = user.username;
       throw expiredError;
     }
 
-    throw new Error("Failed to refresh DeviantArt token");
+    throw new Error('Failed to refresh DeviantArt token');
   }
 
   const data = await response.json();
@@ -122,9 +122,7 @@ export interface RefreshTokenStatus {
 export function getRefreshTokenStatus(user: User): RefreshTokenStatus {
   const now = new Date();
   const expiresAt = user.refreshTokenExpiresAt;
-  const daysUntilExpiry = Math.floor(
-    (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysUntilExpiry = Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
   return {
     isValid: expiresAt > now,
@@ -148,7 +146,7 @@ async function fetchFileFromStorage(storageKey: string): Promise<Buffer> {
 
   const response = await s3Client.send(getCommand);
   if (!response.Body) {
-    throw new Error("Failed to fetch file from storage");
+    throw new Error('Failed to fetch file from storage');
   }
 
   // Convert stream to buffer
@@ -170,7 +168,7 @@ async function uploadSingleFileToDeviantArt(
 
   // Check if we already have a stashItemId from a previous attempt
   if (deviation.stashItemId) {
-    logger.debug("Reusing existing stash item ID", {
+    logger.debug('Reusing existing stash item ID', {
       stashItemId: deviation.stashItemId,
       deviationId: deviation.id,
     });
@@ -185,47 +183,47 @@ async function uploadSingleFileToDeviantArt(
     const blob = new Blob([new Uint8Array(fileBuffer)], {
       type: file.mimeType,
     });
-    formData.append("file", blob, file.originalFilename);
+    formData.append('file', blob, file.originalFilename);
 
     // For multi-image deviations, use the main deviation title
     // For single files in multiple mode, could use original filename
-    formData.append("title", deviation.title);
+    formData.append('title', deviation.title);
 
     if (deviation.description) {
-      formData.append("artist_comments", deviation.description);
+      formData.append('artist_comments', deviation.description);
     }
 
     // Note: Tags are NOT sent during stash/submit - they will be added during publish
     // This is because DeviantArt's stash/submit doesn't properly handle tags
 
     if (deviation.isMature) {
-      formData.append("is_mature", "true");
+      formData.append('is_mature', 'true');
       if (deviation.matureLevel) {
-        formData.append("mature_level", deviation.matureLevel);
+        formData.append('mature_level', deviation.matureLevel);
       }
     }
 
     if (deviation.categoryPath) {
-      formData.append("catpath", deviation.categoryPath);
+      formData.append('catpath', deviation.categoryPath);
     }
 
     // Note: Gallery IDs are also NOT sent during stash/submit - will be added during publish
 
     if (deviation.allowComments !== undefined) {
-      formData.append("allow_comments", deviation.allowComments.toString());
+      formData.append('allow_comments', deviation.allowComments.toString());
     }
 
     if (deviation.allowFreeDownload) {
-      formData.append("allow_free_download", "true");
+      formData.append('allow_free_download', 'true');
     }
 
     if (deviation.isAiGenerated) {
-      formData.append("is_ai_generated", "true");
+      formData.append('is_ai_generated', 'true');
     }
 
     // Submit to DeviantArt
     const uploadResponse = await fetch(`${DEVIANTART_API_URL}/stash/submit`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -236,13 +234,11 @@ async function uploadSingleFileToDeviantArt(
       const errorText = await uploadResponse.text();
 
       // Extract headers for rate limiting and debugging
-      const retryAfter = uploadResponse.headers.get("Retry-After");
-      const xRateLimit = uploadResponse.headers.get("X-RateLimit-Reset");
-      const xRateLimitRemaining = uploadResponse.headers.get(
-        "X-RateLimit-Remaining"
-      );
+      const retryAfter = uploadResponse.headers.get('Retry-After');
+      const xRateLimit = uploadResponse.headers.get('X-RateLimit-Reset');
+      const xRateLimitRemaining = uploadResponse.headers.get('X-RateLimit-Remaining');
 
-      logger.error("DeviantArt stash upload failed", {
+      logger.error('DeviantArt stash upload failed', {
         status: uploadResponse.status,
         error: errorText,
         retryAfter,
@@ -252,9 +248,7 @@ async function uploadSingleFileToDeviantArt(
       });
 
       // Build detailed error with headers
-      const error: any = new Error(
-        `DeviantArt API error: ${uploadResponse.status}`
-      );
+      const error: any = new Error(`DeviantArt API error: ${uploadResponse.status}`);
       error.status = uploadResponse.status;
       error.statusCode = uploadResponse.status;
       error.response = uploadResponse;
@@ -268,13 +262,11 @@ async function uploadSingleFileToDeviantArt(
       if (uploadResponse.status === 429) {
         error.message = retryAfter
           ? `DeviantArt API rate limit exceeded. Retry after ${retryAfter} seconds.`
-          : "DeviantArt API rate limit exceeded. Please try again later.";
+          : 'DeviantArt API rate limit exceeded. Please try again later.';
       } else if (uploadResponse.status === 401) {
-        error.message =
-          "DeviantArt authentication failed. Please reconnect your account.";
+        error.message = 'DeviantArt authentication failed. Please reconnect your account.';
       } else if (uploadResponse.status === 403) {
-        error.message =
-          "DeviantArt permission denied. Check your account permissions.";
+        error.message = 'DeviantArt permission denied. Check your account permissions.';
       } else if (uploadResponse.status === 400) {
         error.message = `DeviantArt validation error: ${errorText}`;
       } else if (uploadResponse.status >= 500) {
@@ -288,7 +280,7 @@ async function uploadSingleFileToDeviantArt(
 
     const uploadResult = await uploadResponse.json();
 
-    logger.debug("DeviantArt stash/submit response received", {
+    logger.debug('DeviantArt stash/submit response received', {
       response: uploadResult,
       deviationId: deviation.id,
     });
@@ -297,22 +289,22 @@ async function uploadSingleFileToDeviantArt(
     const rawItemId = uploadResult.itemid || uploadResult.stackid;
 
     if (!rawItemId) {
-      logger.error("DeviantArt response missing item/stack ID", {
+      logger.error('DeviantArt response missing item/stack ID', {
         response: uploadResult,
         responseKeys: Object.keys(uploadResult),
         deviationId: deviation.id,
       });
       throw new Error(
-        `DeviantArt did not return an item ID. Response keys: ${Object.keys(
-          uploadResult
-        ).join(", ")}`
+        `DeviantArt did not return an item ID. Response keys: ${Object.keys(uploadResult).join(
+          ', '
+        )}`
       );
     }
 
     // Convert to string explicitly (DeviantArt returns numeric IDs, but Prisma expects String)
     itemId = String(rawItemId);
 
-    logger.info("Item uploaded to DeviantArt stash", {
+    logger.info('Item uploaded to DeviantArt stash', {
       itemId,
       deviationId: deviation.id,
     });
@@ -324,7 +316,7 @@ async function uploadSingleFileToDeviantArt(
     });
   }
 
-  logger.info("Publishing stash item to DeviantArt", {
+  logger.info('Publishing stash item to DeviantArt', {
     itemId,
     deviationId: deviation.id,
   });
@@ -333,7 +325,7 @@ async function uploadSingleFileToDeviantArt(
   // Build form data manually to properly handle arrays
   const formParts: string[] = [
     `itemid=${encodeURIComponent(itemId)}`,
-    `is_mature=${deviation.isMature ? "true" : "false"}`,
+    `is_mature=${deviation.isMature ? 'true' : 'false'}`,
   ];
 
   // Start with is_dirty=false, will change if we add tags/galleries
@@ -346,7 +338,7 @@ async function uploadSingleFileToDeviantArt(
   // Sanitize and add tags as array with brackets (replace spaces with underscores, DeviantArt allows only letters/numbers/underscore)
   if (deviation.tags && deviation.tags.length > 0) {
     const sanitizedTags = deviation.tags
-      .map((tag) => tag.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, ""))
+      .map((tag) => tag.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''))
       .filter((tag) => tag.length > 0);
 
     if (sanitizedTags.length > 0) {
@@ -355,7 +347,7 @@ async function uploadSingleFileToDeviantArt(
         formParts.push(`tags[]=${encodeURIComponent(tag)}`);
       });
       isDirty = true;
-      logger.debug("Adding tags to DeviantArt publish", {
+      logger.debug('Adding tags to DeviantArt publish', {
         tagCount: sanitizedTags.length,
         tags: sanitizedTags,
         deviationId: deviation.id,
@@ -369,7 +361,7 @@ async function uploadSingleFileToDeviantArt(
       formParts.push(`galleryids[]=${encodeURIComponent(galleryId)}`);
     });
     isDirty = true;
-    logger.debug("Adding galleries to DeviantArt publish", {
+    logger.debug('Adding galleries to DeviantArt publish', {
       galleryCount: deviation.galleryIds.length,
       galleryIds: deviation.galleryIds,
       deviationId: deviation.id,
@@ -377,12 +369,9 @@ async function uploadSingleFileToDeviantArt(
   }
 
   // Add display resolution (0=original, 1-8 for various sizes)
-  if (
-    deviation.displayResolution !== undefined &&
-    deviation.displayResolution !== null
-  ) {
+  if (deviation.displayResolution !== undefined && deviation.displayResolution !== null) {
     formParts.push(`display_resolution=${deviation.displayResolution}`);
-    logger.debug("Setting display resolution for DeviantArt publish", {
+    logger.debug('Setting display resolution for DeviantArt publish', {
       displayResolution: deviation.displayResolution,
       deviationId: deviation.id,
     });
@@ -390,47 +379,45 @@ async function uploadSingleFileToDeviantArt(
     // Add watermark only if display_resolution is present (watermark requires display_resolution)
     if (deviation.displayResolution > 0 && deviation.addWatermark) {
       formParts.push(`add_watermark=true`);
-      logger.debug("Adding watermark to DeviantArt publish", {
+      logger.debug('Adding watermark to DeviantArt publish', {
         deviationId: deviation.id,
       });
     }
   }
 
-  formParts.push(`is_dirty=${isDirty ? "true" : "false"}`);
+  formParts.push(`is_dirty=${isDirty ? 'true' : 'false'}`);
 
-  const publishBody = formParts.join("&");
-  logger.debug("DeviantArt publish request body prepared", {
+  const publishBody = formParts.join('&');
+  logger.debug('DeviantArt publish request body prepared', {
     body: publishBody,
     deviationId: deviation.id,
   });
 
   const publishResponse = await fetch(`${DEVIANTART_API_URL}/stash/publish`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/x-www-form-urlencoded",
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: publishBody,
   });
 
   if (!publishResponse.ok) {
     const errorText = await publishResponse.text();
-    logger.error("DeviantArt stash publish failed", {
+    logger.error('DeviantArt stash publish failed', {
       status: publishResponse.status,
       error: errorText,
       deviationId: deviation.id,
     });
 
-    const error: any = new Error(
-      `DeviantArt publish error: ${publishResponse.status}`
-    );
+    const error: any = new Error(`DeviantArt publish error: ${publishResponse.status}`);
     error.status = publishResponse.status;
     error.responseBody = errorText;
     throw error;
   }
 
   const publishResult = await publishResponse.json();
-  logger.debug("DeviantArt stash/publish response received", {
+  logger.debug('DeviantArt stash/publish response received', {
     response: publishResult,
     deviationId: deviation.id,
   });
@@ -440,7 +427,7 @@ async function uploadSingleFileToDeviantArt(
   const url = publishResult.url;
 
   if (!deviationId) {
-    logger.error("DeviantArt publish response missing deviation ID", {
+    logger.error('DeviantArt publish response missing deviation ID', {
       response: publishResult,
       responseKeys: Object.keys(publishResult),
       deviationId: deviation.id,
@@ -448,11 +435,11 @@ async function uploadSingleFileToDeviantArt(
     throw new Error(
       `DeviantArt did not return a deviation ID after publishing. Response keys: ${Object.keys(
         publishResult
-      ).join(", ")}`
+      ).join(', ')}`
     );
   }
 
-  logger.info("Successfully published deviation to DeviantArt", {
+  logger.info('Successfully published deviation to DeviantArt', {
     deviationId,
     url,
     originalDeviationId: deviation.id,
@@ -473,29 +460,22 @@ export async function publishToDeviantArt(
   const accessToken = await refreshTokenIfNeeded(user);
 
   if (!deviation.files || deviation.files.length === 0) {
-    throw new Error("No files to upload");
+    throw new Error('No files to upload');
   }
 
   // Sort files by sortOrder to ensure correct order
-  const sortedFiles = [...deviation.files].sort(
-    (a, b) => a.sortOrder - b.sortOrder
-  );
+  const sortedFiles = [...deviation.files].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  if (uploadMode === "multiple") {
+  if (uploadMode === 'multiple') {
     // Multiple mode: Create separate deviation for each file
     const results: PublishResult[] = [];
 
     for (const file of sortedFiles) {
-      logger.info("Publishing file as separate deviation", {
+      logger.info('Publishing file as separate deviation', {
         filename: file.originalFilename,
         deviationId: deviation.id,
       });
-      const result = await uploadSingleFileToDeviantArt(
-        file,
-        deviation,
-        accessToken,
-        false
-      );
+      const result = await uploadSingleFileToDeviantArt(file, deviation, accessToken, false);
       results.push(result);
 
       // Adaptive delay between uploads to avoid rate limiting
@@ -504,7 +484,7 @@ export async function publishToDeviantArt(
         const jitter = Math.random() * 1000; // 0-1s jitter
         const delay = baseDelay + jitter;
 
-        logger.debug("Waiting before next upload to respect rate limits", {
+        logger.debug('Waiting before next upload to respect rate limits', {
           delayMs: Math.round(delay),
           deviationId: deviation.id,
         });
@@ -517,13 +497,13 @@ export async function publishToDeviantArt(
     // Single mode: Upload first file (multi-image support TBD)
     // TODO: Research DeviantArt multi-image API
     // For now, we only upload the primary (first) file
-    logger.info("Publishing single deviation", {
+    logger.info('Publishing single deviation', {
       fileCount: sortedFiles.length,
       deviationId: deviation.id,
     });
 
     if (sortedFiles.length > 1) {
-      logger.warn("Multi-image upload not yet supported, uploading first file only", {
+      logger.warn('Multi-image upload not yet supported, uploading first file only', {
         fileCount: sortedFiles.length,
         deviationId: deviation.id,
       });

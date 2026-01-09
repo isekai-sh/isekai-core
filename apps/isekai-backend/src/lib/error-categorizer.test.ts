@@ -16,11 +16,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  ErrorCategorizer,
-  ErrorCategory,
-  type CategorizedError,
-} from './error-categorizer.js';
+import { ErrorCategorizer, ErrorCategory, type CategorizedError } from './error-categorizer.js';
 
 describe('ErrorCategorizer', () => {
   describe('determineCategory - by HTTP status code', () => {
@@ -505,9 +501,7 @@ describe('ErrorCategorizer', () => {
 
     it('should use default 20% jitter when not specified', () => {
       const baseDelay = 10000;
-      const results = Array.from({ length: 100 }, () =>
-        ErrorCategorizer.addJitter(baseDelay)
-      );
+      const results = Array.from({ length: 100 }, () => ErrorCategorizer.addJitter(baseDelay));
 
       results.forEach((result) => {
         expect(result).toBeGreaterThanOrEqual(8000);
@@ -619,12 +613,8 @@ describe('ErrorCategorizer', () => {
       const categorized = ErrorCategorizer.categorize(error);
       const after = new Date();
 
-      expect(categorized.errorContext.timestamp.getTime()).toBeGreaterThanOrEqual(
-        before.getTime()
-      );
-      expect(categorized.errorContext.timestamp.getTime()).toBeLessThanOrEqual(
-        after.getTime()
-      );
+      expect(categorized.errorContext.timestamp.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(categorized.errorContext.timestamp.getTime()).toBeLessThanOrEqual(after.getTime());
     });
   });
 

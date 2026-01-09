@@ -8,19 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.3] - 2025-12-28
 
 ### Added
+
 - Storage abstraction layer to support S3 compatible object storage providers
 - MinIO as default storage
 - SaaS configuration based deployment features
 
 ## [0.1.0-alpha.2] - 2025-12-22
+
 This version enables users run the application via pre-built Docker images.
 
 ### Added
+
 - Easily run via Docker compose
 - Set up unit tests in apps
 - Updated Github Actions to support test, build, and Docker image push to registry
 
 ### Known Issues
+
 - Low coverage in frontend unit tests
 - Linting warnings still not addressed
 

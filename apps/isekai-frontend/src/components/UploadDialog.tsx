@@ -15,21 +15,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Upload, Check, X, AlertCircle } from "lucide-react";
-import { deviations, uploads } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Upload, Check, X, AlertCircle } from 'lucide-react';
+import { deviations, uploads } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 interface FileWithMetadata {
   id: string;
@@ -45,7 +45,7 @@ interface FileWithMetadata {
 interface UploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: "single" | "multiple";
+  mode: 'single' | 'multiple';
 }
 
 export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
@@ -59,12 +59,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
     setIsUploading(true);
 
     try {
-      console.log(
-        "[Upload] Starting upload with mode:",
-        mode,
-        "files:",
-        filesToUpload.length
-      );
+      console.log('[Upload] Starting upload with mode:', mode, 'files:', filesToUpload.length);
 
       // Upload all files to R2
       for (const fileData of filesToUpload) {
@@ -72,25 +67,23 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       }
 
       // Create draft(s)
-      console.log("[Upload] All files uploaded, creating drafts...");
-      if (mode === "single") {
-        console.log("[Upload] Creating single draft with all files");
+      console.log('[Upload] All files uploaded, creating drafts...');
+      if (mode === 'single') {
+        console.log('[Upload] Creating single draft with all files');
         await createSingleDraft(filesToUpload);
       } else {
-        console.log("[Upload] Creating multiple drafts (one per file)");
+        console.log('[Upload] Creating multiple drafts (one per file)');
         await createMultipleDrafts(filesToUpload);
       }
 
       // Refresh the drafts table
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
 
       // Show success toast
-      const draftCount = mode === "single" ? 1 : filesToUpload.length;
+      const draftCount = mode === 'single' ? 1 : filesToUpload.length;
       toast({
-        title: "Upload complete",
-        description: `${draftCount} draft${
-          draftCount > 1 ? "s" : ""
-        } created successfully`,
+        title: 'Upload complete',
+        description: `${draftCount} draft${draftCount > 1 ? 's' : ''} created successfully`,
       });
 
       // Auto-close dialog after short delay
@@ -98,11 +91,11 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
         handleClose();
       }, 500);
     } catch (error: any) {
-      console.error("[Upload] Upload failed:", error);
+      console.error('[Upload] Upload failed:', error);
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload files",
-        variant: "destructive",
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload files',
+        variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
@@ -112,11 +105,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
   const uploadFile = async (fileData: FileWithMetadata) => {
     try {
       // Update progress
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === fileData.id ? { ...f, uploadProgress: 0 } : f
-        )
-      );
+      setFiles((prev) => prev.map((f) => (f.id === fileData.id ? { ...f, uploadProgress: 0 } : f)));
 
       // Get presigned URL
       const { uploadUrl, fileId, storageKey } = await uploads.getPresignedUrl(
@@ -129,18 +118,16 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
-        xhr.upload.addEventListener("progress", (e) => {
+        xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
             const progress = Math.round((e.loaded / e.total) * 100);
             setFiles((prev) =>
-              prev.map((f) =>
-                f.id === fileData.id ? { ...f, uploadProgress: progress } : f
-              )
+              prev.map((f) => (f.id === fileData.id ? { ...f, uploadProgress: progress } : f))
             );
           }
         });
 
-        xhr.addEventListener("load", () => {
+        xhr.addEventListener('load', () => {
           if (xhr.status === 200) {
             resolve();
           } else {
@@ -148,10 +135,10 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
           }
         });
 
-        xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
 
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", fileData.file.type);
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', fileData.file.type);
         xhr.send(fileData.file);
       });
 
@@ -160,7 +147,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       let height: number | undefined;
       let duration: number | undefined;
 
-      if (fileData.file.type.startsWith("image/")) {
+      if (fileData.file.type.startsWith('image/')) {
         const img = new Image();
         await new Promise<void>((resolve) => {
           img.onload = () => {
@@ -170,8 +157,8 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
           };
           img.src = fileData.preview;
         });
-      } else if (fileData.file.type.startsWith("video/")) {
-        const video = document.createElement("video");
+      } else if (fileData.file.type.startsWith('video/')) {
+        const video = document.createElement('video');
         await new Promise<void>((resolve) => {
           video.onloadedmetadata = () => {
             width = video.videoWidth;
@@ -187,7 +174,7 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       fileData.fileId = fileId;
       fileData.storageKey = storageKey;
       fileData.storageUrl = `${
-        (window as any).ISEKAI_CONFIG?.S3_PUBLIC_URL || "http://localhost:9000/isekai-uploads"
+        (window as any).ISEKAI_CONFIG?.S3_PUBLIC_URL || 'http://localhost:9000/isekai-uploads'
       }/${storageKey}`;
       fileData.uploadProgress = 100;
 
@@ -196,15 +183,11 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
       (fileData as any).height = height;
       (fileData as any).duration = duration;
 
-      setFiles((prev) =>
-        prev.map((f) => (f.id === fileData.id ? { ...fileData } : f))
-      );
+      setFiles((prev) => prev.map((f) => (f.id === fileData.id ? { ...fileData } : f)));
     } catch (error: any) {
       setFiles((prev) =>
         prev.map((f) =>
-          f.id === fileData.id
-            ? { ...f, error: error.message, uploadProgress: undefined }
-            : f
+          f.id === fileData.id ? { ...f, error: error.message, uploadProgress: undefined } : f
         )
       );
       throw error;
@@ -214,12 +197,12 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
   const createSingleDraft = async (filesToUpload: FileWithMetadata[]) => {
     // Get title from first filename
     const firstFile = filesToUpload[0];
-    const title = firstFile.file.name.replace(/\.[^/.]+$/, "");
+    const title = firstFile.file.name.replace(/\.[^/.]+$/, '');
 
     // Create deviation
     const draft = await deviations.create({
       title,
-      uploadMode: "single",
+      uploadMode: 'single',
     });
 
     // Link all files
@@ -244,30 +227,21 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
   const createMultipleDrafts = async (filesToUpload: FileWithMetadata[]) => {
     const drafts = [];
 
-    console.log(
-      "[Upload] Creating multiple drafts for",
-      filesToUpload.length,
-      "files"
-    );
+    console.log('[Upload] Creating multiple drafts for', filesToUpload.length, 'files');
 
     for (const fileData of filesToUpload) {
-      const title = fileData.file.name.replace(/\.[^/.]+$/, "");
+      const title = fileData.file.name.replace(/\.[^/.]+$/, '');
 
-      console.log("[Upload] Creating draft:", title);
+      console.log('[Upload] Creating draft:', title);
       // Create deviation
       const draft = await deviations.create({
         title,
-        uploadMode: "multiple",
+        uploadMode: 'multiple',
       });
-      console.log("[Upload] Draft created:", draft.id);
+      console.log('[Upload] Draft created:', draft.id);
 
       // Link file
-      console.log(
-        "[Upload] Linking file:",
-        fileData.fileId,
-        "to draft:",
-        draft.id
-      );
+      console.log('[Upload] Linking file:', fileData.fileId, 'to draft:', draft.id);
       await uploads.complete(
         fileData.fileId!,
         draft.id,
@@ -279,17 +253,17 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
         (fileData as any).height,
         (fileData as any).duration
       );
-      console.log("[Upload] File linked successfully");
+      console.log('[Upload] File linked successfully');
 
       drafts.push(draft);
     }
 
-    console.log("[Upload] All drafts created:", drafts.length);
+    console.log('[Upload] All drafts created:', drafts.length);
     setCreatedDrafts(drafts);
   };
 
   const handleClose = () => {
-    queryClient.invalidateQueries({ queryKey: ["deviations"] });
+    queryClient.invalidateQueries({ queryKey: ['deviations'] });
     setFiles([]);
     setUploadComplete(false);
     setCreatedDrafts([]);
@@ -300,15 +274,15 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
     (acceptedFiles: File[]) => {
       // Filter to only supported extensions
       const allowedExtensions = [
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".gif",
-        ".bmp",
-        ".webp",
-        ".mp4",
-        ".webm",
-        ".mov",
+        '.png',
+        '.jpg',
+        '.jpeg',
+        '.gif',
+        '.bmp',
+        '.webp',
+        '.mp4',
+        '.webm',
+        '.mov',
       ];
       const validFiles = acceptedFiles.filter((file) => {
         const ext = file.name.toLowerCase().match(/\.[^.]*$/)?.[0];
@@ -334,40 +308,33 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
-      "video/*": [".mp4", ".webm", ".mov"],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'],
+      'video/*': ['.mp4', '.webm', '.mov'],
     },
     maxSize: 50 * 1024 * 1024, // 50MB
   });
 
   const totalFiles = files.length;
   const completedFiles = files.filter((f) => f.uploadProgress === 100).length;
-  const overallProgress =
-    totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
+  const overallProgress = totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {uploadComplete
-              ? "Upload Complete"
-              : isUploading
-              ? "Uploading..."
-              : "Upload Files"}
+            {uploadComplete ? 'Upload Complete' : isUploading ? 'Uploading...' : 'Upload Files'}
           </DialogTitle>
           <DialogDescription>
             {uploadComplete
               ? `${createdDrafts.length} draft${
-                  createdDrafts.length > 1 ? "s" : ""
+                  createdDrafts.length > 1 ? 's' : ''
                 } created successfully`
               : isUploading
-              ? `Uploading ${
-                  mode === "single"
-                    ? "files for single artwork"
-                    : "multiple artworks"
-                }...`
-              : "Drop your files here to start uploading"}
+                ? `Uploading ${
+                    mode === 'single' ? 'files for single artwork' : 'multiple artworks'
+                  }...`
+                : 'Drop your files here to start uploading'}
           </DialogDescription>
         </DialogHeader>
 
@@ -377,8 +344,8 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
                 isDragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-primary/50"
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-foreground/25 hover:border-primary/50'
               }`}
             >
               <input {...getInputProps()} />
@@ -387,15 +354,10 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
                 <p className="text-lg font-medium">Drop files here...</p>
               ) : (
                 <div>
-                  <p className="text-lg font-medium mb-2">
-                    Drag & drop files here
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    or click to browse
-                  </p>
+                  <p className="text-lg font-medium mb-2">Drag & drop files here</p>
+                  <p className="text-sm text-muted-foreground mb-2">or click to browse</p>
                   <p className="text-xs text-muted-foreground">
-                    Images (PNG, JPG, GIF, WebP) and Videos (MP4, WebM) up to
-                    50MB
+                    Images (PNG, JPG, GIF, WebP) and Videos (MP4, WebM) up to 50MB
                   </p>
                 </div>
               )}
@@ -418,30 +380,19 @@ export function UploadDialog({ open, onOpenChange, mode }: UploadDialogProps) {
 
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {files.map((fileData) => (
-                  <div
-                    key={fileData.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg"
-                  >
+                  <div key={fileData.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <img
                       src={fileData.preview}
                       alt={fileData.file.name}
                       className="w-12 h-12 object-cover rounded"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {fileData.file.name}
-                      </p>
-                      {fileData.uploadProgress !== undefined &&
-                        fileData.uploadProgress < 100 && (
-                          <Progress
-                            value={fileData.uploadProgress}
-                            className="h-1 mt-1"
-                          />
-                        )}
+                      <p className="text-sm font-medium truncate">{fileData.file.name}</p>
+                      {fileData.uploadProgress !== undefined && fileData.uploadProgress < 100 && (
+                        <Progress value={fileData.uploadProgress} className="h-1 mt-1" />
+                      )}
                       {fileData.error && (
-                        <p className="text-xs text-red-500 mt-1">
-                          {fileData.error}
-                        </p>
+                        <p className="text-xs text-red-500 mt-1">{fileData.error}</p>
                       )}
                     </div>
                     {fileData.uploadProgress === 100 && (

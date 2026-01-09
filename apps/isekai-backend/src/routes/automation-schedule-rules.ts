@@ -15,42 +15,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
 // Zod schemas
 const timeOfDaySchema = z
   .string()
-  .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM");
+  .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format. Use HH:MM');
 
 const daysOfWeekSchema = z
-  .array(
-    z.enum([
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ])
-  )
+  .array(z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']))
   .optional();
 
-const createRuleSchema = z.discriminatedUnion("type", [
+const createRuleSchema = z.discriminatedUnion('type', [
   z.object({
-    type: z.literal("fixed_time"),
+    type: z.literal('fixed_time'),
     timeOfDay: timeOfDaySchema,
     daysOfWeek: daysOfWeekSchema,
     priority: z.number().int().default(0),
     enabled: z.boolean().default(true),
   }),
   z.object({
-    type: z.literal("fixed_interval"),
+    type: z.literal('fixed_interval'),
     intervalMinutes: z.number().int().min(5).max(10080), // 5 min to 7 days
     deviationsPerInterval: z.number().int().min(1).max(100),
     daysOfWeek: daysOfWeekSchema,
@@ -58,7 +48,7 @@ const createRuleSchema = z.discriminatedUnion("type", [
     enabled: z.boolean().default(true),
   }),
   z.object({
-    type: z.literal("daily_quota"),
+    type: z.literal('daily_quota'),
     dailyQuota: z.number().int().min(1).max(100),
     daysOfWeek: daysOfWeekSchema,
     priority: z.number().int().default(0),
@@ -77,7 +67,7 @@ const updateRuleSchema = z.object({
 });
 
 // List schedule rules for specific automation
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const userId = req.user!.id;
   const { automationId } = z
     .object({
@@ -91,12 +81,12 @@ router.get("/", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation not found");
+    throw new AppError(404, 'Automation not found');
   }
 
   const rules = await prisma.automationScheduleRule.findMany({
     where: { automationId },
-    orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
   });
 
   res.json({
@@ -109,7 +99,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create schedule rule
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const userId = req.user!.id;
   const { automationId, ...ruleData } = z
     .object({
@@ -124,7 +114,7 @@ router.post("/", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation not found");
+    throw new AppError(404, 'Automation not found');
   }
 
   // Create the rule with type-specific fields
@@ -137,12 +127,12 @@ router.post("/", async (req, res) => {
   };
 
   // Add type-specific fields
-  if (ruleData.type === "fixed_time") {
+  if (ruleData.type === 'fixed_time') {
     createData.timeOfDay = ruleData.timeOfDay;
-  } else if (ruleData.type === "fixed_interval") {
+  } else if (ruleData.type === 'fixed_interval') {
     createData.intervalMinutes = ruleData.intervalMinutes;
     createData.deviationsPerInterval = ruleData.deviationsPerInterval;
-  } else if (ruleData.type === "daily_quota") {
+  } else if (ruleData.type === 'daily_quota') {
     createData.dailyQuota = ruleData.dailyQuota;
   }
 
@@ -160,7 +150,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update schedule rule
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
   const data = updateRuleSchema.parse(req.body);
@@ -172,42 +162,33 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!rule || rule.automation.userId !== userId) {
-    throw new AppError(404, "Schedule rule not found");
+    throw new AppError(404, 'Schedule rule not found');
   }
 
   // Validate type-specific fields to prevent setting wrong fields for rule type
-  if (rule.type === "fixed_time") {
+  if (rule.type === 'fixed_time') {
     if (
       data.intervalMinutes !== undefined ||
       data.deviationsPerInterval !== undefined ||
       data.dailyQuota !== undefined
     ) {
-      throw new AppError(
-        400,
-        "Cannot set interval or quota fields on fixed_time rule"
-      );
+      throw new AppError(400, 'Cannot set interval or quota fields on fixed_time rule');
     }
   }
 
-  if (rule.type === "fixed_interval") {
+  if (rule.type === 'fixed_interval') {
     if (data.timeOfDay !== undefined || data.dailyQuota !== undefined) {
-      throw new AppError(
-        400,
-        "Cannot set timeOfDay or quota fields on fixed_interval rule"
-      );
+      throw new AppError(400, 'Cannot set timeOfDay or quota fields on fixed_interval rule');
     }
   }
 
-  if (rule.type === "daily_quota") {
+  if (rule.type === 'daily_quota') {
     if (
       data.timeOfDay !== undefined ||
       data.intervalMinutes !== undefined ||
       data.deviationsPerInterval !== undefined
     ) {
-      throw new AppError(
-        400,
-        "Cannot set time or interval fields on daily_quota rule"
-      );
+      throw new AppError(400, 'Cannot set time or interval fields on daily_quota rule');
     }
   }
 
@@ -215,13 +196,11 @@ router.patch("/:id", async (req, res) => {
   const updateData: any = {};
 
   if (data.timeOfDay !== undefined) updateData.timeOfDay = data.timeOfDay;
-  if (data.intervalMinutes !== undefined)
-    updateData.intervalMinutes = data.intervalMinutes;
+  if (data.intervalMinutes !== undefined) updateData.intervalMinutes = data.intervalMinutes;
   if (data.deviationsPerInterval !== undefined)
     updateData.deviationsPerInterval = data.deviationsPerInterval;
   if (data.dailyQuota !== undefined) updateData.dailyQuota = data.dailyQuota;
-  if (data.daysOfWeek !== undefined)
-    updateData.daysOfWeek = data.daysOfWeek || null;
+  if (data.daysOfWeek !== undefined) updateData.daysOfWeek = data.daysOfWeek || null;
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.enabled !== undefined) updateData.enabled = data.enabled;
 
@@ -240,7 +219,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete schedule rule
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -251,7 +230,7 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!rule || rule.automation.userId !== userId) {
-    throw new AppError(404, "Schedule rule not found");
+    throw new AppError(404, 'Schedule rule not found');
   }
 
   // Check if this is the last enabled rule and automation is enabled
@@ -266,7 +245,7 @@ router.delete("/:id", async (req, res) => {
     if (enabledRulesCount === 1) {
       throw new AppError(
         400,
-        "Cannot delete the last enabled rule while automation is enabled. Disable automation first."
+        'Cannot delete the last enabled rule while automation is enabled. Disable automation first.'
       );
     }
   }

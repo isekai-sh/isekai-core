@@ -15,17 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,29 +30,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useAuthStore } from "@/stores/auth";
-import { admin, type InstanceUser, type InstanceInfo } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Loader2, Trash2, Users, Server, HardDrive, Settings as SettingsIcon, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/alert-dialog';
+import { useAuthStore } from '@/stores/auth';
+import { admin, type InstanceUser, type InstanceInfo } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import {
+  Loader2,
+  Trash2,
+  Users,
+  Server,
+  HardDrive,
+  Settings as SettingsIcon,
+  User,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-type SettingsTab = "account" | "instance" | "team";
+type SettingsTab = 'account' | 'instance' | 'team';
 
 const tabs = [
-  { id: "account" as const, label: "Account", icon: User },
-  { id: "instance" as const, label: "Instance", icon: Server, adminOnly: true },
-  { id: "team" as const, label: "Team", icon: Users, adminOnly: true },
+  { id: 'account' as const, label: 'Account', icon: User },
+  { id: 'instance' as const, label: 'Instance', icon: Server, adminOnly: true },
+  { id: 'team' as const, label: 'Team', icon: Users, adminOnly: true },
 ];
 
 export function Settings() {
@@ -73,7 +75,7 @@ export function Settings() {
   const [teamInvitesEnabled, setTeamInvitesEnabled] = useState(false);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
-  const tab = (searchParams.get("tab") as SettingsTab) || "account";
+  const tab = (searchParams.get('tab') as SettingsTab) || 'account';
 
   const setTab = (newTab: SettingsTab) => {
     setSearchParams({ tab: newTab });
@@ -82,10 +84,10 @@ export function Settings() {
   // Fetch team members, instance info, and settings if admin
   useEffect(() => {
     if (isAdmin) {
-      if (tab === "team") {
+      if (tab === 'team') {
         fetchTeamMembers();
       }
-      if (tab === "instance") {
+      if (tab === 'instance') {
         fetchInstanceInfo();
         fetchSettings();
       }
@@ -109,16 +111,16 @@ export function Settings() {
       // Also refresh instance info to update the displayed status
       await fetchInstanceInfo();
       toast({
-        title: "Settings Updated",
+        title: 'Settings Updated',
         description: enabled
-          ? "Team invites are now enabled. New users can join."
-          : "Team invites are now disabled. New users cannot join.",
+          ? 'Team invites are now enabled. New users can join.'
+          : 'Team invites are now disabled. New users cannot join.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update settings",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update settings',
+        variant: 'destructive',
       });
     } finally {
       setIsUpdatingSettings(false);
@@ -132,9 +134,9 @@ export function Settings() {
       setTeamMembers(response.users);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load team members",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load team members',
+        variant: 'destructive',
       });
     } finally {
       setIsLoadingTeam(false);
@@ -148,9 +150,9 @@ export function Settings() {
       setInstanceInfo(response);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load instance info",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load instance info',
+        variant: 'destructive',
       });
     } finally {
       setIsLoadingInstance(false);
@@ -162,7 +164,7 @@ export function Settings() {
     try {
       const result = await admin.removeTeamMember(memberId);
       toast({
-        title: "Member Removed",
+        title: 'Member Removed',
         description: `${username} has been removed. ${result.cleanup?.jobsCancelled || 0} jobs cancelled, ${result.cleanup?.filesQueued || 0} files queued for cleanup.`,
       });
       // Refresh the team list
@@ -170,9 +172,9 @@ export function Settings() {
       await fetchInstanceInfo();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to remove team member",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to remove team member',
+        variant: 'destructive',
       });
     } finally {
       setRemovingMemberId(null);
@@ -204,10 +206,10 @@ export function Settings() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-left",
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-left',
                   tab === t.id
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -219,7 +221,7 @@ export function Settings() {
 
         {/* Main Content */}
         <div className="flex-1 min-w-0 overflow-auto">
-          {tab === "account" && (
+          {tab === 'account' && (
             <Card className="rounded-lg border-border/50">
               <CardHeader>
                 <CardTitle>Connected Account</CardTitle>
@@ -252,16 +254,14 @@ export function Settings() {
                     <p className="text-sm text-muted-foreground">
                       DeviantArt ID: {user?.deviantartId}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {user?.email}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {tab === "instance" && isAdmin && (
+          {tab === 'instance' && isAdmin && (
             <div className="space-y-6">
               {/* Instance Info */}
               <Card className="rounded-lg border-border/50">
@@ -281,9 +281,7 @@ export function Settings() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                       <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg space-y-1">
                         <p className="text-sm text-muted-foreground">Plan</p>
-                        <p className="text-2xl font-bold capitalize">
-                          {instanceInfo.tier}
-                        </p>
+                        <p className="text-2xl font-bold capitalize">{instanceInfo.tier}</p>
                       </div>
                       <div className="p-4 bg-card border border-border/50 rounded-lg space-y-1">
                         <p className="text-sm text-muted-foreground">DA Accounts</p>
@@ -291,11 +289,15 @@ export function Settings() {
                           {instanceInfo.limits.currentDaAccounts}
                           {!instanceInfo.limits.unlimited && (
                             <span className="text-base text-muted-foreground font-normal">
-                              {" "}/ {instanceInfo.limits.maxDaAccounts}
+                              {' '}
+                              / {instanceInfo.limits.maxDaAccounts}
                             </span>
                           )}
                           {instanceInfo.limits.unlimited && (
-                            <span className="text-base text-muted-foreground font-normal"> (unlimited)</span>
+                            <span className="text-base text-muted-foreground font-normal">
+                              {' '}
+                              (unlimited)
+                            </span>
                           )}
                         </p>
                       </div>
@@ -366,16 +368,14 @@ export function Settings() {
             </div>
           )}
 
-          {tab === "team" && isAdmin && (
+          {tab === 'team' && isAdmin && (
             <Card className="rounded-lg border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Team Members
                 </CardTitle>
-                <CardDescription>
-                  Manage who has access to this instance
-                </CardDescription>
+                <CardDescription>Manage who has access to this instance</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingTeam ? (
@@ -412,8 +412,12 @@ export function Settings() {
                             <div className="flex items-center gap-2 mb-1">
                               <p className="font-semibold">{member.daUsername}</p>
                               <Badge
-                                variant={member.role === "admin" ? "default" : "secondary"}
-                                className={member.role === "admin" ? "bg-primary/10 text-primary border-primary/20" : ""}
+                                variant={member.role === 'admin' ? 'default' : 'secondary'}
+                                className={
+                                  member.role === 'admin'
+                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                    : ''
+                                }
                               >
                                 {member.role}
                               </Badge>
@@ -421,12 +425,15 @@ export function Settings() {
                             <p className="text-sm text-muted-foreground">
                               Joined {new Date(member.createdAt).toLocaleDateString()}
                               {member.lastLoginAt && (
-                                <> · Last login {new Date(member.lastLoginAt).toLocaleDateString()}</>
+                                <>
+                                  {' '}
+                                  · Last login {new Date(member.lastLoginAt).toLocaleDateString()}
+                                </>
                               )}
                             </p>
                           </div>
                         </div>
-                        {member.role !== "admin" && (
+                        {member.role !== 'admin' && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -445,9 +452,10 @@ export function Settings() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to remove <strong>{member.daUsername}</strong>?
-                                  This will cancel all their pending jobs, queue their files for deletion,
-                                  and remove all their data from this instance. This action cannot be undone.
+                                  Are you sure you want to remove{' '}
+                                  <strong>{member.daUsername}</strong>? This will cancel all their
+                                  pending jobs, queue their files for deletion, and remove all their
+                                  data from this instance. This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

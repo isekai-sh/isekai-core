@@ -81,14 +81,14 @@ export function validateEnv(): Env {
     for (const [field, messages] of Object.entries(errors.fieldErrors)) {
       if (messages && messages.length > 0) {
         console.error(`  ${field}:`);
-        messages.forEach(msg => console.error(`    - ${msg}`));
+        messages.forEach((msg) => console.error(`    - ${msg}`));
       }
     }
 
     // Show form-level errors if any
     if (errors.formErrors.length > 0) {
       console.error('\nGeneral errors:');
-      errors.formErrors.forEach(msg => console.error(`  - ${msg}`));
+      errors.formErrors.forEach((msg) => console.error(`  - ${msg}`));
     }
 
     console.error('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

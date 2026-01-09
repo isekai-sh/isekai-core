@@ -356,10 +356,7 @@ describe('health route', () => {
         timestamp: expect.any(String),
         error: 'Health check failed',
       });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Health check error:',
-        expect.any(Error)
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Health check error:', expect.any(Error));
 
       consoleErrorSpy.mockRestore();
     });

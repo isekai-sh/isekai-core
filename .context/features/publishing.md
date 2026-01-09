@@ -10,12 +10,14 @@
 The **Publishing System** manages the complete lifecycle of deviations from creation to publication on DeviantArt. It uses BullMQ for reliable job processing and implements circuit breaker and adaptive rate limiting patterns.
 
 **Core Components:**
+
 - **Backend API** - Deviation CRUD and scheduling endpoints
 - **Publisher Worker** - Microservice that processes publication jobs
 - **BullMQ Queue** - Delayed job queue with retry logic
 - **Storage Service** - R2/S3/MinIO abstraction for file uploads
 
 **Related Files:**
+
 - `/apps/isekai-backend/src/routes/deviations.ts` - API routes
 - `/apps/isekai-publisher/src/queues/deviation-publisher.ts` - Queue worker
 - `/packages/shared/src/publishers/deviation-publisher.ts` - Core publisher logic
@@ -45,19 +47,20 @@ failed ❌ (with retry logic)
 
 **Status Definitions:**
 
-| Status | Description | User Actions |
-|--------|-------------|--------------|
-| `review` | Initial state, needs files | Attach files, edit metadata |
-| `draft` | Ready but not scheduled | Schedule, publish now, edit, delete |
-| `scheduled` | Queued for future publishing | Unschedule, view queue position |
-| `uploading` | Files being uploaded to DeviantArt | View progress (via logs) |
-| `publishing` | Metadata being submitted | View progress (via logs) |
-| `published` | Successfully posted | View on DeviantArt, cannot edit |
-| `failed` | Error occurred | View error, retry, edit, delete |
+| Status       | Description                        | User Actions                        |
+| ------------ | ---------------------------------- | ----------------------------------- |
+| `review`     | Initial state, needs files         | Attach files, edit metadata         |
+| `draft`      | Ready but not scheduled            | Schedule, publish now, edit, delete |
+| `scheduled`  | Queued for future publishing       | Unschedule, view queue position     |
+| `uploading`  | Files being uploaded to DeviantArt | View progress (via logs)            |
+| `publishing` | Metadata being submitted           | View progress (via logs)            |
+| `published`  | Successfully posted                | View on DeviantArt, cannot edit     |
+| `failed`     | Error occurred                     | View error, retry, edit, delete     |
 
 ### Field Tracking
 
 **Timestamps:**
+
 ```typescript
 createdAt: DateTime       // When deviation was created
 updatedAt: DateTime       // Last modification
@@ -68,20 +71,28 @@ lastRetryAt: DateTime?    // Last retry attempt
 ```
 
 **Execution Tracking:**
+
 ```typescript
-executionLockId: String?      // UUID lock for concurrent protection
-executionLockedAt: DateTime?  // Lock acquisition time
-executionVersion: Int         // Optimistic locking counter
-postCountIncremented: Boolean // Prevents double-incrementing quota
+executionLockId: String // UUID lock for concurrent protection
+  ? executionLockedAt
+  : DateTime // Lock acquisition time
+    ? executionVersion
+    : Int; // Optimistic locking counter
+postCountIncremented: Boolean; // Prevents double-incrementing quota
 ```
 
 **Publishing Results:**
+
 ```typescript
-deviationId: String?   // DeviantArt's deviation ID
-deviationUrl: String?  // Public URL
-errorMessage: String?  // Human-readable error
-errorCode: String?     // Machine-readable code
-retryCount: Int        // Number of retry attempts
+deviationId: String // DeviantArt's deviation ID
+  ? deviationUrl
+  : String // Public URL
+    ? errorMessage
+    : String // Human-readable error
+      ? errorCode
+      : String // Machine-readable code
+        ? retryCount
+        : Int; // Number of retry attempts
 ```
 
 ---
@@ -104,6 +115,7 @@ retryCount: Int        // Number of retry attempts
 ```
 
 **Response:**
+
 ```json
 {
   "id": "deviation-uuid",
@@ -129,6 +141,7 @@ retryCount: Int        // Number of retry attempts
 ```
 
 **Response:**
+
 ```json
 {
   "uploadUrl": "https://r2.example.com/presigned?...",
@@ -138,6 +151,7 @@ retryCount: Int        // Number of retry attempts
 ```
 
 **Client uploads to presigned URL:**
+
 ```bash
 curl -X PUT "${uploadUrl}" \
   -H "Content-Type: image/png" \
@@ -165,6 +179,7 @@ curl -X PUT "${uploadUrl}" \
 ```
 
 **Validation:**
+
 - Must have at least 1 file
 - Required fields: `title`
 
@@ -181,21 +196,23 @@ curl -X PUT "${uploadUrl}" \
 ```
 
 **Validation:**
+
 ```typescript
 const scheduledDate = new Date(scheduledAt);
 const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
 const maxScheduleTime = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
 if (scheduledDate < oneHourFromNow) {
-  throw new AppError(400, "Scheduled time must be at least 1 hour in the future");
+  throw new AppError(400, 'Scheduled time must be at least 1 hour in the future');
 }
 
 if (scheduledDate > maxScheduleTime) {
-  throw new AppError(400, "Cannot schedule more than 365 days in the future");
+  throw new AppError(400, 'Cannot schedule more than 365 days in the future');
 }
 ```
 
 **Jitter Calculation:**
+
 ```typescript
 // Generate random jitter (0-300 seconds = 0-5 minutes)
 const jitterSeconds = Math.floor(Math.random() * 301);
@@ -229,6 +246,7 @@ await scheduleDeviation(id, userId, actualPublishAt, uploadMode);
 ### Queue Configuration
 
 **BullMQ Settings:**
+
 ```typescript
 export const deviationPublisherQueue = new Queue<DeviationPublishJobData>('deviation-publisher', {
   connection: redisConnection,
@@ -236,7 +254,7 @@ export const deviationPublisherQueue = new Queue<DeviationPublishJobData>('devia
     attempts: parseInt(process.env.PUBLISHER_MAX_ATTEMPTS || '7'),
     backoff: calculateBackoff, // Custom backoff strategy
     removeOnComplete: {
-      age: 48 * 3600,  // Keep completed jobs for 48 hours
+      age: 48 * 3600, // Keep completed jobs for 48 hours
       count: 5000,
     },
     removeOnFail: {
@@ -248,13 +266,16 @@ export const deviationPublisherQueue = new Queue<DeviationPublishJobData>('devia
 ```
 
 **Worker Settings:**
+
 ```typescript
 export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
   'deviation-publisher',
-  async (job) => { /* ... */ },
+  async (job) => {
+    /* ... */
+  },
   {
     connection: redisConnection,
-    concurrency: parseInt(process.env.PUBLISHER_CONCURRENCY || '2'),  // Max 2 concurrent jobs
+    concurrency: parseInt(process.env.PUBLISHER_CONCURRENCY || '2'), // Max 2 concurrent jobs
     lockDuration: parseInt(process.env.PUBLISHER_JOB_TIMEOUT_MS || '1200000'), // 20 minutes
     stalledInterval: parseInt(process.env.PUBLISHER_STALE_CHECK_INTERVAL_MS || '60000'),
     maxStalledCount: parseInt(process.env.PUBLISHER_MAX_STALLED_COUNT || '2'),
@@ -267,6 +288,7 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
 ```
 
 **Why Low Concurrency?**
+
 - DeviantArt rate limits are per OAuth token (per user)
 - Multiple concurrent requests from same user trigger 429 errors
 - Better to process sequentially with backoff
@@ -305,6 +327,7 @@ function calculateBackoff(attemptsMade: number, err: Error): number {
 ```
 
 **Why Adaptive?**
+
 - DeviantArt's rate limits vary (some endpoints have specific Retry-After headers)
 - Circuit breaker prevents wasting retries during known outages
 - Exponential backoff prevents thundering herd on transient errors
@@ -386,7 +409,7 @@ const publishResult = await deviantArt.publishDeviation(accessToken, {
   tags: deviation.tags,
   is_mature: deviation.isMature,
   mature_level: deviation.matureLevel,
-  stash_itemids: fileRecords.map(f => f.stashItemId), // Files from step 3
+  stash_itemids: fileRecords.map((f) => f.stashItemId), // Files from step 3
   categorypath: deviation.categoryPath,
   gallery_ids: deviation.galleryIds,
   allow_comments: deviation.allowComments,
@@ -506,6 +529,7 @@ await prisma.deviation.update({
 ```
 
 **User Actions:**
+
 - View error details
 - Edit metadata and retry
 - Contact support if DeviantArt issue
@@ -517,43 +541,48 @@ await prisma.deviation.update({
 ### Scheduling Validation
 
 **Minimum Schedule Time:**
+
 ```typescript
 const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
 if (scheduledDate < oneHourFromNow) {
-  throw new AppError(400, "Scheduled time must be at least 1 hour in the future");
+  throw new AppError(400, 'Scheduled time must be at least 1 hour in the future');
 }
 ```
 
 **Maximum Schedule Time:**
+
 ```typescript
 const maxScheduleTime = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
 if (scheduledDate > maxScheduleTime) {
-  throw new AppError(400, "Cannot schedule more than 365 days in the future");
+  throw new AppError(400, 'Cannot schedule more than 365 days in the future');
 }
 ```
 
 ### Status Validation
 
 **Only Drafts and Failed Deviations Can Be Scheduled:**
+
 ```typescript
 if (deviation.status !== 'draft' && deviation.status !== 'failed') {
-  throw new AppError(400, "Only drafts and failed deviations can be scheduled");
+  throw new AppError(400, 'Only drafts and failed deviations can be scheduled');
 }
 ```
 
 **Cannot Edit Published Deviations:**
+
 ```typescript
 if (deviation.status === 'published') {
-  throw new AppError(400, "Cannot edit published deviation");
+  throw new AppError(400, 'Cannot edit published deviation');
 }
 ```
 
 ### File Validation
 
 **Must Have Files:**
+
 ```typescript
 if (!deviation.files || deviation.files.length === 0) {
-  throw new AppError(400, "Deviation must have at least one file");
+  throw new AppError(400, 'Deviation must have at least one file');
 }
 ```
 
@@ -564,11 +593,13 @@ if (!deviation.files || deviation.files.length === 0) {
 ### De-Duplication
 
 **Job ID Pattern:**
+
 ```typescript
 const jobId = `deviation-${deviationId}`;
 ```
 
 **Check Before Queueing:**
+
 ```typescript
 const existingJob = await deviationPublisherQueue.getJob(jobId);
 if (existingJob) {
@@ -593,10 +624,14 @@ if (existingJob) {
 await publishDeviationNow(deviationId, userId, uploadMode);
 
 // Internally:
-await deviationPublisherQueue.add('publish-deviation', { deviationId, userId, uploadMode }, {
-  delay: 0,
-  jobId: `deviation-${deviationId}`,
-});
+await deviationPublisherQueue.add(
+  'publish-deviation',
+  { deviationId, userId, uploadMode },
+  {
+    delay: 0,
+    jobId: `deviation-${deviationId}`,
+  }
+);
 ```
 
 **Use Case:** "Publish now" button bypasses scheduling.
@@ -624,11 +659,13 @@ if (job) {
 ### Worker Throughput
 
 **Theoretical Max:**
+
 - Concurrency: 2
 - Limiter: 2 jobs/sec
 - Max throughput: 7200 jobs/hour
 
 **Actual Throughput:**
+
 - Depends on DeviantArt API latency (~2-5 seconds per publish)
 - Circuit breaker reduces throughput during rate limit events
 - Typically: 100-500 publishes/hour
@@ -636,10 +673,12 @@ if (job) {
 ### Job Retention
 
 **Completed Jobs:**
+
 - Keep for 48 hours (debugging)
 - Max 5000 jobs
 
 **Failed Jobs:**
+
 - Keep for 7 days (investigation)
 - Max 1000 jobs
 
@@ -648,6 +687,7 @@ if (job) {
 ### Metrics Collection
 
 **Tracked Metrics:**
+
 ```typescript
 metricsCollector.recordSuccess(userId, uploadMode, processingTimeMs);
 metricsCollector.recordFailure(userId, errorCategory);
@@ -656,6 +696,7 @@ metricsCollector.recordRateLimitHit(userId);
 ```
 
 **Reporting:**
+
 ```typescript
 // Every 5 minutes
 const metrics = metricsCollector.getMetrics('5min');
@@ -680,8 +721,8 @@ process.on('SIGTERM', async () => {
   if (activeJobs.length > 0) {
     console.log(`[Publisher] Waiting for ${activeJobs.length} active jobs to complete...`);
     await Promise.race([
-      Promise.all(activeJobs.map(job => job.waitUntilFinished(queueEvents))),
-      new Promise(resolve => setTimeout(resolve, 30000)), // 30s timeout
+      Promise.all(activeJobs.map((job) => job.waitUntilFinished(queueEvents))),
+      new Promise((resolve) => setTimeout(resolve, 30000)), // 30s timeout
     ]);
   }
 
@@ -699,6 +740,7 @@ process.on('SIGTERM', async () => {
 ```
 
 **Why 30s Drain Period?**
+
 - Most publishes complete in 2-10 seconds
 - 30s allows even slow jobs to finish
 - Prevents aborted uploads (which waste DeviantArt quota)
@@ -712,6 +754,7 @@ process.on('SIGTERM', async () => {
 **Cause:** Worker crashed mid-job.
 
 **Solution:** Stuck job recovery runs every 5 minutes:
+
 ```typescript
 // apps/isekai-publisher/src/jobs/stuck-job-recovery.ts
 const JOB_TIMEOUT = 10 * 60 * 1000; // 10 minutes
@@ -735,6 +778,7 @@ for (const job of activeJobs) {
 **Cause:** Multiple users or automations triggering simultaneously.
 
 **Solution:** Circuit breaker pattern opens after 3 consecutive failures:
+
 ```typescript
 // apps/isekai-publisher/src/lib/circuit-breaker.ts
 if (error.status === 429) {
@@ -750,6 +794,7 @@ if (error.status === 429) {
 **Cause:** Past-due recovery job runs every 1 minute, may miss deviations if actualPublishAt is >1 minute ago.
 
 **Solution:** Past-due recovery batches 50 at a time:
+
 ```typescript
 const pastDueDeviations = await prisma.deviation.findMany({
   where: {
@@ -778,11 +823,13 @@ const pastDueDeviations = await prisma.deviation.findMany({
 ## Future Enhancements
 
 **Planned Features:**
+
 - **Progress tracking:** Real-time upload/publish progress
 - **Bulk operations:** Schedule/publish multiple deviations at once
 - **Draft templates:** Save metadata as template
 - **Smart retry:** Skip permanent errors, aggressive retry for transient
 
 **Not Planned:**
+
 - Client-side file validation (use DeviantArt's API response)
 - Multi-file diff upload (DeviantArt doesn't support)

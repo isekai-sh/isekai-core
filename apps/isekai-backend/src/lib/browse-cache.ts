@@ -15,19 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { prisma } from "../db/index.js";
-import { RedisCache, CacheTTL } from "./redis-cache.js";
+import { prisma } from '../db/index.js';
+import { RedisCache, CacheTTL } from './redis-cache.js';
 
 // Cache TTL settings (in minutes for PostgreSQL, converted to seconds for Redis)
 const CACHE_TTL_MINUTES = 10; // Fresh cache duration for API data (10 minutes)
 const STALE_TTL_MINUTES = 120; // Max stale cache for fallback on rate limit (2 hours)
 
 // Browse modes that require per-user caching
-const PER_USER_MODES = ["home", "following"];
+const PER_USER_MODES = ['home', 'following'];
 
 export interface BrowseCacheParams {
   mode: string;
-  source: "api";
+  source: 'api';
   tag?: string;
   topic?: string;
   username?: string;
@@ -55,12 +55,8 @@ export function isPerUserMode(mode: string): boolean {
 /**
  * Generate a unique cache key for browse responses
  */
-export function generateCacheKey(
-  params: BrowseCacheParams,
-  userId?: string
-): string {
-  const { mode, source, tag, topic, username, keywords, mature, offset } =
-    params;
+export function generateCacheKey(params: BrowseCacheParams, userId?: string): string {
+  const { mode, source, tag, topic, username, keywords, mature, offset } = params;
 
   if (isPerUserMode(mode) && userId) {
     // Per-user cache: browse:{userId}:{mode}:{source}:{mature}:{offset}
@@ -68,9 +64,9 @@ export function generateCacheKey(
   }
 
   // Global cache: browse:global:{mode}:{source}:{tag}:{topic}:{username}:{keywords}:{mature}:{offset}
-  return `browse:global:${mode}:${source}:${tag || ""}:${topic || ""}:${
-    username || ""
-  }:${keywords || ""}:${mature}:${offset}`;
+  return `browse:global:${mode}:${source}:${tag || ''}:${topic || ''}:${
+    username || ''
+  }:${keywords || ''}:${mature}:${offset}`;
 }
 
 /**
@@ -88,17 +84,10 @@ export async function getCachedBrowseResponse(
       // Use the same cache key as PostgreSQL (includes offset and all params)
       const redisKey = cacheKey;
 
-      const cached = await RedisCache.getWithStale<CachedBrowseResponse>(
-        redisKey,
-        allowStale
-      );
+      const cached = await RedisCache.getWithStale<CachedBrowseResponse>(redisKey, allowStale);
 
       if (cached.data !== null) {
-        console.log(
-          `[BrowseCache] Redis HIT: ${redisKey}${
-            cached.isStale ? " (stale)" : ""
-          }`
-        );
+        console.log(`[BrowseCache] Redis HIT: ${redisKey}${cached.isStale ? ' (stale)' : ''}`);
         // Only set fromCache: true for STALE cache (rate limit fallback)
         // Fresh cache doesn't need this flag
         return {
@@ -111,26 +100,22 @@ export async function getCachedBrowseResponse(
     }
 
     // Fallback to PostgreSQL
-    const pgResponse = await getCachedBrowseResponseFromDB(
-      cacheKey,
-      userId,
-      allowStale
-    );
+    const pgResponse = await getCachedBrowseResponseFromDB(cacheKey, userId, allowStale);
 
     if (pgResponse) {
-      console.log("[BrowseCache] PostgreSQL HIT");
+      console.log('[BrowseCache] PostgreSQL HIT');
 
       // Backfill Redis cache if available
       if (RedisCache.isEnabled()) {
         const redisKey = cacheKey;
         await RedisCache.set(redisKey, pgResponse, CacheTTL.BROWSE_FEED);
-        console.log("[BrowseCache] Backfilled Redis from PostgreSQL");
+        console.log('[BrowseCache] Backfilled Redis from PostgreSQL');
       }
     }
 
     return pgResponse;
   } catch (error) {
-    console.error("Error getting cached browse response:", error);
+    console.error('Error getting cached browse response:', error);
     return null;
   }
 }
@@ -176,7 +161,7 @@ async function getCachedBrowseResponseFromDB(
 
     return response;
   } catch (error) {
-    console.error("Error getting cached browse response from DB:", error);
+    console.error('Error getting cached browse response from DB:', error);
     return null;
   }
 }
@@ -207,10 +192,8 @@ export async function setCachedBrowseResponse(
       await RedisCache.set(redisKey, cacheData, CacheTTL.BROWSE_FEED);
 
       // Also set stale cache with the same key pattern for fallback
-      await RedisCache.set(redisKey + ":stale", cacheData, CacheTTL.STALE_MAX);
-      console.log(
-        `[BrowseCache] Redis SET: ${redisKey} (TTL: ${CacheTTL.BROWSE_FEED}s)`
-      );
+      await RedisCache.set(redisKey + ':stale', cacheData, CacheTTL.STALE_MAX);
+      console.log(`[BrowseCache] Redis SET: ${redisKey} (TTL: ${CacheTTL.BROWSE_FEED}s)`);
     }
 
     // Write to PostgreSQL (for fallback)
@@ -231,7 +214,7 @@ export async function setCachedBrowseResponse(
 
     console.log(`[BrowseCache] PostgreSQL SET: ${cacheKey}`);
   } catch (error) {
-    console.error("Error setting cached browse response:", error);
+    console.error('Error setting cached browse response:', error);
   }
 }
 
@@ -250,7 +233,7 @@ export async function cleanExpiredCache(): Promise<number> {
 
     return result.count;
   } catch (error) {
-    console.error("Error cleaning expired cache:", error);
+    console.error('Error cleaning expired cache:', error);
     return 0;
   }
 }

@@ -15,19 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Folder, Search } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { galleries } from "@/lib/api";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Folder, Search } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { galleries } from '@/lib/api';
 
 interface GallerySelectorProps {
   selectedGalleryIds: string[];
@@ -41,13 +37,12 @@ export function GallerySelector({
   triggerButton,
 }: GallerySelectorProps) {
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [tempSelected, setTempSelected] =
-    useState<string[]>(selectedGalleryIds);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tempSelected, setTempSelected] = useState<string[]>(selectedGalleryIds);
 
   // Cached query with 5-minute stale time
   const { data, isLoading } = useQuery({
-    queryKey: ["galleries"],
+    queryKey: ['galleries'],
     queryFn: () => galleries.list(0, 100),
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
@@ -98,9 +93,7 @@ export function GallerySelector({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label>Gallery Folders</Label>
-            <span className="text-xs text-muted-foreground">
-              {tempSelected.length} selected
-            </span>
+            <span className="text-xs text-muted-foreground">{tempSelected.length} selected</span>
           </div>
 
           {/* Search */}
@@ -122,9 +115,7 @@ export function GallerySelector({
               </div>
             ) : filteredGalleries.length === 0 ? (
               <div className="text-center py-4 text-sm text-muted-foreground">
-                {searchTerm
-                  ? "No folders found"
-                  : "No gallery folders available"}
+                {searchTerm ? 'No folders found' : 'No gallery folders available'}
               </div>
             ) : (
               filteredGalleries.map((gallery) => (
@@ -138,12 +129,10 @@ export function GallerySelector({
                     onCheckedChange={() => toggleGallery(gallery.folderid)}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {gallery.name}
-                    </p>
+                    <p className="text-sm font-medium truncate">{gallery.name}</p>
                     {gallery.size !== undefined && (
                       <p className="text-xs text-muted-foreground">
-                        {gallery.size} item{gallery.size !== 1 ? "s" : ""}
+                        {gallery.size} item{gallery.size !== 1 ? 's' : ''}
                       </p>
                     )}
                   </div>

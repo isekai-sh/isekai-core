@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 import {
   Heart,
   MessageCircle,
@@ -25,16 +25,16 @@ import {
   Calendar,
   Folder,
   X,
-} from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { browse, type BrowseDeviation, type DeviationDetail } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+} from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { browse, type BrowseDeviation, type DeviationDetail } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface DeviationDetailModalProps {
   deviation: BrowseDeviation | null;
@@ -51,7 +51,7 @@ export function DeviationDetailModal({
 }: DeviationDetailModalProps) {
   // Fetch full deviation details
   const { data: details, isLoading: detailsLoading } = useQuery({
-    queryKey: ["deviation", deviation?.deviationId],
+    queryKey: ['deviation', deviation?.deviationId],
     queryFn: () => browse.getDeviation(deviation!.deviationId),
     enabled: open && !!deviation?.deviationId,
     staleTime: 5 * 60 * 1000,
@@ -59,7 +59,7 @@ export function DeviationDetailModal({
 
   // Fetch similar deviations
   const { data: moreLikeThis, isLoading: similarLoading } = useQuery({
-    queryKey: ["moreLikeThis", deviation?.deviationId],
+    queryKey: ['moreLikeThis', deviation?.deviationId],
     queryFn: () => browse.moreLikeThis(deviation!.deviationId),
     enabled: open && !!deviation?.deviationId,
     staleTime: 5 * 60 * 1000,
@@ -72,12 +72,12 @@ export function DeviationDetailModal({
 
   const handleDownload = () => {
     if (details?.downloadUrl) {
-      window.open(details.downloadUrl, "_blank");
+      window.open(details.downloadUrl, '_blank');
     }
   };
 
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "";
+    if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -98,9 +98,7 @@ export function DeviationDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 gap-0 rounded-lg">
         <VisuallyHidden>
-          <DialogTitle>
-            {details?.title || deviation?.title || "Deviation Details"}
-          </DialogTitle>
+          <DialogTitle>{details?.title || deviation?.title || 'Deviation Details'}</DialogTitle>
         </VisuallyHidden>
 
         {/* Close button */}
@@ -118,12 +116,7 @@ export function DeviationDetailModal({
               <Skeleton className="w-full h-full" />
             ) : (
               <img
-                src={
-                  details?.fullImageUrl ||
-                  details?.previewUrl ||
-                  deviation?.previewUrl ||
-                  ""
-                }
+                src={details?.fullImageUrl || details?.previewUrl || deviation?.previewUrl || ''}
                 alt={details?.title || deviation?.title}
                 className="max-w-full max-h-full object-contain"
               />
@@ -138,16 +131,11 @@ export function DeviationDetailModal({
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage
-                      src={
-                        details?.author.avatarUrl || deviation?.author.avatarUrl
-                      }
-                      alt={
-                        details?.author.username || deviation?.author.username
-                      }
+                      src={details?.author.avatarUrl || deviation?.author.avatarUrl}
+                      alt={details?.author.username || deviation?.author.username}
                     />
                     <AvatarFallback>
-                      {(details?.author.username ||
-                        deviation?.author.username)?.[0]?.toUpperCase()}
+                      {(details?.author.username || deviation?.author.username)?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -157,10 +145,11 @@ export function DeviationDetailModal({
                     {details?.publishedTime && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(details.publishedTime).toLocaleDateString(
-                          undefined,
-                          { year: "numeric", month: "short", day: "numeric" }
-                        )}
+                        {new Date(details.publishedTime).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </p>
                     )}
                   </div>
@@ -182,9 +171,7 @@ export function DeviationDetailModal({
                 {detailsLoading ? (
                   <Skeleton className="h-6 w-3/4" />
                 ) : (
-                  <h2 className="text-lg font-semibold">
-                    {details?.title || deviation?.title}
-                  </h2>
+                  <h2 className="text-lg font-semibold">{details?.title || deviation?.title}</h2>
                 )}
               </div>
 
@@ -192,19 +179,11 @@ export function DeviationDetailModal({
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Heart className="h-4 w-4" />
-                  {(
-                    details?.stats.favourites ||
-                    deviation?.stats.favourites ||
-                    0
-                  ).toLocaleString()}
+                  {(details?.stats.favourites || deviation?.stats.favourites || 0).toLocaleString()}
                 </span>
                 <span className="flex items-center gap-1">
                   <MessageCircle className="h-4 w-4" />
-                  {(
-                    details?.stats.comments ||
-                    deviation?.stats.comments ||
-                    0
-                  ).toLocaleString()}
+                  {(details?.stats.comments || deviation?.stats.comments || 0).toLocaleString()}
                 </span>
                 {details?.stats.views && details.stats.views > 0 && (
                   <span className="flex items-center gap-1">
@@ -222,11 +201,7 @@ export function DeviationDetailModal({
 
               {/* Download button */}
               {details?.isDownloadable && details?.downloadUrl && (
-                <Button
-                  onClick={handleDownload}
-                  variant="secondary"
-                  className="w-full"
-                >
+                <Button onClick={handleDownload} variant="secondary" className="w-full">
                   <Download className="h-4 w-4 mr-2" />
                   Download
                   {details.downloadFilesize && (
@@ -251,7 +226,7 @@ export function DeviationDetailModal({
               {details?.category && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Folder className="h-4 w-4" />
-                  <span>{details.category.replace(/\//g, " › ")}</span>
+                  <span>{details.category.replace(/\//g, ' › ')}</span>
                 </div>
               )}
 
@@ -289,7 +264,7 @@ export function DeviationDetailModal({
                         deviation={d}
                         onClick={() => {
                           // Could navigate to this deviation
-                          window.open(d.url, "_blank");
+                          window.open(d.url, '_blank');
                         }}
                       />
                     ))}
@@ -309,7 +284,7 @@ export function DeviationDetailModal({
                         key={d.deviationId}
                         deviation={d}
                         onClick={() => {
-                          window.open(d.url, "_blank");
+                          window.open(d.url, '_blank');
                         }}
                       />
                     ))}
@@ -358,7 +333,7 @@ function MiniDeviationCard({
       onClick={onClick}
     >
       <img
-        src={deviation.thumbUrl || deviation.previewUrl || ""}
+        src={deviation.thumbUrl || deviation.previewUrl || ''}
         alt={deviation.title}
         className="w-full h-full object-cover transition-transform group-hover:scale-105"
       />

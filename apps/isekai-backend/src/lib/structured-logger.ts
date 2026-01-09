@@ -22,14 +22,14 @@
  * across distributed workers and async operations.
  */
 
-import type { Job } from "bullmq";
-import { randomUUID } from "crypto";
+import type { Job } from 'bullmq';
+import { randomUUID } from 'crypto';
 
 export enum LogLevel {
-  DEBUG = "debug",
-  INFO = "info",
-  WARN = "warn",
-  ERROR = "error",
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARN = 'warn',
+  ERROR = 'error',
 }
 
 export interface LogContext {
@@ -123,7 +123,7 @@ export class StructuredLogger {
       ? {
           ...context,
           error: {
-            message: error.message || "Unknown error",
+            message: error.message || 'Unknown error',
             stack: error.stack,
             code: error.code,
             status: error.status || error.statusCode,
@@ -150,11 +150,7 @@ export class StructuredLogger {
   /**
    * Core logging method
    */
-  private log(
-    level: LogLevel,
-    message: string,
-    context?: Record<string, any>
-  ): void {
+  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
     if (!this.shouldLog(level)) {
       return;
     }
@@ -205,12 +201,7 @@ export class StructuredLogger {
    * Check if a log level should be logged based on minimum level
    */
   private shouldLog(level: LogLevel): boolean {
-    const levels = [
-      LogLevel.DEBUG,
-      LogLevel.INFO,
-      LogLevel.WARN,
-      LogLevel.ERROR,
-    ];
+    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
     const currentIndex = levels.indexOf(level);
     const minIndex = levels.indexOf(this.minLevel);
 
@@ -225,13 +216,13 @@ export class StructuredLogger {
 
     for (const [key, value] of Object.entries(context)) {
       // Skip correlationId as it's already in root
-      if (key === "correlationId") {
+      if (key === 'correlationId') {
         continue;
       }
 
       // Redact sensitive fields
       if (this.isSensitiveField(key)) {
-        safe[key] = "[REDACTED]";
+        safe[key] = '[REDACTED]';
         continue;
       }
 
@@ -243,7 +234,7 @@ export class StructuredLogger {
           message: value.message,
           stack: value.stack,
         };
-      } else if (typeof value === "object" && value !== null) {
+      } else if (typeof value === 'object' && value !== null) {
         // Shallow copy objects, don't deep traverse
         safe[key] = this.truncateIfNeeded(value);
       } else {
@@ -259,15 +250,15 @@ export class StructuredLogger {
    */
   private isSensitiveField(fieldName: string): boolean {
     const sensitive = [
-      "password",
-      "token",
-      "accesstoken",
-      "refreshtoken",
-      "secret",
-      "apikey",
-      "authorization",
-      "cookie",
-      "session",
+      'password',
+      'token',
+      'accesstoken',
+      'refreshtoken',
+      'secret',
+      'apikey',
+      'authorization',
+      'cookie',
+      'session',
     ];
 
     return sensitive.some((s) => fieldName.toLowerCase().includes(s));
@@ -298,13 +289,13 @@ export class StructuredLogger {
     const envLevel = process.env.LOG_LEVEL?.toLowerCase();
 
     switch (envLevel) {
-      case "debug":
+      case 'debug':
         return LogLevel.DEBUG;
-      case "info":
+      case 'info':
         return LogLevel.INFO;
-      case "warn":
+      case 'warn':
         return LogLevel.WARN;
-      case "error":
+      case 'error':
         return LogLevel.ERROR;
       default:
         return LogLevel.INFO;
@@ -340,8 +331,8 @@ export function createLogger(context?: Partial<LogContext>): StructuredLogger {
 export function legacyLog(prefix: string, ...args: any[]): void {
   const logger = new StructuredLogger();
   const message = args
-    .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
-    .join(" ");
+    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+    .join(' ');
 
   logger.info(`[${prefix}] ${message}`);
 }

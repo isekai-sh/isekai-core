@@ -512,10 +512,7 @@ describe('rate-limiter', () => {
         baseDelay: 10000,
       };
 
-      mockRedis.keys.mockResolvedValue([
-        'rate_limit:user1:state',
-        'rate_limit:user2:state',
-      ]);
+      mockRedis.keys.mockResolvedValue(['rate_limit:user1:state', 'rate_limit:user2:state']);
 
       mockRedis.get
         .mockResolvedValueOnce(JSON.stringify(state1))
@@ -634,10 +631,7 @@ describe('rate-limiter', () => {
       mockRedis.get.mockResolvedValue(JSON.stringify(state));
 
       // Record success and failure concurrently
-      await Promise.all([
-        limiter.recordSuccess('user-123'),
-        limiter.recordFailure('user-123'),
-      ]);
+      await Promise.all([limiter.recordSuccess('user-123'), limiter.recordFailure('user-123')]);
 
       // Both should complete without error
       expect(mockRedis.setex).toHaveBeenCalled();

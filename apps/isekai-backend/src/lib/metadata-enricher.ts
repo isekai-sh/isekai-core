@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { logger } from "./logger.js";
+import { logger } from './logger.js';
 
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
 export interface BrowseDeviation {
   deviationId: string;
@@ -38,7 +38,7 @@ export interface BrowseDeviation {
   isDownloadable: boolean;
   isMature: boolean;
   category: string | null;
-  tierAccess: "locked" | "unlocked" | "locked-subscribed" | null;
+  tierAccess: 'locked' | 'unlocked' | 'locked-subscribed' | null;
   isExclusive: boolean;
   isPremium: boolean;
   printId: string | null;
@@ -97,19 +97,16 @@ async function enrichBatch(
 
     // Build query params
     const params = new URLSearchParams();
-    deviationIds.forEach((id) => params.append("deviationids[]", id));
-    params.set("ext_stats", "true");
-    params.set("ext_submission", "true");
+    deviationIds.forEach((id) => params.append('deviationids[]', id));
+    params.set('ext_stats', 'true');
+    params.set('ext_submission', 'true');
 
-    const response = await fetch(
-      `${DEVIANTART_API_URL}/deviation/metadata?${params}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
+    const response = await fetch(`${DEVIANTART_API_URL}/deviation/metadata?${params}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
     if (!response.ok) {
-      logger.warn("DeviantArt metadata enrichment API failed", {
+      logger.warn('DeviantArt metadata enrichment API failed', {
         status: response.status,
         batchSize: batch.length,
       });
@@ -150,7 +147,7 @@ async function enrichBatch(
       };
     });
   } catch (error) {
-    logger.error("Error enriching deviation batch", {
+    logger.error('Error enriching deviation batch', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       batchSize: batch.length,

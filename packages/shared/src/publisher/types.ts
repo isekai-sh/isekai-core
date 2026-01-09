@@ -15,14 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Job } from "bullmq";
-import type {
-  PrismaClient,
-  User,
-  Deviation,
-  DeviationFile,
-} from "@prisma/client";
-import type { UploadMode } from "../index.js";
+import type { Job } from 'bullmq';
+import type { PrismaClient, User, Deviation, DeviationFile } from '@prisma/client';
+import type { UploadMode } from '../index.js';
 
 /**
  * Dependencies required by the publisher core logic

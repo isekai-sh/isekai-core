@@ -15,18 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { MoreVertical, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { DeviantArtGalleryFolder } from "@isekai/shared";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MoreVertical, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { DeviantArtGalleryFolder } from '@isekai/shared';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,10 +36,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { galleries } from "@/lib/api";
-import { EditGalleryDialog } from "./EditGalleryDialog";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { galleries } from '@/lib/api';
+import { EditGalleryDialog } from './EditGalleryDialog';
 
 interface GalleryCardProps {
   gallery: DeviantArtGalleryFolder;
@@ -54,17 +54,17 @@ export function GalleryCard({ gallery }: GalleryCardProps) {
   const deleteMutation = useMutation({
     mutationFn: () => galleries.delete(gallery.folderid),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["galleries"] });
+      queryClient.invalidateQueries({ queryKey: ['galleries'] });
       toast({
-        title: "Gallery deleted",
-        description: "The gallery has been deleted successfully.",
+        title: 'Gallery deleted',
+        description: 'The gallery has been deleted successfully.',
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete gallery. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete gallery. Please try again.',
+        variant: 'destructive',
       });
     },
   });
@@ -81,11 +81,8 @@ export function GalleryCard({ gallery }: GalleryCardProps) {
                 alt={gallery.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error(
-                    "Failed to load image:",
-                    gallery.thumb?.preview?.src
-                  );
-                  (e.target as HTMLImageElement).style.display = "none";
+                  console.error('Failed to load image:', gallery.thumb?.preview?.src);
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
@@ -97,10 +94,7 @@ export function GalleryCard({ gallery }: GalleryCardProps) {
         {/* Content */}
         <div className="p-2">
           <div className="flex items-center justify-between gap-2">
-            <Link
-              to={`/galleries/${gallery.folderid}`}
-              className="flex-1 min-w-0 hover:underline"
-            >
+            <Link to={`/galleries/${gallery.folderid}`} className="flex-1 min-w-0 hover:underline">
               <h3 className="font-medium text-sm truncate">{gallery.name}</h3>
             </Link>
 
@@ -132,7 +126,7 @@ export function GalleryCard({ gallery }: GalleryCardProps) {
           </div>
 
           <div className="text-xs text-muted-foreground mt-1">
-            {gallery.size || 0} {gallery.size === 1 ? "post" : "posts"}
+            {gallery.size || 0} {gallery.size === 1 ? 'post' : 'posts'}
           </div>
         </div>
       </div>
@@ -150,8 +144,8 @@ export function GalleryCard({ gallery }: GalleryCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Gallery?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{gallery.name}"? This action
-              cannot be undone. Posts in this gallery will not be deleted.
+              Are you sure you want to delete "{gallery.name}"? This action cannot be undone. Posts
+              in this gallery will not be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

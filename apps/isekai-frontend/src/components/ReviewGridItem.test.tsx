@@ -66,10 +66,7 @@ describe('ReviewGridItem', () => {
       />
     );
 
-    expect(screen.getByRole('img')).toHaveAttribute(
-      'src',
-      'https://storage.isekai.sh/test.jpg'
-    );
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://storage.isekai.sh/test.jpg');
   });
 
   it('should render in list view mode', () => {

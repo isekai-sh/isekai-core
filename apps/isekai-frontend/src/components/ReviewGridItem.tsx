@@ -15,17 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { FileImage } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import type { Deviation } from "@isekai/shared";
+import { FileImage } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import type { Deviation } from '@isekai/shared';
 
 interface ReviewGridItemProps {
   deviation: Deviation;
   isSelected: boolean;
   isFocused: boolean;
-  viewMode: "grid" | "list";
+  viewMode: 'grid' | 'list';
   onToggleSelect: () => void;
   onFocus: () => void;
 }
@@ -38,14 +38,14 @@ export function ReviewGridItem({
   onToggleSelect,
   onFocus,
 }: ReviewGridItemProps) {
-  if (viewMode === "list") {
+  if (viewMode === 'list') {
     return (
       <div
         className={cn(
-          "relative flex items-center gap-3 rounded overflow-hidden cursor-pointer transition-all p-2",
-          isSelected && "bg-primary text-primary-foreground",
-          !isSelected && isFocused && "bg-primary/20",
-          !isSelected && !isFocused && "hover:bg-muted/50"
+          'relative flex items-center gap-3 rounded overflow-hidden cursor-pointer transition-all p-2',
+          isSelected && 'bg-primary text-primary-foreground',
+          !isSelected && isFocused && 'bg-primary/20',
+          !isSelected && !isFocused && 'hover:bg-muted/50'
         )}
         onClick={onFocus}
       >
@@ -59,7 +59,9 @@ export function ReviewGridItem({
         >
           <Checkbox
             checked={isSelected}
-            className={cn(!isSelected && "border-muted-foreground/50 data-[state=unchecked]:bg-muted")}
+            className={cn(
+              !isSelected && 'border-muted-foreground/50 data-[state=unchecked]:bg-muted'
+            )}
           />
         </div>
 
@@ -85,14 +87,12 @@ export function ReviewGridItem({
           {deviation.tags.length > 0 && (
             <p
               className={cn(
-                "text-xs truncate",
-                isSelected
-                  ? "text-primary-foreground/80"
-                  : "text-muted-foreground"
+                'text-xs truncate',
+                isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
               )}
             >
               {deviation.tags.length} tag
-              {deviation.tags.length !== 1 ? "s" : ""}
+              {deviation.tags.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -102,15 +102,11 @@ export function ReviewGridItem({
 
   return (
     <div
-      className={cn(
-        "relative aspect-square rounded overflow-hidden cursor-pointer transition-all"
-      )}
+      className={cn('relative aspect-square rounded overflow-hidden cursor-pointer transition-all')}
       onClick={onFocus}
     >
       {/* Selection overlay */}
-      {isSelected && (
-        <div className="absolute inset-0 bg-primary/50 z-10 pointer-events-none" />
-      )}
+      {isSelected && <div className="absolute inset-0 bg-primary/50 z-10 pointer-events-none" />}
 
       {/* Focused overlay */}
       {!isSelected && isFocused && (
@@ -141,10 +137,7 @@ export function ReviewGridItem({
       >
         <Checkbox
           checked={isSelected}
-          className={cn(
-            "bg-background",
-            !isSelected && "border-muted-foreground/50"
-          )}
+          className={cn('bg-background', !isSelected && 'border-muted-foreground/50')}
         />
       </div>
 
@@ -152,7 +145,7 @@ export function ReviewGridItem({
       {deviation.tags.length > 0 && (
         <div className="absolute top-2 right-2 z-20">
           <Badge variant="secondary" className="text-xs">
-            {deviation.tags.length} tag{deviation.tags.length !== 1 ? "s" : ""}
+            {deviation.tags.length} tag{deviation.tags.length !== 1 ? 's' : ''}
           </Badge>
         </div>
       )}

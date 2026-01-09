@@ -418,7 +418,7 @@ describe('CacheStats', () => {
       const startTime1 = stats1.startTime;
 
       // Wait a tiny bit
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       CacheStats.reset();
 
@@ -463,7 +463,9 @@ describe('CacheStats', () => {
 
       CacheStats.logSummary();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Overall Hit Rate: 50.00%'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Overall Hit Rate: 50.00%')
+      );
 
       consoleLogSpy.mockRestore();
     });

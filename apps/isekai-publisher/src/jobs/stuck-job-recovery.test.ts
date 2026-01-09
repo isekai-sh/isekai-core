@@ -147,9 +147,7 @@ describe('stuck-job-recovery', () => {
         },
       });
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Completing ghost publish')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Completing ghost publish'));
     });
 
     it('should reset and retry (Case 2: has stashItemId)', async () => {
@@ -188,9 +186,7 @@ describe('stuck-job-recovery', () => {
         'single'
       );
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Reset and queued retry')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Reset and queued retry'));
     });
 
     it('should skip retry if retryCount >= 7 (Case 2 fallthrough to Case 3)', async () => {
@@ -222,9 +218,7 @@ describe('stuck-job-recovery', () => {
       });
 
       expect(mockScheduleDeviation).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Reset to draft')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Reset to draft'));
     });
 
     it('should reset to draft (Case 3: no external IDs)', async () => {
@@ -253,9 +247,7 @@ describe('stuck-job-recovery', () => {
         },
       });
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Reset to draft')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Reset to draft'));
     });
 
     it('should handle errors during recovery', async () => {
@@ -346,9 +338,7 @@ describe('stuck-job-recovery', () => {
       await vi.advanceTimersByTimeAsync(5000); // Trigger initial recovery
 
       // Should not attempt to release lock
-      expect(console.log).not.toHaveBeenCalledWith(
-        expect.stringContaining('Releasing stale lock')
-      );
+      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining('Releasing stale lock'));
     });
 
     it('should handle multiple deviations', async () => {
@@ -455,7 +445,9 @@ describe('stuck-job-recovery', () => {
       // Fast-forward 5 seconds
       await vi.advanceTimersByTimeAsync(5000);
 
-      expect(console.log).toHaveBeenCalledWith('[Stuck Job Recovery] Running initial recovery check...');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Stuck Job Recovery] Running initial recovery check...'
+      );
       expect(prisma.deviation.findMany).toHaveBeenCalled();
     });
 

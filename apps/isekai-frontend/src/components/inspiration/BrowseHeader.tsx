@@ -15,15 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { LayoutGrid, LayoutDashboard, Rows3 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { browse, type BrowseMode, type TopTopicItem } from "@/lib/api";
-import { cn, type ViewMode } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { LayoutGrid, LayoutDashboard, Rows3 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { browse, type BrowseMode, type TopTopicItem } from '@/lib/api';
+import { cn, type ViewMode } from '@/lib/utils';
+import type { LucideIcon } from 'lucide-react';
 
 interface BrowseTab {
   id: BrowseMode;
@@ -56,7 +56,7 @@ export function BrowseHeader({
   tabs,
 }: BrowseHeaderProps) {
   const { data: topicsData, isLoading: topicsLoading } = useQuery({
-    queryKey: ["topTopics"],
+    queryKey: ['topTopics'],
     queryFn: () => browse.topTopics(),
     staleTime: 10 * 60 * 1000,
   });
@@ -71,13 +71,10 @@ export function BrowseHeader({
           return (
             <Button
               key={tab.id}
-              variant={isActive ? "default" : "ghost"}
+              variant={isActive ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onModeChange(tab.id)}
-              className={cn(
-                "gap-1.5 h-8",
-                !isActive && "text-muted-foreground"
-              )}
+              className={cn('gap-1.5 h-8', !isActive && 'text-muted-foreground')}
             >
               <Icon className="h-3.5 w-3.5" />
               {tab.label}
@@ -94,18 +91,13 @@ export function BrowseHeader({
         <div className="flex gap-1.5">
           {topicsLoading
             ? Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="h-8 w-20 flex-shrink-0 rounded-md"
-                />
+                <Skeleton key={i} className="h-8 w-20 flex-shrink-0 rounded-md" />
               ))
             : topicsData?.topics.map((topic) => (
                 <TopicChip
                   key={topic.canonicalName}
                   topic={topic}
-                  isActive={
-                    mode === "topic" && selectedTag === topic.canonicalName
-                  }
+                  isActive={mode === 'topic' && selectedTag === topic.canonicalName}
                   onClick={() => onTopicSelect(topic.canonicalName)}
                 />
               ))}
@@ -134,28 +126,28 @@ export function BrowseHeader({
       {/* View mode toggle */}
       <div className="hidden lg:flex items-center gap-0.5 shrink-0 border-l border-border pl-2">
         <Button
-          variant={viewMode === "masonry" ? "secondary" : "ghost"}
+          variant={viewMode === 'masonry' ? 'secondary' : 'ghost'}
           size="icon"
           className="h-8 w-8"
-          onClick={() => onViewModeChange("masonry")}
+          onClick={() => onViewModeChange('masonry')}
           title="Masonry view"
         >
           <LayoutDashboard className="h-4 w-4" />
         </Button>
         <Button
-          variant={viewMode === "bento" ? "secondary" : "ghost"}
+          variant={viewMode === 'bento' ? 'secondary' : 'ghost'}
           size="icon"
           className="h-8 w-8"
-          onClick={() => onViewModeChange("bento")}
+          onClick={() => onViewModeChange('bento')}
           title="Bento view"
         >
           <LayoutGrid className="h-4 w-4" />
         </Button>
         <Button
-          variant={viewMode === "grid" ? "secondary" : "ghost"}
+          variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
           size="icon"
           className="h-8 w-8"
-          onClick={() => onViewModeChange("grid")}
+          onClick={() => onViewModeChange('grid')}
           title="Grid view"
         >
           <Rows3 className="h-4 w-4" />
@@ -178,9 +170,9 @@ function TopicChip({
     <button
       onClick={onClick}
       className={cn(
-        "relative h-8 px-3 flex-shrink-0 rounded-md overflow-hidden transition-all",
-        "hover:ring-1 hover:ring-primary/50",
-        isActive && "ring-2 ring-primary"
+        'relative h-8 px-3 flex-shrink-0 rounded-md overflow-hidden transition-all',
+        'hover:ring-1 hover:ring-primary/50',
+        isActive && 'ring-2 ring-primary'
       )}
     >
       {/* Background image */}

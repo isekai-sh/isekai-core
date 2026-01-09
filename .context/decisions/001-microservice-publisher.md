@@ -9,6 +9,7 @@
 ## Context
 
 Isekai Core needs to publish deviations to DeviantArt at scheduled times. This involves:
+
 - Processing a job queue (BullMQ)
 - Making external API calls to DeviantArt
 - Handling rate limits and retries
@@ -23,12 +24,14 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **We will run the publisher as a separate microservice** (`isekai-publisher`) isolated from the REST API (`isekai-backend`).
 
 **Architecture:**
+
 - **API Service** (`isekai-backend`, port 4000) - Express REST API, handles user requests
 - **Publisher Service** (`isekai-publisher`, port 8000) - BullMQ worker, processes publishing queue
 - **Shared Database** (PostgreSQL) - Both services connect to same database
 - **Shared Queue** (Redis/BullMQ) - API enqueues jobs, Publisher processes jobs
 
 **Communication:**
+
 - API → Queue: Enqueue deviation publishing jobs
 - Publisher → Database: Update deviation status, publish times
 - Publisher → DeviantArt API: Upload files, create deviations
@@ -44,6 +47,7 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Solution:** If the publisher crashes (e.g., due to memory leak, DeviantArt API timeout), the REST API remains available.
 
 **Example:**
+
 - DeviantArt API times out after 60 seconds
 - Publisher worker crashes
 - API continues serving user requests
@@ -56,6 +60,7 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Solution:** Scale publisher independently of API.
 
 **Example:**
+
 - Run 2 API instances (for high traffic)
 - Run 5 publisher instances (for high queue volume)
 - Scale horizontally based on different metrics
@@ -67,6 +72,7 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Solution:** Deploy API and Publisher separately.
 
 **Example:**
+
 - Deploy API update (new user endpoint)
 - Publisher continues processing jobs without interruption
 - Zero downtime for publishing workflow
@@ -78,6 +84,7 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Solution:** Allocate resources separately.
 
 **Example:**
+
 - API: 512MB RAM, 0.5 CPU
 - Publisher: 2GB RAM, 2 CPU (for concurrent uploads)
 
@@ -133,11 +140,13 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Approach:** Run publisher worker in same process as API.
 
 **Pros:**
+
 - Simpler deployment (1 service)
 - No queue overhead
 - Easier to debug (single process)
 
 **Cons:**
+
 - Publisher crash kills API
 - Cannot scale independently
 - Memory leaks affect both API and publisher
@@ -152,11 +161,13 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Approach:** Use AWS Lambda / Cloudflare Workers for publishing.
 
 **Pros:**
+
 - Infinite scaling
 - No infrastructure management
 - Pay-per-use
 
 **Cons:**
+
 - 15-minute timeout (too short for large uploads)
 - Cold start latency
 - Vendor lock-in
@@ -171,10 +182,12 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 **Approach:** Use Node.js worker threads for publishing.
 
 **Pros:**
+
 - Simpler than microservice
 - Share memory with API
 
 **Cons:**
+
 - Still in same process (crash affects API)
 - Limited by Node.js single-threaded event loop
 - Worker thread overhead
@@ -190,7 +203,7 @@ Isekai Core needs to publish deviations to DeviantArt at scheduled times. This i
 ```typescript
 // Deviation publisher worker
 const deviationPublisherWorker = new Worker<DeviationPublishJob>(
-  "deviation-publisher",
+  'deviation-publisher',
   async (job) => {
     // Process publishing job
   },
@@ -199,7 +212,7 @@ const deviationPublisherWorker = new Worker<DeviationPublishJob>(
 
 // Token maintenance worker
 const tokenMaintenanceWorker = new Worker<TokenMaintenanceJob>(
-  "token-maintenance",
+  'token-maintenance',
   async (job) => {
     // Refresh OAuth tokens
   },
@@ -208,11 +221,11 @@ const tokenMaintenanceWorker = new Worker<TokenMaintenanceJob>(
 
 // Health check server
 const app = express();
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.listen(8000);
 
 // Graceful shutdown
-process.on("SIGTERM", async () => {
+process.on('SIGTERM', async () => {
   await deviationPublisherWorker.close();
   await tokenMaintenanceWorker.close();
   process.exit(0);
@@ -222,14 +235,14 @@ process.on("SIGTERM", async () => {
 ### API Service Enqueuing (`apps/isekai-backend/src/queues/deviation-publisher.ts`)
 
 ```typescript
-import { Queue } from "bullmq";
+import { Queue } from 'bullmq';
 
-const deviationQueue = new Queue("deviation-publisher", {
+const deviationQueue = new Queue('deviation-publisher', {
   connection: redisConnection,
 });
 
 export async function enqueueDeviation(deviationId: string) {
-  await deviationQueue.add("publish", { deviationId });
+  await deviationQueue.add('publish', { deviationId });
 }
 ```
 
@@ -247,12 +260,14 @@ export async function enqueueDeviation(deviationId: string) {
 ## Success Metrics
 
 **Target Metrics:**
+
 - API uptime: 99.9% (unaffected by publisher crashes)
 - Publisher throughput: 100 deviations/hour (with 3 concurrent workers)
 - Job processing time: < 5 minutes/deviation
 - Graceful shutdown: 0 interrupted uploads (30s drain period)
 
 **Actual Results (v0.1.0-alpha.5):**
+
 - API uptime: 99.95% (meets target)
 - Publisher throughput: 120 deviations/hour (exceeds target)
 - Job processing time: 3 minutes average (meets target)

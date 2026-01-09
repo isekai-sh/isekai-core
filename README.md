@@ -20,6 +20,7 @@ Isekai is a modern web application that helps artists manage their DeviantArt po
 **For comprehensive documentation, see [`.context/substrate.md`](.context/substrate.md)**
 
 The `.context/` directory contains complete documentation following the [Substrate Methodology](https://github.com/andrefigueira/.context):
+
 - **[Architecture](.context/architecture/overview.md)** - System design and patterns
 - **[API Reference](.context/api/endpoints.md)** - All 19 route groups documented
 - **[Database Schema](.context/database/schema.md)** - Complete Prisma schema
@@ -227,6 +228,7 @@ MEMORY_LIMIT_FRONTEND=50M
 ### System Requirements for 1GB VPS
 
 1. **Add swap file** (critical to prevent OOM kills):
+
 ```bash
 # Create 2GB swap file
 sudo fallocate -l 2G /swapfile
@@ -254,6 +256,7 @@ sudo sysctl -p
 ### When to Upgrade
 
 Upgrade to 2GB+ VPS if you experience:
+
 - Frequent OOM kills (check `dmesg | grep oom`)
 - Swap usage consistently >500MB (`free -h`)
 - Slow response times (>2s for API calls)

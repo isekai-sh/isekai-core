@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { randomUUID } from "crypto";
+import { randomUUID } from 'crypto';
 
 /**
  * Generate a storage key for a deviation file.
@@ -30,21 +30,19 @@ import { randomUUID } from "crypto";
 export function generateStorageKey(
   userId: string,
   filename: string,
-  pathPrefix: string = ""
+  pathPrefix: string = ''
 ): string {
   // Extract filename without extension
-  const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "");
+  const filenameWithoutExt = filename.replace(/\.[^/.]+$/, '');
 
   // Sanitize: replace special characters with hyphens, limit length
-  const sanitized = filenameWithoutExt
-    .replace(/[^a-zA-Z0-9-_]/g, "-")
-    .slice(0, 50);
+  const sanitized = filenameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 50);
 
   // Get short UUID for uniqueness (first 8 chars)
-  const shortUuid = randomUUID().split("-")[0];
+  const shortUuid = randomUUID().split('-')[0];
 
   // Get extension (default to jpg if none)
-  const ext = filename.split(".").pop() || "jpg";
+  const ext = filename.split('.').pop() || 'jpg';
 
   return `${pathPrefix}deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
 }

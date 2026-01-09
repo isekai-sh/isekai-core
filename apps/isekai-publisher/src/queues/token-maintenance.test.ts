@@ -95,7 +95,7 @@ describe('token-maintenance', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     capturedWorkerProcessor = null;
-    Object.keys(workerEventListeners).forEach(key => delete workerEventListeners[key]);
+    Object.keys(workerEventListeners).forEach((key) => delete workerEventListeners[key]);
 
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -213,7 +213,8 @@ describe('token-maintenance', () => {
           },
           data: {
             status: 'draft',
-            errorMessage: 'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
+            errorMessage:
+              'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
             updatedAt: expect.any(Date),
           },
         });
@@ -448,7 +449,11 @@ describe('token-maintenance', () => {
         const result = await capturedWorkerProcessor!(createMockJob() as Job);
 
         // Due to timing, the days calculation might be 9 or 10
-        expect(mockSendRefreshTokenWarningEmail).toHaveBeenCalledWith(mockUser, expect.any(Number), 1);
+        expect(mockSendRefreshTokenWarningEmail).toHaveBeenCalledWith(
+          mockUser,
+          expect.any(Number),
+          1
+        );
         expect(mockPrismaUserUpdate).toHaveBeenCalledWith({
           where: { id: 'user-123' },
           data: { refreshTokenWarningEmailSent: true },
@@ -503,7 +508,7 @@ describe('token-maintenance', () => {
 
       it('should send warning email on day 7 boundary', async () => {
         // Add small buffer to ensure we're solidly at 7 days after timing
-        const futureDate = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000) + (60 * 60 * 1000)); // 7 days + 1 hour
+        const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000); // 7 days + 1 hour
         const mockUser = createMockUser({
           refreshTokenExpiresAt: futureDate,
           refreshTokenWarningEmailSent: false,
@@ -521,7 +526,7 @@ describe('token-maintenance', () => {
 
       it('should send warning email on day 14 boundary', async () => {
         // Add small buffer to ensure we're solidly at 14 days after timing
-        const futureDate = new Date(Date.now() + (14 * 24 * 60 * 60 * 1000) + (60 * 60 * 1000)); // 14 days + 1 hour
+        const futureDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000); // 14 days + 1 hour
         const mockUser = createMockUser({
           refreshTokenExpiresAt: futureDate,
           refreshTokenWarningEmailSent: false,
@@ -551,9 +556,7 @@ describe('token-maintenance', () => {
           expiredNotifications: 0,
           scheduledPostsPaused: 0,
         });
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Found 0 users')
-        );
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Found 0 users'));
       });
 
       it('should process multiple users correctly', async () => {
@@ -722,10 +725,7 @@ describe('token-maintenance', () => {
 
       completedHandler(mockJob, result);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        '[Token Maintenance] Job completed:',
-        result
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith('[Token Maintenance] Job completed:', result);
     });
 
     it('should register failed event handler', () => {

@@ -93,9 +93,7 @@ describe('Callback', () => {
     render(<Callback />);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/login?error=Invalid%20OAuth%20token'
-      );
+      expect(mockNavigate).toHaveBeenCalledWith('/login?error=Invalid%20OAuth%20token');
     });
   });
 });

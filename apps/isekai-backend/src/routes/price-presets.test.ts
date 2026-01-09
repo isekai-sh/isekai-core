@@ -44,7 +44,9 @@ import { prisma } from '../db/index.js';
 // Helper to call route handlers directly
 async function callRoute(method: string, path: string, req: any, res: any) {
   const routes = (pricePresetsRouter as any).stack;
-  const route = routes.find((r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]);
+  const route = routes.find(
+    (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+  );
 
   if (!route) {
     throw new Error(`Route ${method} ${path} not found`);

@@ -84,6 +84,7 @@ Frontend ← Backend API ← Session cookie
 ```
 
 **Steps:**
+
 1. User clicks "Login with DeviantArt"
 2. Backend redirects to DeviantArt OAuth authorize URL
 3. User grants permission on DeviantArt
@@ -115,6 +116,7 @@ User Upload → Frontend → Backend API → S3 Storage
 ```
 
 **Status Lifecycle:**
+
 ```
 review → draft → scheduled → uploading → publishing → published
                                            ↓
@@ -164,6 +166,7 @@ DeviantArt OAuth (refresh endpoint)
 **Technology:** React 18, Vite 6, TypeScript 5.6
 
 **Key Features:**
+
 - Single Page Application (SPA) with React Router 7
 - TanStack Query for server state caching
 - Zustand for client state (user preferences, UI state)
@@ -174,6 +177,7 @@ DeviantArt OAuth (refresh endpoint)
 - Data tables (TanStack Table)
 
 **Pages (19 total):**
+
 - Authentication: Login, Callback
 - Content Management: Draft, Scheduled, Published, Review
 - Browsing: Browse, Galleries, GalleryDetail
@@ -182,6 +186,7 @@ DeviantArt OAuth (refresh endpoint)
 - Settings: Templates, ApiKeys, Settings
 
 **State Management:**
+
 - Server state: TanStack Query (deviations, galleries, automations)
 - Client state: Zustand (theme, layout preferences)
 - Form state: React Hook Form (inferred from patterns)
@@ -191,6 +196,7 @@ DeviantArt OAuth (refresh endpoint)
 **Technology:** Express.js, TypeScript 5.6, Node.js 20+
 
 **Key Responsibilities:**
+
 - HTTP request handling (REST API)
 - Authentication (session + API keys)
 - Input validation (Zod schemas)
@@ -200,6 +206,7 @@ DeviantArt OAuth (refresh endpoint)
 - Database operations (Prisma ORM)
 
 **Middleware Stack:**
+
 1. CORS (allow frontend origin)
 2. Body parser (JSON + URL-encoded)
 3. Cookie parser
@@ -209,11 +216,13 @@ DeviantArt OAuth (refresh endpoint)
 7. Error handler (centralized)
 
 **Authentication Modes:**
+
 - **Session-based:** Browser users (cookie)
 - **API key:** External integrations (header: `X-API-Key`)
 - **Hybrid:** Supports both (e.g., ComfyUI integration)
 
 **Session Store Auto-Detection:**
+
 ```typescript
 // Tries Redis first, falls back to PostgreSQL
 if (REDIS_URL) {
@@ -225,11 +234,13 @@ if (REDIS_URL) {
 
 **Storage Abstraction (v0.1.0-alpha.3+):**
 Supports multiple S3-compatible backends:
+
 - **Cloudflare R2** (default production)
 - **AWS S3** (compatible)
 - **MinIO** (self-hosted, development)
 
 Configured via environment variables:
+
 ```bash
 S3_ENDPOINT=https://xxx.r2.cloudflarestorage.com  # R2
 S3_ENDPOINT=https://s3.amazonaws.com              # AWS S3
@@ -237,6 +248,7 @@ S3_ENDPOINT=http://minio:9000                     # MinIO
 ```
 
 **Multi-Tenant Support (SaaS Mode, v0.1.0-alpha.3+):**
+
 - InstanceUser model tracks users per instance
 - InstanceSettings model stores runtime config
 - S3_PATH_PREFIX for storage isolation: `{tenant_id}/deviations/...`
@@ -246,6 +258,7 @@ S3_ENDPOINT=http://minio:9000                     # MinIO
 **Technology:** Node.js 20+, BullMQ 5, TypeScript 5.6
 
 **Why Separate Microservice:**
+
 1. **Fault Isolation:** Crashes don't affect API
 2. **Independent Scaling:** Scale based on queue depth
 3. **Resource Isolation:** CPU-intensive jobs don't block API
@@ -253,6 +266,7 @@ S3_ENDPOINT=http://minio:9000                     # MinIO
 5. **Simplified Monitoring:** Dedicated health checks
 
 **Architecture (apps/isekai-publisher/src/index.ts):**
+
 ```
 Main Process
   ├─ Health Check Server (Express on port 8000)
@@ -276,15 +290,12 @@ Main Process
 ```
 
 **Graceful Shutdown:**
+
 ```typescript
 process.on('SIGTERM', async () => {
   isShuttingDown = true; // Prevent new jobs
   await setTimeout(30000); // Drain period
-  await Promise.all([
-    deviationWorker.close(),
-    tokenWorker.close(),
-    cleanupWorker.close(),
-  ]);
+  await Promise.all([deviationWorker.close(), tokenWorker.close(), cleanupWorker.close()]);
   process.exit(0);
 });
 ```
@@ -294,18 +305,21 @@ process.on('SIGTERM', async () => {
 **Purpose:** Type-safe code sharing across all apps
 
 **Contents:**
+
 - `prisma/schema.prisma` - Single source of truth for database schema
 - `src/index.ts` - Exported TypeScript types
 - `src/crypto.ts` - Encryption/decryption utilities (AES-256-GCM)
 - `src/publisher/` - Publisher queue types and utilities
 
 **Build Process:**
+
 ```bash
 pnpm --filter @isekai/shared build
 # Outputs: dist/ with compiled JS + .d.ts files
 ```
 
 **Usage in Apps:**
+
 ```typescript
 import { Deviation, User } from '@isekai/shared';
 import { encrypt, decrypt } from '@isekai/shared/crypto';
@@ -319,17 +333,20 @@ import { prisma } from '@isekai/shared/db';
 **Purpose:** Primary data store
 
 **Key Features:**
+
 - ACID transactions
 - Row-level locking
 - Composite indexes for performance
 - Full-text search (future)
 
 **Connection:**
+
 - Backend: Direct via Prisma
 - Publisher: Direct via Prisma (no HTTP to API!)
 - Connection pooling: Prisma default (10 connections)
 
 **Critical Indexes:**
+
 ```sql
 -- Performance-critical queries
 CREATE INDEX idx_deviations_user_status ON deviations(user_id, status);
@@ -343,6 +360,7 @@ CREATE INDEX idx_deviations_automation ON deviations(automation_id);
 **Purpose:** Cache, queue, session store
 
 **Use Cases:**
+
 1. **BullMQ Job Queue:** Reliable job processing
 2. **Session Store:** User authentication (optional - can use PostgreSQL)
 3. **Circuit Breaker State:** Rate limit protection
@@ -351,6 +369,7 @@ CREATE INDEX idx_deviations_automation ON deviations(automation_id);
 **Persistence:** AOF (Append-Only File) enabled for durability
 
 **Connection:**
+
 - Backend: Via `ioredis` client
 - Publisher: Via `ioredis` client
 - BullMQ: Via `ioredis` client
@@ -363,6 +382,7 @@ If `REDIS_URL` not set, system falls back to PostgreSQL for sessions. Queues sti
 **Purpose:** File storage for deviation uploads
 
 **Supported Backends (v0.1.0-alpha.3+):**
+
 1. **Cloudflare R2** (production default)
    - No egress fees
    - S3-compatible API
@@ -378,6 +398,7 @@ If `REDIS_URL` not set, system falls back to PostgreSQL for sessions. Queues sti
    - Internal network URL support
 
 **Storage Abstraction (apps/isekai-backend/src/lib/storage.ts):**
+
 ```typescript
 interface StorageService {
   upload(file: Buffer, key: string): Promise<void>;
@@ -392,6 +413,7 @@ export function getStorageService(): StorageService {
 ```
 
 **Multi-Tenant Storage (v0.1.0-alpha.3+):**
+
 ```
 Bucket: isekai-uploads
 ├── tenant-abc123/          ← S3_PATH_PREFIX
@@ -464,6 +486,7 @@ isekai-core/
 **Container Platform:** Docker + Docker Compose
 
 **Production Deployment (v0.1.0-alpha.2+):**
+
 - GitHub Container Registry (GHCR)
 - Automated builds via GitHub Actions
 - Tags: `latest`, `v0.1.0-alpha.5`, `sha-{git-sha}`
@@ -472,6 +495,7 @@ isekai-core/
 All apps configured via environment variables only - no code forks needed for customization.
 
 **Health Checks:**
+
 - Backend: Implicit (HTTP 200 on any route)
 - Publisher: Explicit (`/health`, `/ready`, `/metrics`)
 - PostgreSQL: `pg_isready`
@@ -484,23 +508,27 @@ All apps configured via environment variables only - no code forks needed for cu
 **Frontend:** Stateless - scale freely behind load balancer
 
 **Backend API:**
+
 - Mostly stateless (sessions in Redis/PostgreSQL)
 - Scale behind load balancer
 - Session affinity NOT required (external session store)
 
 **Publisher Worker:**
+
 - **Easy horizontal scaling:** Add more worker instances
 - BullMQ handles job distribution automatically
 - Execution locks prevent duplicate processing
 - Each worker processes different jobs concurrently
 
 **Database:**
+
 - PostgreSQL: Vertical scaling (single primary)
 - Redis: Vertical scaling (single instance) or Redis Cluster
 
 ### Vertical Scaling
 
 **Adjust concurrency:**
+
 ```bash
 # Publisher
 PUBLISHER_CONCURRENCY=10  # Default: 5
@@ -511,35 +539,39 @@ DATABASE_URL="postgresql://...?connection_limit=20"
 
 ## Development vs Production
 
-| Aspect | Development | Production |
-|--------|-------------|------------|
-| **Storage** | MinIO (Docker) | Cloudflare R2 |
-| **Database** | PostgreSQL (Docker) | Managed PostgreSQL |
-| **Redis** | Redis (Docker) or none | Managed Redis |
-| **Sessions** | PostgreSQL fallback | Redis preferred |
-| **HTTPS** | Not required | Required |
-| **CORS** | `localhost:*` | Specific domains |
-| **Logging** | Console | Structured JSON |
+| Aspect       | Development            | Production         |
+| ------------ | ---------------------- | ------------------ |
+| **Storage**  | MinIO (Docker)         | Cloudflare R2      |
+| **Database** | PostgreSQL (Docker)    | Managed PostgreSQL |
+| **Redis**    | Redis (Docker) or none | Managed Redis      |
+| **Sessions** | PostgreSQL fallback    | Redis preferred    |
+| **HTTPS**    | Not required           | Required           |
+| **CORS**     | `localhost:*`          | Specific domains   |
+| **Logging**  | Console                | Structured JSON    |
 
 ## Communication Patterns
 
 ### Frontend ↔ Backend
+
 - **Protocol:** HTTP/REST
 - **Auth:** Session cookies
 - **Data Format:** JSON
 - **Real-time:** Polling (no WebSockets yet)
 
 ### Backend ↔ Publisher
+
 - **NO direct HTTP communication!**
 - **Shared Database:** Both read/write PostgreSQL
 - **Shared Queue:** Backend enqueues, Publisher dequeues
 
 ### Publisher ↔ DeviantArt
+
 - **Protocol:** HTTPS/REST
 - **Auth:** OAuth 2.0 Bearer tokens
 - **Rate Limiting:** Adaptive with circuit breaker
 
 ### All Apps ↔ Storage
+
 - **Protocol:** S3-compatible API
 - **Auth:** Access key + secret
 - **Operations:** PUT, GET, DELETE via presigned URLs

@@ -99,7 +99,8 @@ async function startHealthCheckServer() {
       const activeJobsCount = 0;
 
       res.set('Content-Type', 'text/plain');
-      res.send(`
+      res.send(
+        `
 # HELP publisher_active_jobs Number of jobs currently being processed
 # TYPE publisher_active_jobs gauge
 publisher_active_jobs ${activeJobsCount}
@@ -107,7 +108,8 @@ publisher_active_jobs ${activeJobsCount}
 # HELP publisher_uptime_seconds Uptime of the publisher service in seconds
 # TYPE publisher_uptime_seconds counter
 publisher_uptime_seconds ${Math.floor(process.uptime())}
-`.trim());
+`.trim()
+      );
     } catch (error: any) {
       res.status(500).send('Error collecting metrics');
     }

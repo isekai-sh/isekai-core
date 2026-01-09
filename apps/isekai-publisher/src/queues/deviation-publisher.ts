@@ -15,9 +15,11 @@ const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: redisUrl.startsWith('rediss://') ? {
-    rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
-  } : undefined,
+  tls: redisUrl.startsWith('rediss://')
+    ? {
+        rejectUnauthorized: false, // Accept self-signed certificates for internal Redis
+      }
+    : undefined,
 });
 
 export interface DeviationPublishJobData {
@@ -41,7 +43,9 @@ function calculateBackoff(attemptsMade: number, err: Error): number {
     const match = errorMessage.match(/Wait (\d+)ms/);
     if (match) {
       const waitMs = parseInt(match[1]);
-      console.log(`[Backoff] Rate limited - respecting Retry-After: ${waitMs}ms (${Math.round(waitMs / 1000)}s)`);
+      console.log(
+        `[Backoff] Rate limited - respecting Retry-After: ${waitMs}ms (${Math.round(waitMs / 1000)}s)`
+      );
       return waitMs;
     }
   }
@@ -57,7 +61,9 @@ function calculateBackoff(attemptsMade: number, err: Error): number {
   // Default exponential backoff for other errors
   // 2s, 4s, 8s, 16s, 32s, 64s (max)
   const exponentialDelay = Math.min(2000 * Math.pow(2, attemptsMade), 64000);
-  console.log(`[Backoff] Using exponential backoff: ${exponentialDelay}ms (attempt ${attemptsMade + 1})`);
+  console.log(
+    `[Backoff] Using exponential backoff: ${exponentialDelay}ms (attempt ${attemptsMade + 1})`
+  );
   return exponentialDelay;
 }
 
@@ -100,7 +106,10 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
       });
     } catch (error: any) {
       // Handle refresh token expiration specifically (publisher-specific logic)
-      if (error.code === 'REFRESH_TOKEN_EXPIRED' || error.message?.includes('REFRESH_TOKEN_EXPIRED')) {
+      if (
+        error.code === 'REFRESH_TOKEN_EXPIRED' ||
+        error.message?.includes('REFRESH_TOKEN_EXPIRED')
+      ) {
         const { deviationId, userId } = job.data;
         const logger = StructuredLogger.createJobLogger(job);
 
@@ -123,7 +132,8 @@ export const deviationPublisherWorker = new Worker<DeviationPublishJobData>(
             },
             data: {
               status: 'draft',
-              errorMessage: 'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
+              errorMessage:
+                'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
               updatedAt: new Date(),
             },
           });
@@ -180,10 +190,13 @@ deviationPublisherWorker.on('error', (err) => {
 });
 
 // Periodic metrics logging (every 5 minutes)
-setInterval(() => {
-  const metrics = metricsCollector.getMetrics('5min');
-  console.log('[Publisher] Metrics:', JSON.stringify(metrics, null, 2));
-}, 5 * 60 * 1000);
+setInterval(
+  () => {
+    const metrics = metricsCollector.getMetrics('5min');
+    console.log('[Publisher] Metrics:', JSON.stringify(metrics, null, 2));
+  },
+  5 * 60 * 1000
+);
 
 // Helper function to schedule a deviation with jitter
 export async function scheduleDeviation(
@@ -199,7 +212,9 @@ export async function scheduleDeviation(
   if (existingJob) {
     const state = await existingJob.getState();
     if (state === 'waiting' || state === 'delayed' || state === 'active') {
-      console.log(`[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`);
+      console.log(
+        `[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`
+      );
       return;
     }
     // Remove if completed/failed to allow re-queueing
@@ -221,7 +236,9 @@ export async function scheduleDeviation(
     }
   );
 
-  console.log(`[Deviation Publisher] Scheduled deviation ${deviationId} for ${actualPublishAt.toISOString()} (${uploadMode} mode, priority ${priority})`);
+  console.log(
+    `[Deviation Publisher] Scheduled deviation ${deviationId} for ${actualPublishAt.toISOString()} (${uploadMode} mode, priority ${priority})`
+  );
 }
 
 // Helper function to publish immediately
@@ -237,7 +254,9 @@ export async function publishDeviationNow(
   if (existingJob) {
     const state = await existingJob.getState();
     if (state === 'waiting' || state === 'delayed' || state === 'active') {
-      console.log(`[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`);
+      console.log(
+        `[Deviation Publisher] Job ${jobId} already exists with state ${state}, skipping`
+      );
       return;
     }
     // Remove if completed/failed to allow re-queueing
@@ -256,7 +275,9 @@ export async function publishDeviationNow(
     }
   );
 
-  console.log(`[Deviation Publisher] Queued deviation ${deviationId} for immediate publishing (${uploadMode} mode, priority ${priority})`);
+  console.log(
+    `[Deviation Publisher] Queued deviation ${deviationId} for immediate publishing (${uploadMode} mode, priority ${priority})`
+  );
 }
 
 // Helper function to cancel a scheduled deviation
@@ -286,8 +307,12 @@ process.on('SIGTERM', async () => {
   if (activeJobs.length > 0) {
     console.log(`[Publisher] Waiting for ${activeJobs.length} active jobs to complete...`);
     await Promise.race([
-      Promise.all(activeJobs.map(job => job.waitUntilFinished(new QueueEvents(deviationPublisherQueue.name, { connection })))),
-      new Promise(resolve => setTimeout(resolve, 30000)),
+      Promise.all(
+        activeJobs.map((job) =>
+          job.waitUntilFinished(new QueueEvents(deviationPublisherQueue.name, { connection }))
+        )
+      ),
+      new Promise((resolve) => setTimeout(resolve, 30000)),
     ]);
   }
 

@@ -320,7 +320,6 @@ export class PublisherMetricsCollector {
       // Trim old entries (keep last 24 hours)
       const oneDayAgo = timestamp - 24 * 60 * 60 * 1000;
       await this.redis.zremrangebyscore('metrics:publisher:timeline', 0, oneDayAgo);
-
     } catch (error) {
       console.error('[Metrics] Failed to flush to Redis:', error);
     }

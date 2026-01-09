@@ -158,7 +158,9 @@ describe('browse-cache', () => {
         offset: 48,
       };
       const key = generateCacheKey(params);
-      expect(key).toBe('browse:global:newest:api:scifi:photography:photographer:space station:true:48');
+      expect(key).toBe(
+        'browse:global:newest:api:scifi:photography:photographer:space station:true:48'
+      );
     });
 
     it('should use global cache key for per-user mode without userId', () => {

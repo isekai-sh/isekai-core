@@ -49,26 +49,22 @@ describe('Galleries Routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (galleriesRouter as any).stack;
-    const route = routes.find(
-      (r: any) => {
-        if (!r.route?.path) return false;
-        if (!r.route.methods?.[method.toLowerCase()]) return false;
+    const route = routes.find((r: any) => {
+      if (!r.route?.path) return false;
+      if (!r.route.methods?.[method.toLowerCase()]) return false;
 
-        // Exact match for non-param routes
-        if (!r.route.path.includes(':')) {
-          return r.route.path === path;
-        }
-
-        // Param match for routes like /:folderId
-        const pathParts = path.split('/');
-        const routeParts = r.route.path.split('/');
-        if (pathParts.length !== routeParts.length) return false;
-
-        return routeParts.every((part, i) =>
-          part.startsWith(':') || part === pathParts[i]
-        );
+      // Exact match for non-param routes
+      if (!r.route.path.includes(':')) {
+        return r.route.path === path;
       }
-    );
+
+      // Param match for routes like /:folderId
+      const pathParts = path.split('/');
+      const routeParts = r.route.path.split('/');
+      if (pathParts.length !== routeParts.length) return false;
+
+      return routeParts.every((part, i) => part.startsWith(':') || part === pathParts[i]);
+    });
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
     await handler(req, res);
@@ -437,11 +433,7 @@ describe('Galleries Routes', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: vi.fn().mockResolvedValue({
-          results: [
-            { folderid: 'folder-1' },
-            { folderid: 'folder-2' },
-            { folderid: 'folder-3' },
-          ],
+          results: [{ folderid: 'folder-1' }, { folderid: 'folder-2' }, { folderid: 'folder-3' }],
           has_more: false,
         }),
       } as any);
@@ -483,10 +475,7 @@ describe('Galleries Routes', () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
-          results: [
-            { folderid: 'folder-1' },
-            { folderid: 'folder-2' },
-          ],
+          results: [{ folderid: 'folder-1' }, { folderid: 'folder-2' }],
           has_more: false,
         }),
       } as any);

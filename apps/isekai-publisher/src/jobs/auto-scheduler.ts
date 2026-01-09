@@ -1,6 +1,12 @@
 import cron from 'node-cron';
 import * as dateFnsTz from 'date-fns-tz';
-import { prisma, Automation, AutomationScheduleRule, AutomationDefaultValue, Deviation } from '../db/index.js';
+import {
+  prisma,
+  Automation,
+  AutomationScheduleRule,
+  AutomationDefaultValue,
+  Deviation,
+} from '../db/index.js';
 import { scheduleDeviation } from '../queues/deviation-publisher.js';
 
 /**
@@ -64,7 +70,11 @@ async function runAutoScheduler(): Promise<void> {
         await processAutomation(automation as AutomationWithRelations);
       } catch (error) {
         console.error(`[Auto-Scheduler] Failed to process automation ${automation.id}:`, error);
-        await logExecution(automation.id, 0, error instanceof Error ? error.message : 'Unknown error');
+        await logExecution(
+          automation.id,
+          0,
+          error instanceof Error ? error.message : 'Unknown error'
+        );
       }
     }
 
@@ -78,7 +88,9 @@ async function runAutoScheduler(): Promise<void> {
  * Process a single automation with idempotency lock
  */
 async function processAutomation(automation: AutomationWithRelations): Promise<void> {
-  console.log(`[Auto-Scheduler] Processing automation ${automation.id} for user ${automation.userId}`);
+  console.log(
+    `[Auto-Scheduler] Processing automation ${automation.id} for user ${automation.userId}`
+  );
 
   // 1. Try to acquire execution lock (with 5-minute timeout)
   const lockTimeout = 5 * 60 * 1000; // 5 minutes
@@ -107,7 +119,11 @@ async function processAutomation(automation: AutomationWithRelations): Promise<v
   try {
     // 2. Evaluate which rules should trigger now (using user's timezone)
     const userTimezone = automation.user.timezone || 'UTC';
-    const rulesToExecute = await evaluateScheduleRules(automation.scheduleRules, automation.id, userTimezone);
+    const rulesToExecute = await evaluateScheduleRules(
+      automation.scheduleRules,
+      automation.id,
+      userTimezone
+    );
 
     if (rulesToExecute.length === 0) {
       console.log(`[Auto-Scheduler] No rules triggered for automation ${automation.id}`);
@@ -150,7 +166,9 @@ async function processAutomation(automation: AutomationWithRelations): Promise<v
 
     // 6. Log execution
     await logExecution(automation.id, scheduled, null, rulesToExecute[0].type);
-    console.log(`[Auto-Scheduler] Successfully scheduled ${scheduled}/${drafts.length} deviation(s)`);
+    console.log(
+      `[Auto-Scheduler] Successfully scheduled ${scheduled}/${drafts.length} deviation(s)`
+    );
   } catch (error) {
     console.error(`[Auto-Scheduler] Error processing automation ${automation.id}:`, error);
     throw error;
@@ -178,7 +196,9 @@ async function evaluateScheduleRules(
   // Get current time in user's timezone
   const nowInUserTz = dateFnsTz.toZonedTime(new Date(), userTimezone);
   const currentTime = `${nowInUserTz.getHours().toString().padStart(2, '0')}:${nowInUserTz.getMinutes().toString().padStart(2, '0')}`;
-  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][nowInUserTz.getDay()];
+  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
+    nowInUserTz.getDay()
+  ];
 
   const triggeredRules: AutomationScheduleRule[] = [];
 
@@ -234,7 +254,10 @@ function isTimeMatch(currentTime: string, targetTime: string): boolean {
 /**
  * Get last execution time for a specific rule type
  */
-async function getLastExecutionForRule(automationId: string, ruleType: string): Promise<Date | null> {
+async function getLastExecutionForRule(
+  automationId: string,
+  ruleType: string
+): Promise<Date | null> {
   const lastLog = await prisma.automationExecutionLog.findFirst({
     where: {
       automationId,
@@ -317,7 +340,10 @@ function calculateScheduleCount(rules: AutomationScheduleRule[]): number {
  * Each draft is atomically selected and marked as locked using executionVersion.
  * This ensures multiple workflows cannot schedule the same draft.
  */
-async function selectDrafts(automation: AutomationWithRelations, count: number): Promise<Deviation[]> {
+async function selectDrafts(
+  automation: AutomationWithRelations,
+  count: number
+): Promise<Deviation[]> {
   const selected: Deviation[] = [];
 
   let candidates: any[];
@@ -345,9 +371,10 @@ async function selectDrafts(automation: AutomationWithRelations, count: number):
     candidates = shuffle(allCandidates);
   } else {
     // For FIFO/LIFO, use ordered selection
-    const orderBy = automation.draftSelectionMethod === 'lifo'
-      ? { createdAt: 'desc' as const }
-      : { createdAt: 'asc' as const };
+    const orderBy =
+      automation.draftSelectionMethod === 'lifo'
+        ? { createdAt: 'desc' as const }
+        : { createdAt: 'asc' as const };
 
     candidates = await prisma.deviation.findMany({
       where: {
@@ -456,9 +483,7 @@ async function scheduleDraft(draft: any, automation: AutomationWithRelations): P
     const fieldName = defaultValue.fieldName;
     const currentValue = draft[fieldName];
 
-    const shouldApply = defaultValue.applyIfEmpty
-      ? isEmpty(currentValue)
-      : true;
+    const shouldApply = defaultValue.applyIfEmpty ? isEmpty(currentValue) : true;
 
     if (shouldApply) {
       updates[fieldName] = defaultValue.value;
@@ -508,7 +533,9 @@ async function scheduleDraft(draft: any, automation: AutomationWithRelations): P
     await scheduleDeviation(draft.id, draft.userId, actualPublishAt, draft.uploadMode);
   });
 
-  console.log(`[Auto-Scheduler] Scheduled deviation ${draft.id} for ${actualPublishAt.toISOString()}`);
+  console.log(
+    `[Auto-Scheduler] Scheduled deviation ${draft.id} for ${actualPublishAt.toISOString()}`
+  );
 }
 
 /**

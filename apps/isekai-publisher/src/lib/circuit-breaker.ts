@@ -125,7 +125,10 @@ export class CircuitBreaker {
    * @param key - Circuit identifier
    * @param config - Optional circuit breaker configuration
    */
-  static async recordFailure(key: string, config: Partial<CircuitBreakerConfig> = {}): Promise<void> {
+  static async recordFailure(
+    key: string,
+    config: Partial<CircuitBreakerConfig> = {}
+  ): Promise<void> {
     const mergedConfig = { ...this.defaultConfig, ...config };
     const circuit = await this.getOrCreateCircuit(key, mergedConfig);
 
@@ -277,18 +280,17 @@ export class CircuitBreaker {
   /**
    * Save circuit state to Redis
    */
-  private static async saveCircuitToRedis(key: string, circuit: CircuitBreakerState): Promise<void> {
+  private static async saveCircuitToRedis(
+    key: string,
+    circuit: CircuitBreakerState
+  ): Promise<void> {
     try {
       const redis = await RedisClientManager.getClient();
       if (!redis) return;
 
       const ttl = Math.floor(circuit.config.openDuration / 1000) + 60; // TTL slightly longer than open duration
 
-      await redis.setex(
-        `circuit:${key}`,
-        ttl,
-        JSON.stringify(circuit)
-      );
+      await redis.setex(`circuit:${key}`, ttl, JSON.stringify(circuit));
     } catch (error) {
       console.error('[CircuitBreaker] Error saving to Redis:', error);
     }

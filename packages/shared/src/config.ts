@@ -5,16 +5,16 @@
  * Loads from root .env in development, reads from process.env in production.
  */
 
-import { config as dotenvConfig } from "dotenv";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { config as dotenvConfig } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load root .env file in development (monorepo root is 3 levels up)
-if (process.env.NODE_ENV !== "production") {
-  const envPath = resolve(__dirname, "../../../.env");
+if (process.env.NODE_ENV !== 'production') {
+  const envPath = resolve(__dirname, '../../../.env');
   dotenvConfig({ path: envPath });
 }
 
@@ -55,7 +55,7 @@ function getEnvNumber(key: string, defaultValue: number): number {
 function getEnvBoolean(key: string, defaultValue: boolean): boolean {
   const value = process.env[key];
   if (!value) return defaultValue;
-  return value.toLowerCase() === "true" || value === "1";
+  return value.toLowerCase() === 'true' || value === '1';
 }
 
 /**
@@ -68,8 +68,8 @@ export interface DatabaseConfig {
 
 export function getDatabaseConfig(): DatabaseConfig {
   return {
-    url: getEnv("DATABASE_URL"),
-    poolSize: getEnvNumber("DB_POOL_SIZE", 10),
+    url: getEnv('DATABASE_URL'),
+    poolSize: getEnvNumber('DB_POOL_SIZE', 10),
   };
 }
 
@@ -82,7 +82,7 @@ export interface RedisConfig {
 
 export function getRedisConfig(): RedisConfig {
   return {
-    url: getEnv("REDIS_URL"),
+    url: getEnv('REDIS_URL'),
   };
 }
 
@@ -97,9 +97,9 @@ export interface DeviantArtConfig {
 
 export function getDeviantArtConfig(): DeviantArtConfig {
   return {
-    clientId: getEnv("DEVIANTART_CLIENT_ID"),
-    clientSecret: getEnv("DEVIANTART_CLIENT_SECRET"),
-    redirectUri: getEnv("DEVIANTART_REDIRECT_URI"),
+    clientId: getEnv('DEVIANTART_CLIENT_ID'),
+    clientSecret: getEnv('DEVIANTART_CLIENT_SECRET'),
+    redirectUri: getEnv('DEVIANTART_REDIRECT_URI'),
   };
 }
 
@@ -119,13 +119,13 @@ export interface StorageConfig {
 
 export function getS3StorageConfig(): StorageConfig {
   return {
-    endpoint: getEnv("S3_ENDPOINT"),
-    region: getEnvOrDefault("S3_REGION", "us-east-1"),
-    accessKeyId: getEnv("S3_ACCESS_KEY_ID"),
-    secretAccessKey: getEnv("S3_SECRET_ACCESS_KEY"),
-    bucketName: getEnv("S3_BUCKET_NAME"),
-    publicUrl: getEnv("S3_PUBLIC_URL"),
-    forcePathStyle: getEnvBoolean("S3_FORCE_PATH_STYLE", false),
+    endpoint: getEnv('S3_ENDPOINT'),
+    region: getEnvOrDefault('S3_REGION', 'us-east-1'),
+    accessKeyId: getEnv('S3_ACCESS_KEY_ID'),
+    secretAccessKey: getEnv('S3_SECRET_ACCESS_KEY'),
+    bucketName: getEnv('S3_BUCKET_NAME'),
+    publicUrl: getEnv('S3_PUBLIC_URL'),
+    forcePathStyle: getEnvBoolean('S3_FORCE_PATH_STYLE', false),
     presignedEndpoint: process.env.S3_PRESIGNED_ENDPOINT,
   };
 }
@@ -143,11 +143,11 @@ export interface SecurityConfig {
 
 export function getSecurityConfig(): SecurityConfig {
   return {
-    sessionSecret: getEnv("SESSION_SECRET"),
-    encryptionKey: getEnv("ENCRYPTION_KEY"),
+    sessionSecret: getEnv('SESSION_SECRET'),
+    encryptionKey: getEnv('ENCRYPTION_KEY'),
     cookieDomain: process.env.COOKIE_DOMAIN,
-    sessionMaxAgeDays: getEnvNumber("SESSION_MAX_AGE_DAYS", 7),
-    refreshTokenExpiryDays: getEnvNumber("REFRESH_TOKEN_EXPIRY_DAYS", 90),
+    sessionMaxAgeDays: getEnvNumber('SESSION_MAX_AGE_DAYS', 7),
+    refreshTokenExpiryDays: getEnvNumber('REFRESH_TOKEN_EXPIRY_DAYS', 90),
   };
 }
 
@@ -163,9 +163,9 @@ export interface AppConfig {
 
 export function getAppConfig(): AppConfig {
   return {
-    nodeEnv: getEnvOrDefault("NODE_ENV", "development"),
-    port: getEnvNumber("PORT", 4000),
-    frontendUrl: getEnvOrDefault("FRONTEND_URL", "http://localhost:3000"),
+    nodeEnv: getEnvOrDefault('NODE_ENV', 'development'),
+    port: getEnvNumber('PORT', 4000),
+    frontendUrl: getEnvOrDefault('FRONTEND_URL', 'http://localhost:3000'),
     nodeOptions: process.env.NODE_OPTIONS,
   };
 }
@@ -174,12 +174,12 @@ export function getAppConfig(): AppConfig {
  * Session Storage Configuration
  */
 export interface SessionConfig {
-  store: "redis" | "postgres";
+  store: 'redis' | 'postgres';
 }
 
 export function getSessionConfig(): SessionConfig {
-  const store = getEnvOrDefault("SESSION_STORE", "redis");
-  if (store !== "redis" && store !== "postgres") {
+  const store = getEnvOrDefault('SESSION_STORE', 'redis');
+  if (store !== 'redis' && store !== 'postgres') {
     throw new Error(`SESSION_STORE must be 'redis' or 'postgres', got: ${store}`);
   }
   return { store };
@@ -196,9 +196,9 @@ export interface CacheConfig {
 
 export function getCacheConfig(): CacheConfig {
   return {
-    enabled: getEnvBoolean("CACHE_ENABLED", true),
-    defaultTtl: getEnvNumber("CACHE_DEFAULT_TTL", 300),
-    staleTtl: getEnvNumber("CACHE_STALE_TTL", 7200),
+    enabled: getEnvBoolean('CACHE_ENABLED', true),
+    defaultTtl: getEnvNumber('CACHE_DEFAULT_TTL', 300),
+    staleTtl: getEnvNumber('CACHE_STALE_TTL', 7200),
   };
 }
 
@@ -214,10 +214,10 @@ export interface CircuitBreakerConfig {
 
 export function getCircuitBreakerConfig(): CircuitBreakerConfig {
   return {
-    enabled: getEnvBoolean("CIRCUIT_BREAKER_ENABLED", true),
-    threshold: getEnvNumber("CIRCUIT_BREAKER_THRESHOLD", 3),
-    openDurationMs: getEnvNumber("CIRCUIT_BREAKER_OPEN_DURATION_MS", 300000),
-    persistToRedis: getEnvBoolean("CIRCUIT_BREAKER_PERSIST_TO_REDIS", true),
+    enabled: getEnvBoolean('CIRCUIT_BREAKER_ENABLED', true),
+    threshold: getEnvNumber('CIRCUIT_BREAKER_THRESHOLD', 3),
+    openDurationMs: getEnvNumber('CIRCUIT_BREAKER_OPEN_DURATION_MS', 300000),
+    persistToRedis: getEnvBoolean('CIRCUIT_BREAKER_PERSIST_TO_REDIS', true),
   };
 }
 
@@ -234,11 +234,11 @@ export interface PublisherConfig {
 
 export function getPublisherConfig(): PublisherConfig {
   return {
-    concurrency: getEnvNumber("PUBLISHER_CONCURRENCY", 5),
-    maxAttempts: getEnvNumber("PUBLISHER_MAX_ATTEMPTS", 7),
-    jobTimeoutMs: getEnvNumber("PUBLISHER_JOB_TIMEOUT_MS", 600000),
-    staleCheckIntervalMs: getEnvNumber("PUBLISHER_STALE_CHECK_INTERVAL_MS", 60000),
-    maxStalledCount: getEnvNumber("PUBLISHER_MAX_STALLED_COUNT", 2),
+    concurrency: getEnvNumber('PUBLISHER_CONCURRENCY', 5),
+    maxAttempts: getEnvNumber('PUBLISHER_MAX_ATTEMPTS', 7),
+    jobTimeoutMs: getEnvNumber('PUBLISHER_JOB_TIMEOUT_MS', 600000),
+    staleCheckIntervalMs: getEnvNumber('PUBLISHER_STALE_CHECK_INTERVAL_MS', 60000),
+    maxStalledCount: getEnvNumber('PUBLISHER_MAX_STALLED_COUNT', 2),
   };
 }
 
@@ -256,12 +256,16 @@ export interface RateLimiterConfig {
 
 export function getRateLimiterConfig(): RateLimiterConfig {
   return {
-    enabled: getEnvBoolean("RATE_LIMITER_ENABLED", true),
-    baseDelayMs: getEnvNumber("RATE_LIMITER_BASE_DELAY_MS", 3000),
-    maxDelayMs: getEnvNumber("RATE_LIMITER_MAX_DELAY_MS", 300000),
-    jitterPercent: getEnvNumber("RATE_LIMITER_JITTER_PERCENT", 20),
-    successDecreaseFactor: parseFloat(getEnvOrDefault("RATE_LIMITER_SUCCESS_DECREASE_FACTOR", "0.9")),
-    failureIncreaseFactor: parseFloat(getEnvOrDefault("RATE_LIMITER_FAILURE_INCREASE_FACTOR", "2.0")),
+    enabled: getEnvBoolean('RATE_LIMITER_ENABLED', true),
+    baseDelayMs: getEnvNumber('RATE_LIMITER_BASE_DELAY_MS', 3000),
+    maxDelayMs: getEnvNumber('RATE_LIMITER_MAX_DELAY_MS', 300000),
+    jitterPercent: getEnvNumber('RATE_LIMITER_JITTER_PERCENT', 20),
+    successDecreaseFactor: parseFloat(
+      getEnvOrDefault('RATE_LIMITER_SUCCESS_DECREASE_FACTOR', '0.9')
+    ),
+    failureIncreaseFactor: parseFloat(
+      getEnvOrDefault('RATE_LIMITER_FAILURE_INCREASE_FACTOR', '2.0')
+    ),
   };
 }
 
@@ -271,18 +275,18 @@ export function getRateLimiterConfig(): RateLimiterConfig {
 export interface MetricsConfig {
   enabled: boolean;
   flushIntervalMs: number;
-  logLevel: "debug" | "info" | "warn" | "error";
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
 
 export function getMetricsConfig(): MetricsConfig {
-  const logLevel = getEnvOrDefault("LOG_LEVEL", "info");
-  if (!["debug", "info", "warn", "error"].includes(logLevel)) {
+  const logLevel = getEnvOrDefault('LOG_LEVEL', 'info');
+  if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
     throw new Error(`LOG_LEVEL must be one of: debug, info, warn, error. Got: ${logLevel}`);
   }
   return {
-    enabled: getEnvBoolean("METRICS_ENABLED", true),
-    flushIntervalMs: getEnvNumber("METRICS_FLUSH_INTERVAL_MS", 60000),
-    logLevel: logLevel as "debug" | "info" | "warn" | "error",
+    enabled: getEnvBoolean('METRICS_ENABLED', true),
+    flushIntervalMs: getEnvNumber('METRICS_FLUSH_INTERVAL_MS', 60000),
+    logLevel: logLevel as 'debug' | 'info' | 'warn' | 'error',
   };
 }
 
@@ -296,8 +300,8 @@ export interface HealthCheckConfig {
 
 export function getHealthCheckConfig(): HealthCheckConfig {
   return {
-    port: getEnvNumber("HEALTH_CHECK_PORT", 8000),
-    enabled: getEnvBoolean("HEALTH_CHECK_ENABLED", true),
+    port: getEnvNumber('HEALTH_CHECK_PORT', 8000),
+    enabled: getEnvBoolean('HEALTH_CHECK_ENABLED', true),
   };
 }
 
@@ -345,11 +349,11 @@ export function getConfig(): Config {
  * Validate configuration on module load (fail fast)
  * Only validate in non-test environments
  */
-if (process.env.NODE_ENV !== "test" && process.env.VITEST !== "true") {
+if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
   try {
     getConfig();
   } catch (error) {
-    console.error("❌ Configuration validation failed:");
+    console.error('❌ Configuration validation failed:');
     console.error(error);
     process.exit(1);
   }

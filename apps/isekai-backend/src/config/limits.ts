@@ -39,18 +39,13 @@ export const ADMIN_LIMITS = {
 /**
  * Validate credit amount for admin operations
  */
-export function validateCreditAmount(
-  amount: number,
-  operation: "add" | "deduct"
-): void {
+export function validateCreditAmount(amount: number, operation: 'add' | 'deduct'): void {
   if (!amount || amount <= 0) {
-    throw new Error("Amount must be a positive number");
+    throw new Error('Amount must be a positive number');
   }
 
   const maxLimit =
-    operation === "add"
-      ? ADMIN_LIMITS.MAX_CREDIT_ADD
-      : ADMIN_LIMITS.MAX_CREDIT_DEDUCT;
+    operation === 'add' ? ADMIN_LIMITS.MAX_CREDIT_ADD : ADMIN_LIMITS.MAX_CREDIT_DEDUCT;
 
   if (amount > maxLimit) {
     throw new Error(
@@ -72,8 +67,6 @@ export function validateGiftDuration(months: number): void {
   }
 
   if (months > ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS) {
-    throw new Error(
-      `Gift duration cannot exceed ${ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS} months`
-    );
+    throw new Error(`Gift duration cannot exceed ${ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS} months`);
   }
 }

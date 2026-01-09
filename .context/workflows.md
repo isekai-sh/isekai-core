@@ -56,6 +56,7 @@ pnpm dev
 ```
 
 **Servers Running:**
+
 - Backend: http://localhost:4000
 - Frontend: http://localhost:3000
 - Publisher: http://localhost:8000 (health check)
@@ -141,9 +142,11 @@ pnpm typecheck
 **CRITICAL:** ALL work MUST be done in feature branches. NEVER commit directly to `main`.
 
 **Main Branch:**
+
 - `main` - Production-ready code (protected, merge via PR only)
 
 **Feature Branches (Required):**
+
 ```
 feature/add-bulk-scheduling
 fix/execution-lock-race-condition
@@ -154,6 +157,7 @@ chore/update-dependencies
 ```
 
 **Branch Naming Convention:**
+
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `refactor/` - Code refactoring
@@ -174,18 +178,21 @@ chore/update-dependencies
 ```
 
 **Required Elements:**
+
 1. **Line 1:** Type, scope, subject (max 72 chars)
 2. **Line 2:** Blank line
 3. **Line 3+:** Detailed body with bullet points
 4. **Last line:** Issue reference if applicable
 
 **Forbidden:**
+
 - ❌ Single-line commits
 - ❌ Emojis
 - ❌ "Generated with" or "Co-Authored-By" lines
 - ❌ AI attribution
 
 **Multi-Line Commit Example:**
+
 ```bash
 git commit -m "feat(automation): add weekly quota rule type
 
@@ -272,6 +279,7 @@ pnpm typecheck
 ### 5. Update Documentation
 
 Update relevant `.context/` files if:
+
 - Adding new features
 - Changing architecture
 - Modifying API endpoints
@@ -328,6 +336,7 @@ git push origin --delete feature/feature-name
 6. **Commit:** Include schema file in commit
 
 **Example:**
+
 ```bash
 # Add field to model
 # Edit schema.prisma
@@ -349,6 +358,7 @@ git commit -m "feat(db): add executionLock fields to Deviation"
 ### Backend Debugging
 
 **VS Code `launch.json`:**
+
 ```json
 {
   "type": "node",
@@ -362,6 +372,7 @@ git commit -m "feat(db): add executionLock fields to Deviation"
 ```
 
 **Logs:**
+
 ```bash
 # Follow backend logs
 docker-compose logs -f backend
@@ -373,17 +384,20 @@ docker-compose logs -f publisher
 ### Database Debugging
 
 **Prisma Studio:**
+
 ```bash
 DATABASE_URL="postgresql://isekai:isekai@localhost:5434/isekai_run" \
   pnpm --filter @isekai/shared prisma:studio
 ```
 
 **Direct SQL:**
+
 ```bash
 psql "postgresql://isekai:isekai@localhost:5434/isekai_run"
 ```
 
 **Check execution locks:**
+
 ```sql
 SELECT id, title, status, "executionLockId", "executionLockedAt"
 FROM deviations
@@ -447,6 +461,7 @@ LRANGE bull:deviation-publisher:wait 0 -1
 ### "Cannot find @isekai/shared"
 
 **Solution:**
+
 ```bash
 pnpm --filter @isekai/shared build
 ```
@@ -454,6 +469,7 @@ pnpm --filter @isekai/shared build
 ### "Prisma Client not generated"
 
 **Solution:**
+
 ```bash
 pnpm --filter @isekai/shared prisma:generate
 ```
@@ -461,6 +477,7 @@ pnpm --filter @isekai/shared prisma:generate
 ### "Port already in use"
 
 **Solution:**
+
 ```bash
 # Kill process on port 4000
 lsof -ti:4000 | xargs kill -9
@@ -472,6 +489,7 @@ PORT=4001
 ### "Database connection failed"
 
 **Check:**
+
 ```bash
 docker ps  # Is postgres running?
 psql "postgresql://isekai:isekai@localhost:5434/isekai_run"

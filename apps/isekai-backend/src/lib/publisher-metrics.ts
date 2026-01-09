@@ -26,9 +26,9 @@
  * - Rate limit hits
  */
 
-import type { Redis } from "ioredis";
-import { ErrorCategory } from "./error-categorizer.js";
-import type { CategorizedError } from "./error-categorizer.js";
+import type { Redis } from 'ioredis';
+import { ErrorCategory } from './error-categorizer.js';
+import type { CategorizedError } from './error-categorizer.js';
 
 export interface PublisherMetrics {
   totalJobs: number;
@@ -140,11 +140,7 @@ export class PublisherMetricsCollector {
   /**
    * Record job failure
    */
-  recordJobFailure(
-    jobId: string,
-    error: CategorizedError,
-    latencyMs: number
-  ): void {
+  recordJobFailure(jobId: string, error: CategorizedError, latencyMs: number): void {
     const record = this.jobRecords.get(jobId);
     if (record) {
       record.endTime = Date.now();
@@ -197,7 +193,7 @@ export class PublisherMetricsCollector {
   /**
    * Get current metrics
    */
-  getMetrics(timeWindow: string = "5min"): PublisherMetrics {
+  getMetrics(timeWindow: string = '5min'): PublisherMetrics {
     const totalJobs = this.successCount + this.failureCount;
     const successRate = totalJobs > 0 ? this.successCount / totalJobs : 0;
 
@@ -222,7 +218,7 @@ export class PublisherMetricsCollector {
   /**
    * Calculate latency percentiles
    */
-  private calculateLatencyPercentiles(): PublisherMetrics["latency"] {
+  private calculateLatencyPercentiles(): PublisherMetrics['latency'] {
     if (this.latencies.length === 0) {
       return {
         p50: 0,
@@ -276,60 +272,50 @@ export class PublisherMetricsCollector {
     const lines: string[] = [];
 
     // Total jobs
-    lines.push("# HELP publisher_jobs_total Total number of publisher jobs");
-    lines.push("# TYPE publisher_jobs_total counter");
+    lines.push('# HELP publisher_jobs_total Total number of publisher jobs');
+    lines.push('# TYPE publisher_jobs_total counter');
     lines.push(`publisher_jobs_total ${metrics.totalJobs}`);
 
     // Success counter
-    lines.push(
-      "# HELP publisher_jobs_success_total Total number of successful jobs"
-    );
-    lines.push("# TYPE publisher_jobs_success_total counter");
+    lines.push('# HELP publisher_jobs_success_total Total number of successful jobs');
+    lines.push('# TYPE publisher_jobs_success_total counter');
     lines.push(`publisher_jobs_success_total ${metrics.successfulJobs}`);
 
     // Failure counter
-    lines.push(
-      "# HELP publisher_jobs_failed_total Total number of failed jobs"
-    );
-    lines.push("# TYPE publisher_jobs_failed_total counter");
+    lines.push('# HELP publisher_jobs_failed_total Total number of failed jobs');
+    lines.push('# TYPE publisher_jobs_failed_total counter');
     lines.push(`publisher_jobs_failed_total ${metrics.failedJobs}`);
 
     // Success rate gauge
-    lines.push("# HELP publisher_success_rate Current success rate percentage");
-    lines.push("# TYPE publisher_success_rate gauge");
+    lines.push('# HELP publisher_success_rate Current success rate percentage');
+    lines.push('# TYPE publisher_success_rate gauge');
     lines.push(`publisher_success_rate ${metrics.successRate}`);
 
     // Latency histogram
-    lines.push("# HELP publisher_latency_ms Job latency in milliseconds");
-    lines.push("# TYPE publisher_latency_ms summary");
+    lines.push('# HELP publisher_latency_ms Job latency in milliseconds');
+    lines.push('# TYPE publisher_latency_ms summary');
     lines.push(`publisher_latency_ms{quantile="0.5"} ${metrics.latency.p50}`);
     lines.push(`publisher_latency_ms{quantile="0.95"} ${metrics.latency.p95}`);
     lines.push(`publisher_latency_ms{quantile="0.99"} ${metrics.latency.p99}`);
-    lines.push(
-      `publisher_latency_ms_sum ${metrics.latency.avg * metrics.totalJobs}`
-    );
+    lines.push(`publisher_latency_ms_sum ${metrics.latency.avg * metrics.totalJobs}`);
     lines.push(`publisher_latency_ms_count ${metrics.totalJobs}`);
 
     // Rate limit hits
-    lines.push("# HELP publisher_rate_limit_hits_total Total rate limit hits");
-    lines.push("# TYPE publisher_rate_limit_hits_total counter");
+    lines.push('# HELP publisher_rate_limit_hits_total Total rate limit hits');
+    lines.push('# TYPE publisher_rate_limit_hits_total counter');
     lines.push(`publisher_rate_limit_hits_total ${metrics.rateLimitHits}`);
 
     // Circuit breaker opens
-    lines.push(
-      "# HELP publisher_circuit_breaker_opens_total Circuit breaker open count"
-    );
-    lines.push("# TYPE publisher_circuit_breaker_opens_total counter");
-    lines.push(
-      `publisher_circuit_breaker_opens_total ${metrics.circuitBreakerOpenCount}`
-    );
+    lines.push('# HELP publisher_circuit_breaker_opens_total Circuit breaker open count');
+    lines.push('# TYPE publisher_circuit_breaker_opens_total counter');
+    lines.push(`publisher_circuit_breaker_opens_total ${metrics.circuitBreakerOpenCount}`);
 
     // Errors by category
     for (const [category, count] of Object.entries(metrics.errorsByCategory)) {
       lines.push(`publisher_errors_total{category="${category}"} ${count}`);
     }
 
-    return lines.join("\n") + "\n";
+    return lines.join('\n') + '\n';
   }
 
   /**
@@ -339,24 +325,20 @@ export class PublisherMetricsCollector {
     if (!this.redis) return;
 
     try {
-      const metrics = this.getMetrics("1min");
+      const metrics = this.getMetrics('1min');
       const timestamp = Date.now();
       const key = `metrics:publisher:1min:${timestamp}`;
 
       await this.redis.setex(key, 3600, JSON.stringify(metrics)); // 1 hour TTL
 
       // Also store in a sorted set for time-series queries
-      await this.redis.zadd("metrics:publisher:timeline", timestamp, key);
+      await this.redis.zadd('metrics:publisher:timeline', timestamp, key);
 
       // Trim old entries (keep last 24 hours)
       const oneDayAgo = timestamp - 24 * 60 * 60 * 1000;
-      await this.redis.zremrangebyscore(
-        "metrics:publisher:timeline",
-        0,
-        oneDayAgo
-      );
+      await this.redis.zremrangebyscore('metrics:publisher:timeline', 0, oneDayAgo);
     } catch (error) {
-      console.error("[Metrics] Failed to flush to Redis:", error);
+      console.error('[Metrics] Failed to flush to Redis:', error);
     }
   }
 
@@ -364,9 +346,7 @@ export class PublisherMetricsCollector {
    * Start periodic flush to Redis
    */
   private startPeriodicFlush(): void {
-    const intervalMs = parseInt(
-      process.env.METRICS_FLUSH_INTERVAL_MS || "60000"
-    );
+    const intervalMs = parseInt(process.env.METRICS_FLUSH_INTERVAL_MS || '60000');
 
     this.flushInterval = setInterval(() => {
       this.flushToRedis();
@@ -402,7 +382,7 @@ export class PublisherMetricsCollector {
    */
   private isEnabled(): boolean {
     const enabled = process.env.METRICS_ENABLED?.toLowerCase();
-    return enabled !== "false" && enabled !== "0";
+    return enabled !== 'false' && enabled !== '0';
   }
 
   /**

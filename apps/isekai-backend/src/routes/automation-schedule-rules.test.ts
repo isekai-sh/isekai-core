@@ -102,8 +102,8 @@ describe('automation-schedule-rules routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (automationScheduleRulesRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -645,9 +645,7 @@ describe('automation-schedule-rules routes', () => {
 
       (prisma.automationScheduleRule.findUnique as any).mockResolvedValue(null);
 
-      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow(
-        'Schedule rule not found'
-      );
+      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow('Schedule rule not found');
     });
 
     it('should return 404 when user does not own rule', async () => {
@@ -663,9 +661,7 @@ describe('automation-schedule-rules routes', () => {
         automation: { ...mockAutomation, userId: 'different-user' },
       });
 
-      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow(
-        'Schedule rule not found'
-      );
+      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow('Schedule rule not found');
     });
   });
 

@@ -298,5 +298,4 @@ describe('email-service', () => {
       expect(call.html).toContain('https://isekai.sh/drafts');
     });
   });
-
 });

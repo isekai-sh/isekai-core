@@ -23,15 +23,15 @@
  */
 
 export enum ErrorCategory {
-  RATE_LIMIT = "RATE_LIMIT", // 429 - Use circuit breaker + adaptive backoff
-  AUTH_ERROR = "AUTH_ERROR", // 401, 403 - Refresh token, then retry
-  NETWORK_ERROR = "NETWORK_ERROR", // Timeout, connection errors
-  VALIDATION_ERROR = "VALIDATION_ERROR", // 400 - No retry, move to DLQ
-  SERVER_ERROR = "SERVER_ERROR", // 500-504 - Retry with backoff
-  TOKEN_EXPIRED = "TOKEN_EXPIRED", // Token refresh needed
-  REFRESH_TOKEN_EXPIRED = "REFRESH_TOKEN_EXPIRED", // Refresh token expired - user must re-auth
-  QUOTA_EXCEEDED = "QUOTA_EXCEEDED", // API quota exhausted
-  UNKNOWN = "UNKNOWN", // Unknown error - conservative retry
+  RATE_LIMIT = 'RATE_LIMIT', // 429 - Use circuit breaker + adaptive backoff
+  AUTH_ERROR = 'AUTH_ERROR', // 401, 403 - Refresh token, then retry
+  NETWORK_ERROR = 'NETWORK_ERROR', // Timeout, connection errors
+  VALIDATION_ERROR = 'VALIDATION_ERROR', // 400 - No retry, move to DLQ
+  SERVER_ERROR = 'SERVER_ERROR', // 500-504 - Retry with backoff
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED', // Token refresh needed
+  REFRESH_TOKEN_EXPIRED = 'REFRESH_TOKEN_EXPIRED', // Refresh token expired - user must re-auth
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED', // API quota exhausted
+  UNKNOWN = 'UNKNOWN', // Unknown error - conservative retry
 }
 
 export interface RetryStrategy {
@@ -96,7 +96,7 @@ export class ErrorCategorizer {
     if (!error) return ErrorCategory.UNKNOWN;
 
     // Check for refresh token expiry FIRST (before status codes)
-    if (error.code === "REFRESH_TOKEN_EXPIRED") {
+    if (error.code === 'REFRESH_TOKEN_EXPIRED') {
       return ErrorCategory.REFRESH_TOKEN_EXPIRED;
     }
 
@@ -109,17 +109,17 @@ export class ErrorCategorizer {
 
     if (status === 401) {
       // Check if refresh token expired specifically
-      const message = error.message?.toLowerCase() || "";
+      const message = error.message?.toLowerCase() || '';
       if (
-        message.includes("refresh token") &&
-        (message.includes("expired") || message.includes("invalid"))
+        message.includes('refresh token') &&
+        (message.includes('expired') || message.includes('invalid'))
       ) {
         return ErrorCategory.REFRESH_TOKEN_EXPIRED;
       }
       // Check if access token expired
       if (
-        message.includes("token") &&
-        (message.includes("expired") || message.includes("invalid"))
+        message.includes('token') &&
+        (message.includes('expired') || message.includes('invalid'))
       ) {
         return ErrorCategory.TOKEN_EXPIRED;
       }
@@ -139,54 +139,48 @@ export class ErrorCategorizer {
     }
 
     // Check error message patterns
-    const message = error.message?.toLowerCase() || "";
+    const message = error.message?.toLowerCase() || '';
 
-    if (
-      message.includes("rate limit") ||
-      message.includes("too many requests")
-    ) {
+    if (message.includes('rate limit') || message.includes('too many requests')) {
       return ErrorCategory.RATE_LIMIT;
     }
 
-    if (message.includes("quota") && message.includes("exceeded")) {
+    if (message.includes('quota') && message.includes('exceeded')) {
       return ErrorCategory.QUOTA_EXCEEDED;
     }
 
-    if (
-      message.includes("token") &&
-      (message.includes("expired") || message.includes("invalid"))
-    ) {
+    if (message.includes('token') && (message.includes('expired') || message.includes('invalid'))) {
       return ErrorCategory.TOKEN_EXPIRED;
     }
 
     // Network errors
     if (
-      message.includes("timeout") ||
-      message.includes("econnreset") ||
-      message.includes("econnrefused") ||
-      message.includes("network") ||
-      error.code === "ETIMEDOUT" ||
-      error.code === "ECONNRESET" ||
-      error.code === "ECONNREFUSED" ||
-      error.code === "ENETUNREACH"
+      message.includes('timeout') ||
+      message.includes('econnreset') ||
+      message.includes('econnrefused') ||
+      message.includes('network') ||
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ECONNRESET' ||
+      error.code === 'ECONNREFUSED' ||
+      error.code === 'ENETUNREACH'
     ) {
       return ErrorCategory.NETWORK_ERROR;
     }
 
     // Validation errors
     if (
-      message.includes("validation") ||
-      message.includes("invalid") ||
-      message.includes("required")
+      message.includes('validation') ||
+      message.includes('invalid') ||
+      message.includes('required')
     ) {
       return ErrorCategory.VALIDATION_ERROR;
     }
 
     // Authentication errors
     if (
-      message.includes("authentication") ||
-      message.includes("unauthorized") ||
-      message.includes("forbidden")
+      message.includes('authentication') ||
+      message.includes('unauthorized') ||
+      message.includes('forbidden')
     ) {
       return ErrorCategory.AUTH_ERROR;
     }
@@ -294,13 +288,10 @@ export class ErrorCategorizer {
   /**
    * Build error context for logging and debugging
    */
-  private static buildErrorContext(
-    error: any,
-    category: ErrorCategory
-  ): ErrorContext {
+  private static buildErrorContext(error: any, category: ErrorCategory): ErrorContext {
     return {
       category,
-      message: error.message || "Unknown error",
+      message: error.message || 'Unknown error',
       status: error.status || error.statusCode,
       retryAfter: error.retryAfter,
       headers: error.headers,
@@ -312,10 +303,7 @@ export class ErrorCategorizer {
   /**
    * Check if error should be retried based on attempt number
    */
-  static shouldRetry(
-    categorized: CategorizedError,
-    attemptNumber: number
-  ): boolean {
+  static shouldRetry(categorized: CategorizedError, attemptNumber: number): boolean {
     if (!categorized.isRetryable) {
       return false;
     }
@@ -326,10 +314,7 @@ export class ErrorCategorizer {
   /**
    * Get backoff delay for a specific attempt
    */
-  static getBackoffDelay(
-    categorized: CategorizedError,
-    attemptNumber: number
-  ): number {
+  static getBackoffDelay(categorized: CategorizedError, attemptNumber: number): number {
     const { backoffMs } = categorized.retryStrategy;
 
     if (attemptNumber >= backoffMs.length) {
@@ -366,6 +351,6 @@ export class ErrorCategorizer {
       parts.push(`- Retry after: ${errorContext.retryAfter}`);
     }
 
-    return parts.join(" ");
+    return parts.join(' ');
   }
 }

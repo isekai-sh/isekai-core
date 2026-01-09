@@ -246,10 +246,8 @@ export class CacheStats {
    */
   static logSummary(): void {
     const stats = this.getDetailedStats();
-    console.log("\n=== Cache Statistics ===");
-    console.log(
-      `Overall Hit Rate: ${(stats.overall.hitRate * 100).toFixed(2)}%`
-    );
+    console.log('\n=== Cache Statistics ===');
+    console.log(`Overall Hit Rate: ${(stats.overall.hitRate * 100).toFixed(2)}%`);
     console.log(`Total Requests: ${stats.overall.totalRequests}`);
     console.log(`Cache Hits: ${stats.overall.hits}`);
     console.log(`Cache Misses: ${stats.overall.misses}`);
@@ -259,7 +257,7 @@ export class CacheStats {
     console.log(`Uptime: ${Math.floor(stats.uptime / 1000)}s`);
 
     if (Object.keys(stats.byNamespace).length > 0) {
-      console.log("\nBy Namespace:");
+      console.log('\nBy Namespace:');
       for (const [namespace, metrics] of Object.entries(stats.byNamespace)) {
         console.log(
           `  ${namespace}: ${(metrics.hitRate * 100).toFixed(2)}% hit rate (${
@@ -268,6 +266,6 @@ export class CacheStats {
         );
       }
     }
-    console.log("=======================\n");
+    console.log('=======================\n');
   }
 }

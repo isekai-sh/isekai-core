@@ -7,6 +7,7 @@
 ## Step 1: Reproduce the Bug
 
 **Checklist:**
+
 - [ ] Can you reproduce the bug locally?
 - [ ] What are the exact steps to reproduce?
 - [ ] Is it consistent or intermittent?
@@ -14,6 +15,7 @@
 - [ ] What is the actual behavior?
 
 **Document:**
+
 ```
 Steps to Reproduce:
 1. Navigate to /automation
@@ -71,26 +73,31 @@ LRANGE bull:deviation-publisher:wait 0 -1
 **Common Bug Categories:**
 
 ### 1. Validation Error
+
 - Issue: Input rejected by Zod schema
 - Location: API route handlers
 - Fix: Update validation schema
 
 ### 2. Race Condition
+
 - Issue: Concurrent operations conflict
 - Location: Publisher worker, auto-scheduler
 - Fix: Add execution locks
 
 ### 3. Timezone Bug
+
 - Issue: Time calculations incorrect
 - Location: Auto-scheduler, time range evaluation
 - Fix: Use `date-fns-tz` with user timezone
 
 ### 4. State Synchronization
+
 - Issue: Frontend shows stale data
 - Location: TanStack Query cache
 - Fix: Add cache invalidation
 
 ### 5. API Error
+
 - Issue: DeviantArt API returns unexpected response
 - Location: Publisher worker
 - Fix: Add error handling, update types
@@ -103,24 +110,24 @@ LRANGE bull:deviation-publisher:wait 0 -1
 
 ```typescript
 // Example: Time range across midnight
-describe("Time Range Rule", () => {
-  it("should allow time range across midnight", async () => {
+describe('Time Range Rule', () => {
+  it('should allow time range across midnight', async () => {
     const rule = {
-      type: "time_range",
-      timeStart: "23:00",
-      timeEnd: "01:00", // Next day
+      type: 'time_range',
+      timeStart: '23:00',
+      timeEnd: '01:00', // Next day
     };
 
     // Test at 23:30 (should pass)
-    const result1 = await evaluateTimeRange(rule, "23:30", "America/New_York");
+    const result1 = await evaluateTimeRange(rule, '23:30', 'America/New_York');
     expect(result1).toBe(true);
 
     // Test at 00:30 (should pass)
-    const result2 = await evaluateTimeRange(rule, "00:30", "America/New_York");
+    const result2 = await evaluateTimeRange(rule, '00:30', 'America/New_York');
     expect(result2).toBe(true);
 
     // Test at 02:00 (should fail)
-    const result3 = await evaluateTimeRange(rule, "02:00", "America/New_York");
+    const result3 = await evaluateTimeRange(rule, '02:00', 'America/New_York');
     expect(result3).toBe(false);
   });
 });
@@ -188,13 +195,13 @@ pnpm test -- fix-bug.test.ts
 **Cover edge cases:**
 
 ```typescript
-it("should handle exact time boundaries", () => {
-  const rule = { type: "time_range", timeStart: "09:00", timeEnd: "17:00" };
+it('should handle exact time boundaries', () => {
+  const rule = { type: 'time_range', timeStart: '09:00', timeEnd: '17:00' };
 
-  expect(evaluateTimeRange(rule, "09:00")).toBe(true); // Exact start
-  expect(evaluateTimeRange(rule, "17:00")).toBe(true); // Exact end
-  expect(evaluateTimeRange(rule, "08:59")).toBe(false); // Just before
-  expect(evaluateTimeRange(rule, "17:01")).toBe(false); // Just after
+  expect(evaluateTimeRange(rule, '09:00')).toBe(true); // Exact start
+  expect(evaluateTimeRange(rule, '17:00')).toBe(true); // Exact end
+  expect(evaluateTimeRange(rule, '08:59')).toBe(false); // Just before
+  expect(evaluateTimeRange(rule, '17:01')).toBe(false); // Just after
 });
 ```
 
@@ -213,6 +220,7 @@ it("should handle exact time boundaries", () => {
 ✅ Valid: `09:00-17:00` (9 AM to 5 PM same day)
 
 **Evaluation:**
+
 - If timeStart > timeEnd: Range spans midnight
 - If timeStart < timeEnd: Range is same-day
 ```
@@ -239,17 +247,21 @@ Fixes #42
 
 ```markdown
 ## Summary
+
 Fixes time range validation for rules that span midnight.
 
 ## Root Cause
+
 Time range evaluation used simple comparison (start <= current <= end),
 which fails when end < start (midnight-spanning ranges).
 
 ## Fix
+
 Added logic to detect midnight-spanning ranges (start > end) and
 use OR logic instead of AND logic.
 
 ## Testing
+
 - Added test for midnight-spanning ranges
 - Added tests for edge cases (exact boundaries)
 - Manual testing confirmed fix
@@ -298,10 +310,10 @@ git bisect good v0.1.0-alpha.3  # This version was good
 ### 4. Add Logging
 
 ```typescript
-console.log("[DEBUG] currentTime:", currentTime);
-console.log("[DEBUG] timeStart:", timeStart);
-console.log("[DEBUG] timeEnd:", timeEnd);
-console.log("[DEBUG] result:", result);
+console.log('[DEBUG] currentTime:', currentTime);
+console.log('[DEBUG] timeStart:', timeStart);
+console.log('[DEBUG] timeEnd:', timeEnd);
+console.log('[DEBUG] result:', result);
 ```
 
 ---

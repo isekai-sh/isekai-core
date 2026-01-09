@@ -15,18 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState } from "react";
-import { Check, X, Tags } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { TagTemplateSelector } from "@/components/TemplateSelector";
+import { useState } from 'react';
+import { Check, X, Tags } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TagTemplateSelector } from '@/components/TemplateSelector';
 
 interface ReviewHeaderProps {
   count: number;
@@ -71,9 +67,7 @@ export function ReviewHeader({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Tags</Label>
-              <TagTemplateSelector
-                onSelect={(templateTags) => setBulkTags(templateTags)}
-              />
+              <TagTemplateSelector onSelect={(templateTags) => setBulkTags(templateTags)} />
             </div>
             <div className="flex flex-wrap gap-1">
               {bulkTags.map((tag, idx) => (
@@ -91,19 +85,15 @@ export function ReviewHeader({
             <Input
               placeholder="Add tag and press Enter..."
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   addTag(e.currentTarget.value);
-                  e.currentTarget.value = "";
+                  e.currentTarget.value = '';
                 }
               }}
             />
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setBulkTagsOpen(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setBulkTagsOpen(false)}>
                 Cancel
               </Button>
               <Button

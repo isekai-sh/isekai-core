@@ -18,6 +18,7 @@ All API endpoints return JSON with consistent structure and HTTP status codes.
 ### Simple Success (200 OK)
 
 **Single Resource:**
+
 ```json
 {
   "deviation": {
@@ -29,6 +30,7 @@ All API endpoints return JSON with consistent structure and HTTP status codes.
 ```
 
 **Multiple Resources:**
+
 ```json
 {
   "deviations": [
@@ -41,6 +43,7 @@ All API endpoints return JSON with consistent structure and HTTP status codes.
 ### Created (201 Created)
 
 **Resource Creation:**
+
 ```json
 {
   "deviation": {
@@ -52,18 +55,22 @@ All API endpoints return JSON with consistent structure and HTTP status codes.
 ```
 
 **Batch Creation:**
+
 ```json
 {
   "created": 5,
   "skipped": 2,
   "message": "Added 5 deviation(s) to sale queue",
-  "items": [/* created items */]
+  "items": [
+    /* created items */
+  ]
 }
 ```
 
 ### No Content (204 No Content)
 
 **Deletion:**
+
 ```http
 HTTP/1.1 204 No Content
 ```
@@ -77,14 +84,18 @@ HTTP/1.1 204 No Content
 ### Offset-Based Pagination
 
 **Request:**
+
 ```http
 GET /api/deviations?page=2&limit=20
 ```
 
 **Response:**
+
 ```json
 {
-  "deviations": [/* 20 items */],
+  "deviations": [
+    /* 20 items */
+  ],
   "total": 142,
   "page": 2,
   "limit": 20,
@@ -93,6 +104,7 @@ GET /api/deviations?page=2&limit=20
 ```
 
 **Calculation:**
+
 ```typescript
 const offset = (page - 1) * limit;
 const totalPages = Math.ceil(total / limit);
@@ -103,14 +115,18 @@ const totalPages = Math.ceil(total / limit);
 ### Cursor-Based Pagination
 
 **Request:**
+
 ```http
 GET /api/browse/home?offset=24&limit=24
 ```
 
 **Response:**
+
 ```json
 {
-  "deviations": [/* 24 items */],
+  "deviations": [
+    /* 24 items */
+  ],
   "hasMore": true,
   "nextOffset": 48,
   "estimatedTotal": 500
@@ -118,6 +134,7 @@ GET /api/browse/home?offset=24&limit=24
 ```
 
 **Next Page Request:**
+
 ```http
 GET /api/browse/home?offset=48&limit=24
 ```
@@ -145,6 +162,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 400 Bad Request
 
 **Validation Error:**
+
 ```json
 {
   "error": "Validation error",
@@ -158,6 +176,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Zod Validation:**
+
 ```json
 {
   "error": "Validation error",
@@ -178,6 +197,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Invalid JSON:**
+
 ```json
 {
   "error": "Invalid JSON"
@@ -187,6 +207,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 401 Unauthorized
 
 **Not Authenticated:**
+
 ```json
 {
   "error": "Unauthorized",
@@ -195,6 +216,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Token Expired:**
+
 ```json
 {
   "error": "DeviantArt authentication expired. Please re-connect your account.",
@@ -205,6 +227,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 403 Forbidden
 
 **Insufficient Permissions:**
+
 ```json
 {
   "error": "Insufficient permissions",
@@ -213,6 +236,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Admin Required:**
+
 ```json
 {
   "error": "Admin access required",
@@ -223,6 +247,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 404 Not Found
 
 **Resource Not Found:**
+
 ```json
 {
   "error": "Deviation not found",
@@ -231,6 +256,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Ownership Check Failed:**
+
 ```json
 {
   "error": "Deviation not found or not owned by user",
@@ -241,6 +267,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 409 Conflict
 
 **Duplicate Resource:**
+
 ```json
 {
   "error": "Deviation already in queue",
@@ -249,6 +276,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **State Conflict:**
+
 ```json
 {
   "error": "Cannot update automation while it is executing. Please try again in a moment.",
@@ -259,6 +287,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 429 Too Many Requests
 
 **Rate Limit Exceeded:**
+
 ```json
 {
   "error": "Too many requests. Try again later.",
@@ -268,6 +297,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **DeviantArt Rate Limit:**
+
 ```json
 {
   "error": "Rate limited by DeviantArt. Please try again later.",
@@ -279,6 +309,7 @@ GET /api/browse/home?offset=48&limit=24
 ### 500 Internal Server Error
 
 **Generic Server Error:**
+
 ```json
 {
   "error": "Internal server error",
@@ -287,6 +318,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Database Error:**
+
 ```json
 {
   "error": "Database operation failed",
@@ -295,6 +327,7 @@ GET /api/browse/home?offset=48&limit=24
 ```
 
 **Upstream Service Error:**
+
 ```json
 {
   "error": "Failed to fetch data from DeviantArt",
@@ -325,6 +358,7 @@ GET /api/browse/home?offset=48&limit=24
 **Format:** `YYYY-MM-DDTHH:mm:ss.sssZ`
 
 **Parsing:**
+
 ```typescript
 // JavaScript
 const date = new Date(createdAt);
@@ -337,6 +371,7 @@ const date = parseISO(createdAt);
 ### Null Timestamps
 
 **Nullable fields return `null`:**
+
 ```json
 {
   "publishedAt": null,
@@ -356,13 +391,14 @@ const date = parseISO(createdAt);
 
 ```json
 {
-  "price": 5000,    // $50.00
+  "price": 5000, // $50.00
   "minPrice": 3000, // $30.00
   "maxPrice": 10000 // $100.00
 }
 ```
 
 **Display:**
+
 ```typescript
 const dollars = price / 100;
 const formatted = `$${dollars.toFixed(2)}`; // "$50.00"
@@ -417,7 +453,9 @@ const formatted = `$${dollars.toFixed(2)}`; // "$50.00"
 
 ```json
 {
-  "deviations": [/* items */],
+  "deviations": [
+    /* items */
+  ],
   "total": 5,
   "_count": {
     "scheduleRules": 2,
@@ -484,12 +522,13 @@ await prisma.deviation.findMany({
     id: true,
     title: true,
     deviationUrl: true,
-    publishedAt: true
-  }
+    publishedAt: true,
+  },
 });
 ```
 
 **Response:**
+
 ```json
 {
   "deviations": [
@@ -525,7 +564,7 @@ await prisma.deviation.findMany({
 
 ```json
 {
-  "stashOnly": null  // User hasn't set preference
+  "stashOnly": null // User hasn't set preference
 }
 ```
 
@@ -612,9 +651,9 @@ await prisma.deviation.findMany({
 
 ```json
 {
-  "allowComments": true,       // Default
-  "allowFreeDownload": false,  // Default
-  "displayResolution": 0       // Default (original)
+  "allowComments": true, // Default
+  "allowFreeDownload": false, // Default
+  "displayResolution": 0 // Default (original)
 }
 ```
 
@@ -629,10 +668,7 @@ await prisma.deviation.findMany({
   "created": 5,
   "skipped": 2,
   "message": "Added 5 deviation(s) to sale queue",
-  "items": [
-    { "id": "uuid-1", /* ... */ },
-    { "id": "uuid-2", /* ... */ }
-  ]
+  "items": [{ "id": "uuid-1" /* ... */ }, { "id": "uuid-2" /* ... */ }]
 }
 ```
 

@@ -15,33 +15,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { refreshTokenIfNeeded } from "../lib/deviantart.js";
+import { Router } from 'express';
+import { refreshTokenIfNeeded } from '../lib/deviantart.js';
 import {
   generateCacheKey,
   getCachedBrowseResponse,
   setCachedBrowseResponse,
   isPerUserMode,
   type BrowseCacheParams,
-} from "../lib/browse-cache.js";
-import { getBrowseSource, type BrowseMode } from "../lib/browse-source.js";
-import { RedisCache, CacheTTL } from "../lib/redis-cache.js";
-import { CacheKeys } from "../lib/cache-keys.js";
-import type { BrowseDeviation } from "../lib/metadata-enricher.js";
+} from '../lib/browse-cache.js';
+import { getBrowseSource, type BrowseMode } from '../lib/browse-source.js';
+import { RedisCache, CacheTTL } from '../lib/redis-cache.js';
+import { CacheKeys } from '../lib/cache-keys.js';
+import type { BrowseDeviation } from '../lib/metadata-enricher.js';
 
 const router = Router();
 
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
 // Browse mode to DeviantArt endpoint mapping
 // All modes now use OAuth API with proper caching
 const BROWSE_ENDPOINTS: Record<string, string> = {
-  home: "/browse/home",
-  daily: "/browse/dailydeviations",
-  following: "/browse/deviantsyouwatch",
-  tags: "/browse/tags",
-  topic: "/browse/topic",
-  "user-gallery": "/gallery/all", // User's all gallery
+  home: '/browse/home',
+  daily: '/browse/dailydeviations',
+  following: '/browse/deviantsyouwatch',
+  tags: '/browse/tags',
+  topic: '/browse/topic',
+  'user-gallery': '/gallery/all', // User's all gallery
 };
 
 // Transform DeviantArt deviation to our format
@@ -49,15 +49,14 @@ function transformDeviation(deviation: any): BrowseDeviation {
   const tierAccess = deviation.tier_access || null;
 
   // Exclusive: Content requiring direct purchase/unlock
-  const isExclusive = tierAccess === "locked";
+  const isExclusive = tierAccess === 'locked';
 
   // Premium: Content requiring premium subscription
-  const isPremium =
-    tierAccess === "locked-subscribed" || !!deviation.premium_folder_data;
+  const isPremium = tierAccess === 'locked-subscribed' || !!deviation.premium_folder_data;
 
   // Debug: Log first few deviations to check if tier data is now present
   if (Math.random() < 0.1) {
-    console.log("🔍 Tier Debug:", {
+    console.log('🔍 Tier Debug:', {
       title: deviation.title?.substring(0, 30),
       tier_access: deviation.tier_access,
       tier: deviation.tier,
@@ -69,17 +68,15 @@ function transformDeviation(deviation: any): BrowseDeviation {
 
   return {
     deviationId: deviation.deviationid,
-    title: deviation.title || "Untitled",
+    title: deviation.title || 'Untitled',
     url: deviation.url,
     thumbUrl: deviation.thumbs?.[0]?.src || deviation.preview?.src || null,
     previewUrl:
-      deviation.preview?.src ||
-      deviation.thumbs?.[deviation.thumbs?.length - 1]?.src ||
-      null,
+      deviation.preview?.src || deviation.thumbs?.[deviation.thumbs?.length - 1]?.src || null,
     author: {
-      username: deviation.author?.username || "Unknown",
-      avatarUrl: deviation.author?.usericon || "",
-      userId: deviation.author?.userid || "",
+      username: deviation.author?.username || 'Unknown',
+      avatarUrl: deviation.author?.usericon || '',
+      userId: deviation.author?.userid || '',
     },
     stats: {
       favourites: deviation.stats?.favourites || 0,
@@ -101,7 +98,7 @@ function transformDeviation(deviation: any): BrowseDeviation {
 // NOTE: Specific routes MUST come before the dynamic /:mode route
 
 // GET /browse/tags/search - Tag autocomplete
-router.get("/tags/search", async (req, res) => {
+router.get('/tags/search', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -117,24 +114,19 @@ router.get("/tags/search", async (req, res) => {
       cacheKey,
       async () => {
         const params = new URLSearchParams();
-        params.set("tag_name", tagName);
+        params.set('tag_name', tagName);
 
-        const response = await fetch(
-          `${DEVIANTART_API_URL}/browse/tags/search?${params}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
+        const response = await fetch(`${DEVIANTART_API_URL}/browse/tags/search?${params}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
         if (!response.ok) {
-          console.error("DeviantArt tag search error:", await response.text());
+          console.error('DeviantArt tag search error:', await response.text());
           return { tags: [] };
         }
 
         const data = await response.json();
-        const tags = (data.results || []).map(
-          (t: { tag_name: string }) => t.tag_name
-        );
+        const tags = (data.results || []).map((t: { tag_name: string }) => t.tag_name);
         return { tags };
       },
       CacheTTL.TAG_SEARCH,
@@ -143,13 +135,13 @@ router.get("/tags/search", async (req, res) => {
 
     res.json(result.data);
   } catch (error) {
-    console.error("Tag search error:", error);
+    console.error('Tag search error:', error);
     res.json({ tags: [] });
   }
 });
 
 // GET /browse/morelikethis/:deviationId - Similar deviations
-router.get("/morelikethis/:deviationId", async (req, res) => {
+router.get('/morelikethis/:deviationId', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -161,8 +153,8 @@ router.get("/morelikethis/:deviationId", async (req, res) => {
       cacheKey,
       async () => {
         const params = new URLSearchParams();
-        params.set("seed", deviationId);
-        params.set("expand", "user.details");
+        params.set('seed', deviationId);
+        params.set('expand', 'user.details');
 
         const response = await fetch(
           `${DEVIANTART_API_URL}/browse/morelikethis/preview?${params}`,
@@ -172,7 +164,7 @@ router.get("/morelikethis/:deviationId", async (req, res) => {
         );
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch similar deviations");
+          const error: any = new Error('Failed to fetch similar deviations');
           error.status = response.status;
           throw error;
         }
@@ -180,10 +172,9 @@ router.get("/morelikethis/:deviationId", async (req, res) => {
         const data = await response.json();
 
         // The response has author info and more_from_artist/more_from_da arrays
-        const deviations = [
-          ...(data.more_from_artist || []),
-          ...(data.more_from_da || []),
-        ].map(transformDeviation);
+        const deviations = [...(data.more_from_artist || []), ...(data.more_from_da || [])].map(
+          transformDeviation
+        );
 
         return {
           deviations,
@@ -202,15 +193,13 @@ router.get("/morelikethis/:deviationId", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("More like this error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal server error" });
+    console.error('More like this error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // GET /browse/topics/list - Get all topics with sample deviations
-router.get("/topics/list", async (req, res) => {
+router.get('/topics/list', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -220,15 +209,12 @@ router.get("/topics/list", async (req, res) => {
     const result = await RedisCache.getOrFetch(
       cacheKey,
       async () => {
-        const response = await fetch(
-          `${DEVIANTART_API_URL}/browse/topics?expand=user.details`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
+        const response = await fetch(`${DEVIANTART_API_URL}/browse/topics?expand=user.details`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch topics");
+          const error: any = new Error('Failed to fetch topics');
           error.status = response.status;
           throw error;
         }
@@ -238,9 +224,7 @@ router.get("/topics/list", async (req, res) => {
         const topics = (data.results || []).map((topic: any) => ({
           name: topic.name,
           canonicalName: topic.canonical_name,
-          exampleDeviations: (topic.example_deviations || [])
-            .slice(0, 4)
-            .map(transformDeviation),
+          exampleDeviations: (topic.example_deviations || []).slice(0, 4).map(transformDeviation),
         }));
 
         return { topics, hasMore: data.has_more || false };
@@ -251,15 +235,13 @@ router.get("/topics/list", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("Topics error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal server error" });
+    console.error('Topics error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // GET /browse/toptopics - Get trending topics
-router.get("/toptopics", async (req, res) => {
+router.get('/toptopics', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -274,7 +256,7 @@ router.get("/toptopics", async (req, res) => {
         });
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch top topics");
+          const error: any = new Error('Failed to fetch top topics');
           error.status = response.status;
           throw error;
         }
@@ -297,15 +279,13 @@ router.get("/toptopics", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("Top topics error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal server error" });
+    console.error('Top topics error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // GET /browse/trendingtags - Get popular/trending tags (using toptopics as source)
-router.get("/trendingtags", async (req, res) => {
+router.get('/trendingtags', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -321,7 +301,7 @@ router.get("/trendingtags", async (req, res) => {
         });
 
         if (!response.ok) {
-          const error: any = new Error("Failed to fetch trending tags");
+          const error: any = new Error('Failed to fetch trending tags');
           error.status = response.status;
           throw error;
         }
@@ -342,15 +322,13 @@ router.get("/trendingtags", async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    console.error("Trending tags error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal server error" });
+    console.error('Trending tags error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // GET /browse/deviation/:deviationId - Get full deviation details
-router.get("/deviation/:deviationId", async (req, res) => {
+router.get('/deviation/:deviationId', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -364,12 +342,9 @@ router.get("/deviation/:deviationId", async (req, res) => {
       async () => {
         // Fetch deviation info with extended data
         const [deviationResponse, metadataResponse] = await Promise.all([
-          fetch(
-            `${DEVIANTART_API_URL}/deviation/${deviationId}?expand=user.details`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          ),
+          fetch(`${DEVIANTART_API_URL}/deviation/${deviationId}?expand=user.details`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
           fetch(
             `${DEVIANTART_API_URL}/deviation/metadata?deviationids[]=${deviationId}&ext_submission=true`,
             {
@@ -379,7 +354,7 @@ router.get("/deviation/:deviationId", async (req, res) => {
         ]);
 
         if (!deviationResponse.ok) {
-          const error: any = new Error("Failed to fetch deviation");
+          const error: any = new Error('Failed to fetch deviation');
           error.status = deviationResponse.status;
           throw error;
         }
@@ -405,27 +380,21 @@ router.get("/deviation/:deviationId", async (req, res) => {
 
         return {
           deviationId: deviation.deviationid,
-          title: deviation.title || "Untitled",
+          title: deviation.title || 'Untitled',
           url: deviation.url,
-          thumbUrl:
-            deviation.thumbs?.[0]?.src || deviation.preview?.src || null,
+          thumbUrl: deviation.thumbs?.[0]?.src || deviation.preview?.src || null,
           previewUrl:
-            deviation.preview?.src ||
-            deviation.thumbs?.[deviation.thumbs?.length - 1]?.src ||
-            null,
+            deviation.preview?.src || deviation.thumbs?.[deviation.thumbs?.length - 1]?.src || null,
           fullImageUrl,
           author: {
-            username: deviation.author?.username || "Unknown",
-            avatarUrl: deviation.author?.usericon || "",
-            userId: deviation.author?.userid || "",
+            username: deviation.author?.username || 'Unknown',
+            avatarUrl: deviation.author?.usericon || '',
+            userId: deviation.author?.userid || '',
             isWatched: deviation.author?.is_watching || false,
           },
           description: metadata?.description || deviation.excerpt || null,
           tags: (metadata?.tags || []).map((t: any) => t.tag_name),
-          category:
-            deviation.category_path ||
-            metadata?.submission?.category_path ||
-            null,
+          category: deviation.category_path || metadata?.submission?.category_path || null,
           stats: {
             favourites: deviation.stats?.favourites || 0,
             comments: deviation.stats?.comments || 0,
@@ -473,15 +442,13 @@ router.get("/deviation/:deviationId", async (req, res) => {
       downloadFilesize: downloadInfo?.filesize || null,
     });
   } catch (error: any) {
-    console.error("Deviation detail error:", error);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal server error" });
+    console.error('Deviation detail error:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // GET /browse/:mode - Main browse endpoint (MUST be last - catches all other modes)
-router.get("/:mode", async (req, res) => {
+router.get('/:mode', async (req, res) => {
   try {
     const user = req.user!;
     const accessToken = await refreshTokenIfNeeded(user);
@@ -490,12 +457,12 @@ router.get("/:mode", async (req, res) => {
     // Parse common params
     const offset = parseInt(req.query.offset as string) || 0;
     const limit = Math.min(parseInt(req.query.limit as string) || 24, 50);
-    const tag = (req.query.tag as string) || "";
-    const topic = (req.query.topic as string) || "";
-    const username = (req.query.username as string) || "";
-    const keywords = (req.query.keywords as string) || "";
+    const tag = (req.query.tag as string) || '';
+    const topic = (req.query.topic as string) || '';
+    const username = (req.query.username as string) || '';
+    const keywords = (req.query.keywords as string) || '';
     const date = req.query.date as string;
-    const matureContent = req.query.mature_content === "true";
+    const matureContent = req.query.mature_content === 'true';
 
     // Determine data source
     const sourceConfig = getBrowseSource(mode as BrowseMode, {
@@ -524,13 +491,9 @@ router.get("/:mode", async (req, res) => {
     const cacheKey = generateCacheKey(cacheParams, userId);
 
     // Check cache first
-    const cachedResponse = await getCachedBrowseResponse(
-      cacheKey,
-      userId,
-      false
-    );
+    const cachedResponse = await getCachedBrowseResponse(cacheKey, userId, false);
     if (cachedResponse) {
-      console.log("[Browse] Cache hit:", cacheKey);
+      console.log('[Browse] Cache hit:', cacheKey);
       return res.json(cachedResponse);
     }
 
@@ -549,8 +512,8 @@ router.get("/:mode", async (req, res) => {
       userId,
     });
   } catch (error) {
-    console.error("[Browse] Error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[Browse] Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -579,62 +542,54 @@ async function handleAPIBrowse(req: any, res: any, context: any) {
 
   // Special handling for user-gallery mode
   let url: string;
-  if (mode === "user-gallery") {
+  if (mode === 'user-gallery') {
     if (!username) {
-      return res
-        .status(400)
-        .json({ error: "Username required for user-gallery mode" });
+      return res.status(400).json({ error: 'Username required for user-gallery mode' });
     }
     const params = new URLSearchParams();
-    params.set("username", username);
-    params.set("offset", String(offset));
-    params.set("limit", String(limit));
-    params.set("mode", "newest"); // Sort by newest
+    params.set('username', username);
+    params.set('offset', String(offset));
+    params.set('limit', String(limit));
+    params.set('mode', 'newest'); // Sort by newest
     if (matureContent) {
-      params.set("mature_content", "true");
+      params.set('mature_content', 'true');
     }
-    params.set(
-      "expand",
-      "user.details,deviation.tier,deviation.premium_folder_data"
-    );
+    params.set('expand', 'user.details,deviation.tier,deviation.premium_folder_data');
     url = `${DEVIANTART_API_URL}${endpoint}?${params}`;
   } else {
     const params = new URLSearchParams();
 
     // Pagination
-    params.set("offset", String(offset));
-    params.set("limit", String(limit));
+    params.set('offset', String(offset));
+    params.set('limit', String(limit));
 
     // Tag (for tags mode)
-    if (tag && mode === "tags") {
-      params.set("tag", tag);
+    if (tag && mode === 'tags') {
+      params.set('tag', tag);
     }
 
     // Date (for daily deviations - format: yyyy-mm-dd)
-    if (date && mode === "daily") {
-      params.set("date", date);
+    if (date && mode === 'daily') {
+      params.set('date', date);
     }
 
     // Topic name (for topic mode)
-    if (topic && mode === "topic") {
-      params.set("topic", topic);
+    if (topic && mode === 'topic') {
+      params.set('topic', topic);
     }
 
     // Mature content filter
     if (matureContent) {
-      params.set("mature_content", "true");
+      params.set('mature_content', 'true');
     }
 
     // Expand user details and tier information
-    params.set(
-      "expand",
-      "user.details,deviation.tier,deviation.premium_folder_data"
-    );
+    params.set('expand', 'user.details,deviation.tier,deviation.premium_folder_data');
 
     url = `${DEVIANTART_API_URL}${endpoint}?${params}`;
   }
 
-  console.log("[API] Fetching browse:", url);
+  console.log('[API] Fetching browse:', url);
 
   try {
     const response = await fetch(url, {
@@ -643,37 +598,28 @@ async function handleAPIBrowse(req: any, res: any, context: any) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[API] DeviantArt API error for", endpoint, ":", errorText);
+      console.error('[API] DeviantArt API error for', endpoint, ':', errorText);
 
       // Check for rate limiting
       if (
         response.status === 429 ||
-        errorText.includes("rate limit") ||
-        errorText.includes("api_threshold")
+        errorText.includes('rate limit') ||
+        errorText.includes('api_threshold')
       ) {
         // Try to return cached data on rate limit
-        const cachedResponse = await getCachedBrowseResponse(
-          cacheKey,
-          userId,
-          true
-        );
+        const cachedResponse = await getCachedBrowseResponse(cacheKey, userId, true);
         if (cachedResponse) {
-          console.log(
-            "[API] Returning cached data due to rate limit for:",
-            cacheKey
-          );
+          console.log('[API] Returning cached data due to rate limit for:', cacheKey);
           return res.json(cachedResponse);
         }
 
         return res.status(429).json({
-          error: "Rate limited by DeviantArt. Please try again later.",
+          error: 'Rate limited by DeviantArt. Please try again later.',
           retryAfter: 300,
         });
       }
 
-      return res
-        .status(response.status)
-        .json({ error: "Failed to fetch browse data" });
+      return res.status(response.status).json({ error: 'Failed to fetch browse data' });
     }
 
     const data = await response.json();
@@ -691,13 +637,13 @@ async function handleAPIBrowse(req: any, res: any, context: any) {
 
     // Cache the successful response
     setCachedBrowseResponse(cacheKey, responseData, userId).catch((err) => {
-      console.error("[API] Failed to cache browse response:", err);
+      console.error('[API] Failed to cache browse response:', err);
     });
 
     res.json(responseData);
   } catch (error) {
-    console.error("[API] Browse error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Browse error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 

@@ -16,11 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  ADMIN_LIMITS,
-  validateCreditAmount,
-  validateGiftDuration,
-} from './limits.js';
+import { ADMIN_LIMITS, validateCreditAmount, validateGiftDuration } from './limits.js';
 
 describe('ADMIN_LIMITS', () => {
   it('should define credit limits', () => {
@@ -53,9 +49,7 @@ describe('validateCreditAmount', () => {
     });
 
     it('should accept amount equal to MAX_CREDIT_ADD', () => {
-      expect(() =>
-        validateCreditAmount(ADMIN_LIMITS.MAX_CREDIT_ADD, 'add')
-      ).not.toThrow();
+      expect(() => validateCreditAmount(ADMIN_LIMITS.MAX_CREDIT_ADD, 'add')).not.toThrow();
     });
 
     it('should reject amount exceeding MAX_CREDIT_ADD', () => {
@@ -65,18 +59,12 @@ describe('validateCreditAmount', () => {
     });
 
     it('should reject zero amount', () => {
-      expect(() => validateCreditAmount(0, 'add')).toThrow(
-        'Amount must be a positive number'
-      );
+      expect(() => validateCreditAmount(0, 'add')).toThrow('Amount must be a positive number');
     });
 
     it('should reject negative amounts', () => {
-      expect(() => validateCreditAmount(-100, 'add')).toThrow(
-        'Amount must be a positive number'
-      );
-      expect(() => validateCreditAmount(-1, 'add')).toThrow(
-        'Amount must be a positive number'
-      );
+      expect(() => validateCreditAmount(-100, 'add')).toThrow('Amount must be a positive number');
+      expect(() => validateCreditAmount(-1, 'add')).toThrow('Amount must be a positive number');
     });
   });
 
@@ -89,9 +77,7 @@ describe('validateCreditAmount', () => {
     });
 
     it('should accept amount equal to MAX_CREDIT_DEDUCT', () => {
-      expect(() =>
-        validateCreditAmount(ADMIN_LIMITS.MAX_CREDIT_DEDUCT, 'deduct')
-      ).not.toThrow();
+      expect(() => validateCreditAmount(ADMIN_LIMITS.MAX_CREDIT_DEDUCT, 'deduct')).not.toThrow();
     });
 
     it('should reject amount exceeding MAX_CREDIT_DEDUCT', () => {
@@ -101,9 +87,7 @@ describe('validateCreditAmount', () => {
     });
 
     it('should reject zero amount', () => {
-      expect(() => validateCreditAmount(0, 'deduct')).toThrow(
-        'Amount must be a positive number'
-      );
+      expect(() => validateCreditAmount(0, 'deduct')).toThrow('Amount must be a positive number');
     });
 
     it('should reject negative amounts', () => {
@@ -143,15 +127,11 @@ describe('validateCreditAmount', () => {
 describe('validateGiftDuration', () => {
   describe('valid durations', () => {
     it('should accept minimum duration', () => {
-      expect(() =>
-        validateGiftDuration(ADMIN_LIMITS.MIN_GIFT_DURATION_MONTHS)
-      ).not.toThrow();
+      expect(() => validateGiftDuration(ADMIN_LIMITS.MIN_GIFT_DURATION_MONTHS)).not.toThrow();
     });
 
     it('should accept maximum duration', () => {
-      expect(() =>
-        validateGiftDuration(ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS)
-      ).not.toThrow();
+      expect(() => validateGiftDuration(ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS)).not.toThrow();
     });
 
     it('should accept durations within range', () => {
@@ -165,41 +145,27 @@ describe('validateGiftDuration', () => {
 
   describe('invalid durations', () => {
     it('should reject duration below minimum', () => {
-      expect(() => validateGiftDuration(0)).toThrow(
-        'Gift duration must be at least 1 month(s)'
-      );
+      expect(() => validateGiftDuration(0)).toThrow('Gift duration must be at least 1 month(s)');
     });
 
     it('should reject negative durations', () => {
-      expect(() => validateGiftDuration(-1)).toThrow(
-        'Gift duration must be at least 1 month(s)'
-      );
-      expect(() => validateGiftDuration(-10)).toThrow(
-        'Gift duration must be at least 1 month(s)'
-      );
+      expect(() => validateGiftDuration(-1)).toThrow('Gift duration must be at least 1 month(s)');
+      expect(() => validateGiftDuration(-10)).toThrow('Gift duration must be at least 1 month(s)');
     });
 
     it('should reject duration above maximum', () => {
-      expect(() => validateGiftDuration(25)).toThrow(
-        'Gift duration cannot exceed 24 months'
-      );
-      expect(() => validateGiftDuration(100)).toThrow(
-        'Gift duration cannot exceed 24 months'
-      );
+      expect(() => validateGiftDuration(25)).toThrow('Gift duration cannot exceed 24 months');
+      expect(() => validateGiftDuration(100)).toThrow('Gift duration cannot exceed 24 months');
     });
   });
 
   describe('edge cases', () => {
     it('should reject duration just below minimum', () => {
-      expect(() =>
-        validateGiftDuration(ADMIN_LIMITS.MIN_GIFT_DURATION_MONTHS - 1)
-      ).toThrow();
+      expect(() => validateGiftDuration(ADMIN_LIMITS.MIN_GIFT_DURATION_MONTHS - 1)).toThrow();
     });
 
     it('should reject duration just above maximum', () => {
-      expect(() =>
-        validateGiftDuration(ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS + 1)
-      ).toThrow();
+      expect(() => validateGiftDuration(ADMIN_LIMITS.MAX_GIFT_DURATION_MONTHS + 1)).toThrow();
     });
 
     it('should accept duration at exact boundaries', () => {

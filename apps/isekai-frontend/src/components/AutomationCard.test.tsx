@@ -117,9 +117,7 @@ describe('AutomationCard', () => {
   it('should call onDuplicate when duplicate is clicked', async () => {
     const mockOnDuplicate = vi.fn();
     const user = userEvent.setup();
-    render(
-      <AutomationCard automation={mockAutomation} onDuplicate={mockOnDuplicate} />
-    );
+    render(<AutomationCard automation={mockAutomation} onDuplicate={mockOnDuplicate} />);
 
     // Open dropdown menu first
     const dropdownButton = screen.getByRole('button', { name: '' });

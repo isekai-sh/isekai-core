@@ -9,6 +9,7 @@
 ## Context
 
 DeviantArt API enforces rate limits:
+
 - **60 requests per hour** per OAuth token
 - **429 Too Many Requests** error when limit exceeded
 - **No retry-after header** (unknown cooldown period)
@@ -16,6 +17,7 @@ DeviantArt API enforces rate limits:
 **Problem:** Publishing multiple deviations rapidly causes cascading 429 errors, wasting API quota and delaying publishes.
 
 **Symptoms:**
+
 1. Worker hits rate limit after 10 publishes
 2. Continues attempting publishes (all fail with 429)
 3. Wastes remaining attempts on failures
@@ -40,6 +42,7 @@ DeviantArt API enforces rate limits:
 ```
 
 **States:**
+
 - **CLOSED** - Normal operation, requests allowed
 - **OPEN** - Circuit breaker active, requests blocked (5-minute cooldown)
 - **HALF_OPEN** - Testing recovery, 1 request allowed
@@ -65,6 +68,7 @@ DeviantArt API enforces rate limits:
 **Solution:** Stop making requests after 3 consecutive 429s.
 
 **Flow:**
+
 1. Worker publishes 10 deviations rapidly
 2. Hits rate limit on 10th deviation (429)
 3. Circuit breaker increments failure count (1/3)
@@ -83,6 +87,7 @@ DeviantArt API enforces rate limits:
 **Solution:** Circuit breaker provides clear error message.
 
 **User Experience:**
+
 - **Before:** "Failed to publish" (vague error)
 - **After:** "Rate limit exceeded. Retrying in 5 minutes." (clear message)
 
@@ -93,6 +98,7 @@ DeviantArt API enforces rate limits:
 **Solution:** Circuit breaker automatically tests recovery after cooldown.
 
 **Recovery Flow:**
+
 1. Circuit opens at 2:00 PM
 2. Cooldown period: 5 minutes
 3. Circuit transitions to HALF_OPEN at 2:05 PM
@@ -107,6 +113,7 @@ DeviantArt API enforces rate limits:
 **Solution:** Circuit breaker state stored in Redis (shared).
 
 **Example:**
+
 - Worker A hits rate limit (3 consecutive 429s)
 - Circuit breaker opens in Redis
 - Worker B checks state before publishing
@@ -165,10 +172,12 @@ DeviantArt API enforces rate limits:
 **Approach:** Retry with increasing delays (1s, 2s, 4s, 8s...).
 
 **Pros:**
+
 - Simple implementation
 - No external state
 
 **Cons:**
+
 - Continues making failed requests (wastes API quota)
 - Backoff resets per deviation (no global coordination)
 - Doesn't adapt to sustained rate limits
@@ -189,10 +198,12 @@ const rateLimiter = rateLimit({
 ```
 
 **Pros:**
+
 - Prevents rate limit errors
 - Simple implementation
 
 **Cons:**
+
 - Conservative (DeviantArt limit might be higher)
 - Doesn't adapt to actual rate limit
 - No coordination across workers
@@ -206,10 +217,12 @@ const rateLimiter = rateLimit({
 **Approach:** Consume tokens from bucket, refill over time.
 
 **Pros:**
+
 - Smooth request distribution
 - Prevents bursts
 
 **Cons:**
+
 - Requires accurate knowledge of rate limit
 - Complex state management
 - Doesn't react to 429 errors
@@ -242,31 +255,31 @@ export class CircuitBreaker {
 
   async recordSuccess() {
     // Reset failure count
-    await this.redis.set("circuit-breaker:failures", 0);
-    await this.redis.set("circuit-breaker:state", "CLOSED");
+    await this.redis.set('circuit-breaker:failures', 0);
+    await this.redis.set('circuit-breaker:state', 'CLOSED');
   }
 
   async recordFailure() {
-    const failures = await this.redis.incr("circuit-breaker:failures");
-    await this.redis.set("circuit-breaker:last-failure", new Date().toISOString());
+    const failures = await this.redis.incr('circuit-breaker:failures');
+    await this.redis.set('circuit-breaker:last-failure', new Date().toISOString());
 
     if (failures >= this.failureThreshold) {
       // Open circuit breaker
-      await this.redis.set("circuit-breaker:state", "OPEN");
-      console.log("Circuit breaker opened (rate limit exceeded)");
+      await this.redis.set('circuit-breaker:state', 'OPEN');
+      console.log('Circuit breaker opened (rate limit exceeded)');
     }
   }
 
   async getState(): Promise<CircuitState> {
-    const state = await this.redis.get("circuit-breaker:state") || "CLOSED";
-    const lastFailure = await this.redis.get("circuit-breaker:last-failure");
+    const state = (await this.redis.get('circuit-breaker:state')) || 'CLOSED';
+    const lastFailure = await this.redis.get('circuit-breaker:last-failure');
 
-    if (state === "OPEN" && lastFailure) {
+    if (state === 'OPEN' && lastFailure) {
       const elapsed = Date.now() - new Date(lastFailure).getTime();
       if (elapsed >= this.cooldownMs) {
         // Transition to HALF_OPEN
-        await this.redis.set("circuit-breaker:state", "HALF_OPEN");
-        return "HALF_OPEN";
+        await this.redis.set('circuit-breaker:state', 'HALF_OPEN');
+        return 'HALF_OPEN';
       }
     }
 
@@ -275,7 +288,7 @@ export class CircuitBreaker {
 
   async canExecute(): Promise<boolean> {
     const state = await this.getState();
-    return state === "CLOSED" || state === "HALF_OPEN";
+    return state === 'CLOSED' || state === 'HALF_OPEN';
   }
 }
 ```
@@ -291,8 +304,8 @@ async function publishDeviation(deviationId: string) {
   // Check circuit breaker before publishing
   const canExecute = await circuitBreaker.canExecute();
   if (!canExecute) {
-    console.log("Circuit breaker OPEN, skipping publish");
-    throw new Error("Rate limit cooldown active. Retrying in 5 minutes.");
+    console.log('Circuit breaker OPEN, skipping publish');
+    throw new Error('Rate limit cooldown active. Retrying in 5 minutes.');
   }
 
   try {
@@ -334,11 +347,13 @@ CIRCUIT_BREAKER_ENABLED=true         # Enable circuit breaker
 ## Monitoring
 
 **Metrics:**
+
 - `circuit_breaker.state` (CLOSED/OPEN/HALF_OPEN)
 - `circuit_breaker.failures` (consecutive failure count)
 - `circuit_breaker.cooldown_remaining_ms` (time until recovery test)
 
 **Alerts:**
+
 - Circuit breaker opens → Slack notification
 - Circuit breaker stays open > 15 minutes → Page on-call
 
@@ -347,6 +362,7 @@ CIRCUIT_BREAKER_ENABLED=true         # Enable circuit breaker
 ## Testing Strategy
 
 **Test Cases:**
+
 1. 1 failure → Circuit remains CLOSED
 2. 2 failures → Circuit remains CLOSED
 3. 3 failures → Circuit opens
@@ -355,6 +371,7 @@ CIRCUIT_BREAKER_ENABLED=true         # Enable circuit breaker
 6. Failure in HALF_OPEN → Circuit opens again
 
 **Load Test:**
+
 - Simulate rate limit (mock 429 responses)
 - Verify circuit opens after 3 failures
 - Verify no requests during cooldown
@@ -365,12 +382,14 @@ CIRCUIT_BREAKER_ENABLED=true         # Enable circuit breaker
 ## Success Metrics
 
 **Target Metrics:**
+
 - Rate limit incidents: < 1 per week
 - Wasted API requests per incident: < 5
 - Recovery time: 5-10 minutes
 - False positive rate: < 5%
 
 **Actual Results (v0.1.0-alpha.5):**
+
 - Rate limit incidents: 0.2 per week (meets target)
 - Wasted API requests: 2 average (meets target)
 - Recovery time: 6 minutes average (meets target)

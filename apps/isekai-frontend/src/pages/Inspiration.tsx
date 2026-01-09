@@ -15,73 +15,56 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import {
-  Flame,
-  Calendar,
-  Tag,
-  Users,
-  Sparkles,
-  ChevronUp,
-  RefreshCw,
-  Clock,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn, type CardSize, type ViewMode } from "@/lib/utils";
-import {
-  browse,
-  ApiError,
-  type BrowseMode,
-  type BrowseDeviation,
-} from "@/lib/api";
-import { DeviationCard } from "@/components/inspiration/DeviationCard";
-import { MoreLikeThisPanel } from "@/components/inspiration/MoreLikeThisPanel";
-import { BrowseHeader } from "@/components/inspiration/BrowseHeader";
-import { DeviationDetailModal } from "@/components/inspiration/DeviationDetailModal";
-import { JustifiedGallery } from "@/components/inspiration/JustifiedGallery";
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Flame, Calendar, Tag, Users, Sparkles, ChevronUp, RefreshCw, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn, type CardSize, type ViewMode } from '@/lib/utils';
+import { browse, ApiError, type BrowseMode, type BrowseDeviation } from '@/lib/api';
+import { DeviationCard } from '@/components/inspiration/DeviationCard';
+import { MoreLikeThisPanel } from '@/components/inspiration/MoreLikeThisPanel';
+import { BrowseHeader } from '@/components/inspiration/BrowseHeader';
+import { DeviationDetailModal } from '@/components/inspiration/DeviationDetailModal';
+import { JustifiedGallery } from '@/components/inspiration/JustifiedGallery';
 
 // Browse mode tabs configuration
 // Only modes available in DeviantArt API v1.20240701
 const BROWSE_TABS: { id: BrowseMode; label: string; icon: typeof Flame }[] = [
-  { id: "home", label: "Home", icon: Flame },
-  { id: "daily", label: "Daily", icon: Calendar },
-  { id: "following", label: "Watching", icon: Users },
+  { id: 'home', label: 'Home', icon: Flame },
+  { id: 'daily', label: 'Daily', icon: Calendar },
+  { id: 'following', label: 'Watching', icon: Users },
 ];
 
 // Bento grid: fixed cell sizes with row/col spanning for featured items
 const BENTO_GRID =
-  "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 auto-rows-[120px] sm:auto-rows-[140px] md:auto-rows-[160px] gap-2";
+  'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 auto-rows-[120px] sm:auto-rows-[140px] md:auto-rows-[160px] gap-2';
 
 // Masonry grid: CSS columns for true masonry
-const MASONRY_GRID =
-  "columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-3";
+const MASONRY_GRID = 'columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-3';
 
 // LocalStorage key for view mode
-const VIEW_MODE_KEY = "isekai-inspiration-view-mode";
+const VIEW_MODE_KEY = 'isekai-inspiration-view-mode';
 
 export function Inspiration() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // State from URL params
-  const mode = (searchParams.get("mode") as BrowseMode) || "home";
-  const tag = searchParams.get("tag") || "";
-  const topic = searchParams.get("topic") || "";
-  const username = searchParams.get("username") || "";
-  const keywords = searchParams.get("keywords") || "";
+  const mode = (searchParams.get('mode') as BrowseMode) || 'home';
+  const tag = searchParams.get('tag') || '';
+  const topic = searchParams.get('topic') || '';
+  const username = searchParams.get('username') || '';
+  const keywords = searchParams.get('keywords') || '';
 
   // Local state
   const [matureContent, setMatureContent] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem(VIEW_MODE_KEY);
-    return (saved as ViewMode) || "grid";
+    return (saved as ViewMode) || 'grid';
   });
-  const [moreLikeThisDeviation, setMoreLikeThisDeviation] =
-    useState<BrowseDeviation | null>(null);
-  const [selectedDeviation, setSelectedDeviation] =
-    useState<BrowseDeviation | null>(null);
+  const [moreLikeThisDeviation, setMoreLikeThisDeviation] = useState<BrowseDeviation | null>(null);
+  const [selectedDeviation, setSelectedDeviation] = useState<BrowseDeviation | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Refs
@@ -92,7 +75,7 @@ export function Inspiration() {
   const updateParams = (updates: Record<string, string | null>) => {
     const newParams = new URLSearchParams(searchParams);
     Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === "") {
+      if (value === null || value === '') {
         newParams.delete(key);
       } else {
         newParams.set(key, value);
@@ -102,7 +85,7 @@ export function Inspiration() {
   };
 
   // Determine the actual selected tag (either tag or topic name)
-  const selectedTag = mode === "topic" ? topic : tag;
+  const selectedTag = mode === 'topic' ? topic : tag;
 
   // Infinite query for browse results
   const {
@@ -115,23 +98,20 @@ export function Inspiration() {
     error,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["browse", mode, tag, topic, username, keywords, matureContent],
+    queryKey: ['browse', mode, tag, topic, username, keywords, matureContent],
     queryFn: ({ pageParam = 0 }) =>
       browse.get(mode, {
         offset: pageParam,
         limit: 24,
-        tag: mode === "tags" ? tag : undefined,
-        topic: mode === "topic" ? topic : undefined,
-        username: ["user-gallery", "keyword-search"].includes(mode)
-          ? username
-          : undefined,
-        keywords: mode === "keyword-search" ? keywords : undefined,
+        tag: mode === 'tags' ? tag : undefined,
+        topic: mode === 'topic' ? topic : undefined,
+        username: ['user-gallery', 'keyword-search'].includes(mode) ? username : undefined,
+        keywords: mode === 'keyword-search' ? keywords : undefined,
         mature_content: matureContent,
       }),
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextOffset : undefined,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextOffset : undefined),
     initialPageParam: 0,
-    enabled: (mode !== "tags" || !!tag) && (mode !== "topic" || !!topic),
+    enabled: (mode !== 'tags' || !!tag) && (mode !== 'topic' || !!topic),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -168,14 +148,14 @@ export function Inspiration() {
 
     return deviations.map((d, index) => {
       const isFeatured = featuredIndices.has(index);
-      let displaySize: CardSize = "regular";
+      let displaySize: CardSize = 'regular';
 
       if (isFeatured) {
         const score = d.stats.favourites + d.stats.comments * 2;
         if (score > maxScore * 0.75) {
-          displaySize = "large";
+          displaySize = 'large';
         } else {
-          displaySize = "medium";
+          displaySize = 'medium';
         }
       }
 
@@ -183,8 +163,7 @@ export function Inspiration() {
     });
   }, [deviations]);
 
-  const isShowingCachedData =
-    data?.pages.some((page) => page.fromCache) ?? false;
+  const isShowingCachedData = data?.pages.some((page) => page.fromCache) ?? false;
   const cachedAt = data?.pages.find((page) => page.fromCache)?.cachedAt;
 
   // Intersection observer for infinite scroll
@@ -219,8 +198,8 @@ export function Inspiration() {
       setShowBackToTop(window.scrollY > 500);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleModeChange = (newMode: BrowseMode) => {
@@ -229,14 +208,14 @@ export function Inspiration() {
 
   const handleTagSelect = (searchTag: string) => {
     if (searchTag) {
-      updateParams({ mode: "tags", tag: searchTag, topic: null });
+      updateParams({ mode: 'tags', tag: searchTag, topic: null });
     } else {
-      updateParams({ mode: "home", tag: null, topic: null });
+      updateParams({ mode: 'home', tag: null, topic: null });
     }
   };
 
   const handleTopicSelect = (topicName: string) => {
-    updateParams({ mode: "topic", topic: topicName, tag: null });
+    updateParams({ mode: 'topic', topic: topicName, tag: null });
   };
 
   const handleMoreLikeThis = useCallback((deviation: BrowseDeviation) => {
@@ -257,7 +236,7 @@ export function Inspiration() {
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -279,17 +258,15 @@ export function Inspiration() {
       </div>
 
       {/* Current filter badge */}
-      {((mode === "tags" && tag) || (mode === "topic" && topic)) && (
+      {((mode === 'tags' && tag) || (mode === 'topic' && topic)) && (
         <div className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 rounded-md text-sm w-fit">
           <Tag className="h-3 w-3" />
-          <span>{mode === "topic" ? topic : tag}</span>
+          <span>{mode === 'topic' ? topic : tag}</span>
           <Button
             variant="ghost"
             size="icon"
             className="h-4 w-4 ml-1"
-            onClick={() =>
-              updateParams({ tag: null, topic: null, mode: "home" })
-            }
+            onClick={() => updateParams({ tag: null, topic: null, mode: 'home' })}
           >
             ×
           </Button>
@@ -322,27 +299,27 @@ export function Inspiration() {
 
       {/* Results grid */}
       {isLoading ? (
-        viewMode === "grid" ? (
+        viewMode === 'grid' ? (
           <div className="w-full space-y-3">
             {Array.from({ length: 6 }).map((_, rowIndex) => (
               <div key={rowIndex} className="flex gap-3 w-full">
                 {Array.from({ length: 4 + (rowIndex % 3) }).map((_, itemIndex) => (
-                  <div key={itemIndex} className="flex-1" style={{ minWidth: "200px" }}>
+                  <div key={itemIndex} className="flex-1" style={{ minWidth: '200px' }}>
                     <Skeleton className="w-full h-[280px] rounded-lg" />
                   </div>
                 ))}
               </div>
             ))}
           </div>
-        ) : viewMode === "masonry" ? (
+        ) : viewMode === 'masonry' ? (
           <div className={MASONRY_GRID}>
             {Array.from({ length: 24 }).map((_, i) => {
-              const heights = ["h-48", "h-56", "h-64", "h-72", "h-80"];
+              const heights = ['h-48', 'h-56', 'h-64', 'h-72', 'h-80'];
               const height = heights[i % heights.length];
               return (
                 <Skeleton
                   key={i}
-                  className={cn("w-full rounded-lg mb-3 break-inside-avoid", height)}
+                  className={cn('w-full rounded-lg mb-3 break-inside-avoid', height)}
                 />
               );
             })}
@@ -356,12 +333,12 @@ export function Inspiration() {
                 <Skeleton
                   key={i}
                   className={cn(
-                    "w-full rounded-lg",
+                    'w-full rounded-lg',
                     isLarge
-                      ? "col-span-2 row-span-3"
+                      ? 'col-span-2 row-span-3'
                       : isFeatured
-                      ? "col-span-2 row-span-2"
-                      : "row-span-2"
+                        ? 'col-span-2 row-span-2'
+                        : 'row-span-2'
                   )}
                 />
               );
@@ -387,20 +364,20 @@ export function Inspiration() {
         <div className="text-center py-12">
           <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
           <p className="text-muted-foreground">
-            {(mode === "tags" && !tag) || (mode === "topic" && !topic)
-              ? "Select a topic or enter a tag to search"
-              : "No deviations found"}
+            {(mode === 'tags' && !tag) || (mode === 'topic' && !topic)
+              ? 'Select a topic or enter a tag to search'
+              : 'No deviations found'}
           </p>
         </div>
       ) : (
         <>
-          {viewMode === "grid" ? (
+          {viewMode === 'grid' ? (
             <JustifiedGallery
               deviations={deviations}
               onMoreLikeThis={handleMoreLikeThis}
               onSelect={handleSelectDeviation}
             />
-          ) : viewMode === "masonry" ? (
+          ) : viewMode === 'masonry' ? (
             <div className={MASONRY_GRID}>
               {deviations.map((deviation) => (
                 <DeviationCard

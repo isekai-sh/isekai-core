@@ -51,7 +51,9 @@ vi.mock('../lib/cache-keys.js', () => ({
 }));
 
 vi.mock('../lib/browse-cache.js', () => ({
-  generateCacheKey: vi.fn((params: any, userId?: string) => `browse:${params.mode}:${userId || 'global'}`),
+  generateCacheKey: vi.fn(
+    (params: any, userId?: string) => `browse:${params.mode}:${userId || 'global'}`
+  ),
   getCachedBrowseResponse: vi.fn(),
   setCachedBrowseResponse: vi.fn(),
   isPerUserMode: vi.fn((mode: string) => mode === 'following'),
@@ -98,26 +100,22 @@ describe('Browse Routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (browseRouter as any).stack;
-    const route = routes.find(
-      (r: any) => {
-        if (!r.route?.path) return false;
-        if (!r.route.methods?.[method.toLowerCase()]) return false;
+    const route = routes.find((r: any) => {
+      if (!r.route?.path) return false;
+      if (!r.route.methods?.[method.toLowerCase()]) return false;
 
-        // Exact match for non-param routes
-        if (!r.route.path.includes(':')) {
-          return r.route.path === path;
-        }
-
-        // Param match for routes like /deviation/:deviationId
-        const pathParts = path.split('/');
-        const routeParts = r.route.path.split('/');
-        if (pathParts.length !== routeParts.length) return false;
-
-        return routeParts.every((part, i) =>
-          part.startsWith(':') || part === pathParts[i]
-        );
+      // Exact match for non-param routes
+      if (!r.route.path.includes(':')) {
+        return r.route.path === path;
       }
-    );
+
+      // Param match for routes like /deviation/:deviationId
+      const pathParts = path.split('/');
+      const routeParts = r.route.path.split('/');
+      if (pathParts.length !== routeParts.length) return false;
+
+      return routeParts.every((part, i) => part.startsWith(':') || part === pathParts[i]);
+    });
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
     await handler(req, res);

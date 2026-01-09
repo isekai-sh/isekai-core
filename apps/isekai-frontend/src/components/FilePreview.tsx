@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { X, GripVertical, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { X, GripVertical, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FileWithPreview {
   id: string;
@@ -34,23 +34,17 @@ interface FilePreviewProps {
   isDragging?: boolean;
 }
 
-export function FilePreview({
-  fileData,
-  onRemove,
-  isDragging,
-}: FilePreviewProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: fileData.id,
-    });
+export function FilePreview({ fileData, onRemove, isDragging }: FilePreviewProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: fileData.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  const isUploading =
-    fileData.progress !== undefined && fileData.progress < 100;
+  const isUploading = fileData.progress !== undefined && fileData.progress < 100;
   const hasError = !!fileData.error;
 
   return (
@@ -58,8 +52,8 @@ export function FilePreview({
       ref={setNodeRef}
       style={style}
       className={`relative group rounded-lg border overflow-hidden ${
-        isDragging ? "opacity-50" : ""
-      } ${hasError ? "border-red-500" : "border-border"}`}
+        isDragging ? 'opacity-50' : ''
+      } ${hasError ? 'border-red-500' : 'border-border'}`}
     >
       {/* Image Preview */}
       <div className="aspect-square bg-muted">
@@ -92,9 +86,7 @@ export function FilePreview({
       {/* File Info */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
         <p className="text-xs text-white truncate">{fileData.file.name}</p>
-        <p className="text-xs text-white/70">
-          {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
-        </p>
+        <p className="text-xs text-white/70">{(fileData.file.size / 1024 / 1024).toFixed(2)} MB</p>
       </div>
 
       {/* Upload Progress */}

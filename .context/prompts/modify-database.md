@@ -96,7 +96,7 @@ pnpm --filter @isekai/shared build
 
 ```typescript
 // Export new model type
-export type { MyModel } from "@prisma/client";
+export type { MyModel } from '@prisma/client';
 
 // Export create/update types
 export interface CreateMyModelRequest {
@@ -124,6 +124,7 @@ Add model documentation:
 **Purpose:** Description of what this model represents.
 
 **Fields:**
+
 - `id` (String) - Unique identifier (CUID)
 - `name` (String) - Display name
 - `userId` (String) - Owner of the item
@@ -132,9 +133,11 @@ Add model documentation:
 - `updatedAt` (DateTime) - Last update timestamp
 
 **Relations:**
+
 - `user` - Belongs to User (cascade delete)
 
 **Indexes:**
+
 - `userId` - Query items by user
 - `createdAt` - Sort by creation date
 ```

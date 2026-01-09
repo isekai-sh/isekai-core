@@ -85,7 +85,7 @@ describe('storage-cleanup', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     capturedWorkerProcessor = null;
-    Object.keys(workerEventListeners).forEach(key => delete workerEventListeners[key]);
+    Object.keys(workerEventListeners).forEach((key) => delete workerEventListeners[key]);
     process.env.REDIS_URL = 'redis://localhost:6379';
 
     // Import the module to initialize everything
@@ -117,10 +117,9 @@ describe('storage-cleanup', () => {
       });
       expect(mockDeleteFromStorage).not.toHaveBeenCalled();
       expect(mockPrismaDeviationFileDeleteMany).not.toHaveBeenCalled();
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        'No files to clean up for published deviation',
-        { deviationId: 'dev-123' }
-      );
+      expect(mockLoggerInfo).toHaveBeenCalledWith('No files to clean up for published deviation', {
+        deviationId: 'dev-123',
+      });
     });
 
     it('should successfully clean up files', async () => {
@@ -166,14 +165,11 @@ describe('storage-cleanup', () => {
       expect(mockPrismaDeviationFileDeleteMany).toHaveBeenCalledWith({
         where: { deviationId: 'dev-123' },
       });
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        'Storage cleanup completed successfully',
-        {
-          deviationId: 'dev-123',
-          filesDeleted: 2,
-          bytesFreed: 3072,
-        }
-      );
+      expect(mockLoggerInfo).toHaveBeenCalledWith('Storage cleanup completed successfully', {
+        deviationId: 'dev-123',
+        filesDeleted: 2,
+        bytesFreed: 3072,
+      });
     });
 
     it('should throw error when file deletion fails', async () => {

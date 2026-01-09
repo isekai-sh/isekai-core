@@ -15,16 +15,16 @@
 
 ### Model Categories
 
-| Category | Models | Purpose |
-|----------|--------|---------|
-| **Core** | User, Deviation, DeviationFile | User accounts and content |
-| **Automation** | Automation, AutomationScheduleRule, AutomationDefaultValue, AutomationExecutionLog | Workflow scheduling |
-| **Sales** | PricePreset, SaleQueue | Exclusive content pricing |
-| **Caching** | GalleryCache, BrowseCache | API response caching |
-| **Notes** | NoteFolder, NoteLabel, NoteFolderLabel, NoteTemplate | DeviantArt notes management |
-| **Templates** | Template | Reusable metadata templates |
-| **Auth** | ApiKey, AdminRole | Authentication & authorization |
-| **SaaS** | InstanceUser, InstanceSettings | Multi-tenant support (v0.1.0-alpha.3+) |
+| Category       | Models                                                                             | Purpose                                |
+| -------------- | ---------------------------------------------------------------------------------- | -------------------------------------- |
+| **Core**       | User, Deviation, DeviationFile                                                     | User accounts and content              |
+| **Automation** | Automation, AutomationScheduleRule, AutomationDefaultValue, AutomationExecutionLog | Workflow scheduling                    |
+| **Sales**      | PricePreset, SaleQueue                                                             | Exclusive content pricing              |
+| **Caching**    | GalleryCache, BrowseCache                                                          | API response caching                   |
+| **Notes**      | NoteFolder, NoteLabel, NoteFolderLabel, NoteTemplate                               | DeviantArt notes management            |
+| **Templates**  | Template                                                                           | Reusable metadata templates            |
+| **Auth**       | ApiKey, AdminRole                                                                  | Authentication & authorization         |
+| **SaaS**       | InstanceUser, InstanceSettings                                                     | Multi-tenant support (v0.1.0-alpha.3+) |
 
 ---
 
@@ -47,6 +47,7 @@ enum DeviationStatus {
 ```
 
 **Transitions:**
+
 ```
 review → draft → scheduled → uploading → publishing → published
                                            ↓
@@ -165,10 +166,12 @@ model User {
 ```
 
 **Indexes:**
+
 - Primary: `id`
 - Unique: `deviantartId`
 
 **Security Notes:**
+
 - `accessToken` and `refreshToken` stored encrypted (AES-256-GCM)
 - `refreshTokenExpiresAt` tracked for proactive renewal (90-day expiry)
 
@@ -240,6 +243,7 @@ model Deviation {
 ```
 
 **Indexes (Performance-Critical):**
+
 ```prisma
 @@index([userId, status])                // User's drafts/scheduled
 @@index([status, actualPublishAt])       // Past-due recovery
@@ -275,9 +279,11 @@ model DeviationFile {
 ```
 
 **Storage Key Format (v0.1.0-alpha.3+):**
+
 ```
 {S3_PATH_PREFIX}/deviations/{deviationId}/{filename}
 ```
+
 Multi-tenant prefix isolates files per instance.
 
 ---
@@ -331,6 +337,7 @@ model Automation {
 ```
 
 **Indexes:**
+
 ```prisma
 @@index([userId, enabled])      // Find active automations
 @@index([userId, sortOrder])    // User-ordered display
@@ -372,6 +379,7 @@ model AutomationScheduleRule {
 ```
 
 **Example Rules:**
+
 ```json
 // Post Mon-Fri at 2pm
 { "type": "fixed_time", "timeOfDay": "14:00", "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"] }
@@ -405,6 +413,7 @@ model AutomationDefaultValue {
 ```
 
 **Example Values:**
+
 ```json
 // Tags
 { "fieldName": "tags", "value": ["digital art", "exclusive", "premium"] }
@@ -469,6 +478,7 @@ model PricePreset {
 ```
 
 **Price Logic:**
+
 - If `minPrice` and `maxPrice` set: Random between range
 - Otherwise: Use fixed `price`
 
@@ -507,6 +517,7 @@ model SaleQueue {
 ```
 
 **Indexes:**
+
 ```prisma
 @@index([userId, status])
 @@index([status, createdAt])
@@ -670,6 +681,7 @@ User (1)
 **Location:** `packages/shared/prisma/schema.prisma`
 
 **Commands:**
+
 ```bash
 # Generate migration
 pnpm --filter @isekai/shared db:generate
@@ -682,6 +694,7 @@ pnpm --filter @isekai/shared build
 ```
 
 **Best Practices:**
+
 - Never edit existing migrations
 - Always review generated SQL
 - Test on database copy first

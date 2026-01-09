@@ -63,9 +63,11 @@ export class RedisClientManager {
           const delay = Math.min(times * 100, 3000);
           return delay;
         },
-        tls: redisUrl.startsWith('rediss://') ? {
-          rejectUnauthorized: false, // Accept self-signed certificates
-        } : undefined,
+        tls: redisUrl.startsWith('rediss://')
+          ? {
+              rejectUnauthorized: false, // Accept self-signed certificates
+            }
+          : undefined,
       });
 
       // Attempt connection with timeout
@@ -102,7 +104,6 @@ export class RedisClientManager {
       // Store instance
       this.instance = client;
       return client;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.warn(`[Redis] Failed to connect to Redis: ${errorMessage}`);

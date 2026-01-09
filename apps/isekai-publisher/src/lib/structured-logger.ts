@@ -102,15 +102,17 @@ export class StructuredLogger {
    * Log error message with optional error object
    */
   error(message: string, error?: any, context?: Record<string, any>): void {
-    const errorContext = error ? {
-      ...context,
-      error: {
-        message: error.message || 'Unknown error',
-        stack: error.stack,
-        code: error.code,
-        status: error.status || error.statusCode,
-      },
-    } : context;
+    const errorContext = error
+      ? {
+          ...context,
+          error: {
+            message: error.message || 'Unknown error',
+            stack: error.stack,
+            code: error.code,
+            status: error.status || error.statusCode,
+          },
+        }
+      : context;
 
     this.log(LogLevel.ERROR, message, errorContext);
   }
@@ -242,7 +244,7 @@ export class StructuredLogger {
       'session',
     ];
 
-    return sensitive.some(s => fieldName.toLowerCase().includes(s));
+    return sensitive.some((s) => fieldName.toLowerCase().includes(s));
   }
 
   /**
@@ -311,9 +313,9 @@ export function createLogger(context?: Partial<LogContext>): StructuredLogger {
  */
 export function legacyLog(prefix: string, ...args: any[]): void {
   const logger = new StructuredLogger();
-  const message = args.map(arg =>
-    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-  ).join(' ');
+  const message = args
+    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+    .join(' ');
 
   logger.info(`[${prefix}] ${message}`);
 }

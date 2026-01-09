@@ -62,7 +62,10 @@ export function createWorkerMock<T = any>(): Partial<Worker<T>> {
 /**
  * Create a mock BullMQ Job
  */
-export function createJobMock<T = any>(data: T, opts?: { id?: string; attemptsMade?: number }): Partial<Job<T>> {
+export function createJobMock<T = any>(
+  data: T,
+  opts?: { id?: string; attemptsMade?: number }
+): Partial<Job<T>> {
   return {
     id: opts?.id || 'mock-job-id',
     data,

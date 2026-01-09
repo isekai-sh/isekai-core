@@ -15,33 +15,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useRef, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useRef, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { LayoutGrid, List, Loader2 } from "lucide-react";
-import { ReviewGridItem } from "./ReviewGridItem";
-import type { Deviation } from "@isekai/shared";
+} from '@/components/ui/select';
+import { LayoutGrid, List, Loader2 } from 'lucide-react';
+import { ReviewGridItem } from './ReviewGridItem';
+import type { Deviation } from '@isekai/shared';
 
 interface ReviewGridPanelProps {
   className?: string;
   deviations: Deviation[];
   selectedIds: Set<string>;
   focusedId: string | null;
-  viewMode: "grid" | "list";
+  viewMode: 'grid' | 'list';
   sortBy: string;
   filterBy: string;
   totalCount: number;
   onToggleSelect: (id: string) => void;
   onFocus: (id: string) => void;
-  onViewModeChange: (mode: "grid" | "list") => void;
+  onViewModeChange: (mode: 'grid' | 'list') => void;
   onSortChange: (sort: string) => void;
   onFilterChange: (filter: string) => void;
   onSelectAll: () => void;
@@ -71,7 +71,7 @@ export function ReviewGridPanel({
   hasMore,
   isLoadingMore,
 }: ReviewGridPanelProps) {
-  const gridClasses = viewMode === "grid" ? "grid-cols-3" : "grid-cols-1";
+  const gridClasses = viewMode === 'grid' ? 'grid-cols-3' : 'grid-cols-1';
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Infinite scroll detection
@@ -82,36 +82,32 @@ export function ReviewGridPanel({
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
       // Load more when scrolled to within 200px of bottom
-      if (
-        scrollHeight - scrollTop - clientHeight < 200 &&
-        hasMore &&
-        !isLoadingMore
-      ) {
+      if (scrollHeight - scrollTop - clientHeight < 200 && hasMore && !isLoadingMore) {
         onLoadMore();
       }
     };
 
-    scrollContainer.addEventListener("scroll", handleScroll);
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [hasMore, isLoadingMore, onLoadMore]);
 
   return (
-    <Card className={cn("w-[30%] flex flex-col min-h-0 rounded-lg", className)}>
+    <Card className={cn('w-[30%] flex flex-col min-h-0 rounded-lg', className)}>
       <CardContent className="p-3 flex flex-col h-full min-h-0">
         {/* Controls bar - single row */}
         <div className="flex gap-1 mb-3 flex-shrink-0 w-full">
           <Button
-            variant={viewMode === "list" ? "default" : "outline"}
+            variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onViewModeChange("list")}
+            onClick={() => onViewModeChange('list')}
             className="h-8 w-8 p-0 shrink-0"
           >
             <List className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onViewModeChange("grid")}
+            onClick={() => onViewModeChange('grid')}
             className="h-8 w-8 p-0 shrink-0"
           >
             <LayoutGrid className="h-4 w-4" />
@@ -139,10 +135,7 @@ export function ReviewGridPanel({
         </div>
 
         {/* Scrollable grid */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           {deviations.length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
               No items match the current filter
@@ -174,7 +167,7 @@ export function ReviewGridPanel({
         {/* Footer with total count */}
         <div className="pt-3 mt-auto border-t border-border/50 text-center">
           <span className="text-xs text-muted-foreground">
-            {totalCount} {totalCount === 1 ? "item" : "items"} to review
+            {totalCount} {totalCount === 1 ? 'item' : 'items'} to review
           </span>
         </div>
       </CardContent>

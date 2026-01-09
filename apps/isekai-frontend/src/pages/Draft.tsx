@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Upload,
   FileImage,
@@ -28,27 +28,17 @@ import {
   AlignLeft,
   Check,
   Loader2,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,18 +48,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { deviations } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
-import { UploadModeDialog } from "@/components/UploadModeDialog";
-import { UploadDialog } from "@/components/UploadDialog";
-import { DraftTableRow } from "@/components/DraftTableRow";
-import { GallerySelector } from "@/components/GallerySelector";
-import {
-  TagTemplateSelector,
-  DescriptionTemplateSelector,
-} from "@/components/TemplateSelector";
-import type { Deviation } from "@isekai/shared";
+} from '@/components/ui/alert-dialog';
+import { deviations } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import { UploadModeDialog } from '@/components/UploadModeDialog';
+import { UploadDialog } from '@/components/UploadDialog';
+import { DraftTableRow } from '@/components/DraftTableRow';
+import { GallerySelector } from '@/components/GallerySelector';
+import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
+import type { Deviation } from '@isekai/shared';
 
 const PAGE_SIZE = 50;
 
@@ -78,30 +65,22 @@ export function Draft() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showModeDialog, setShowModeDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
+  const [uploadMode, setUploadMode] = useState<'single' | 'multiple'>('single');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkScheduleDate, setBulkScheduleDate] = useState<Date | undefined>(
-    undefined
-  );
+  const [bulkScheduleDate, setBulkScheduleDate] = useState<Date | undefined>(undefined);
   const [bulkGalleryIds, setBulkGalleryIds] = useState<string[]>([]);
   const [bulkTags, setBulkTags] = useState<string[]>([]);
-  const [bulkDescription, setBulkDescription] = useState<string>("");
+  const [bulkDescription, setBulkDescription] = useState<string>('');
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch drafts with infinite scroll
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["deviations", "draft"],
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['deviations', 'draft'],
     queryFn: async ({ pageParam = 1 }) => {
-      return await deviations.list({ status: "draft", page: pageParam, limit: PAGE_SIZE });
+      return await deviations.list({ status: 'draft', page: pageParam, limit: PAGE_SIZE });
     },
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * PAGE_SIZE;
@@ -127,7 +106,7 @@ export function Draft() {
 
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
-      rootMargin: "100px",
+      rootMargin: '100px',
       threshold: 0,
     });
 
@@ -138,34 +117,33 @@ export function Draft() {
   const deleteDeviation = useMutation({
     mutationFn: (deviationId: string) => deviations.delete(deviationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
-      toast({ title: "Deleted", description: "Draft deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
+      toast({ title: 'Deleted', description: 'Draft deleted successfully' });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete draft",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to delete draft',
+        variant: 'destructive',
       });
     },
   });
 
   const batchDeleteMutation = useMutation({
-    mutationFn: (deviationIds: string[]) =>
-      deviations.batchDelete(deviationIds),
+    mutationFn: (deviationIds: string[]) => deviations.batchDelete(deviationIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations'] });
       setSelectedIds(new Set());
       toast({
-        title: "Deleted",
-        description: "Selected drafts deleted successfully",
+        title: 'Deleted',
+        description: 'Selected drafts deleted successfully',
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete drafts",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to delete drafts',
+        variant: 'destructive',
       });
     },
   });
@@ -178,7 +156,7 @@ export function Draft() {
       deviationIds: string[];
       scheduledAt: string;
     }) => {
-      console.log("batchUpdateScheduleDateMutation executing:", {
+      console.log('batchUpdateScheduleDateMutation executing:', {
         deviationIds,
         scheduledAt,
       });
@@ -186,18 +164,18 @@ export function Draft() {
       const results = await Promise.all(
         deviationIds.map((id) => deviations.update(id, { scheduledAt }))
       );
-      console.log("batchUpdateScheduleDateMutation results:", results);
+      console.log('batchUpdateScheduleDateMutation results:', results);
       return { deviationIds, scheduledAt, results };
     },
     onMutate: async ({ deviationIds, scheduledAt }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["deviations", "draft"] });
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(["deviations", "draft"]);
+      const previousData = queryClient.getQueryData(['deviations', 'draft']);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["deviations", "draft"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -212,7 +190,7 @@ export function Draft() {
     },
     onSuccess: (data) => {
       // Update cache with actual server responses
-      queryClient.setQueryData(["deviations", "draft"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -226,12 +204,12 @@ export function Draft() {
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "draft"], context.previousData);
+        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update schedule date",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to update schedule date',
+        variant: 'destructive',
       });
     },
   });
@@ -247,20 +225,20 @@ export function Draft() {
       return await deviations.batchSchedule(deviationIds, scheduledAt);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
-      queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
       setSelectedIds(new Set());
       setBulkScheduleDate(undefined);
       toast({
-        title: "Scheduled",
-        description: "Selected drafts scheduled successfully",
+        title: 'Scheduled',
+        description: 'Selected drafts scheduled successfully',
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule drafts",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to schedule drafts',
+        variant: 'destructive',
       });
     },
   });
@@ -273,19 +251,17 @@ export function Draft() {
       deviationIds: string[];
       galleryIds: string[];
     }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { galleryIds }))
-      );
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { galleryIds })));
     },
     onMutate: async ({ deviationIds, galleryIds }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["deviations", "draft"] });
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(["deviations", "draft"]);
+      const previousData = queryClient.getQueryData(['deviations', 'draft']);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["deviations", "draft"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -302,24 +278,24 @@ export function Draft() {
       setSelectedIds(new Set());
       setBulkGalleryIds([]);
       toast({
-        title: "Updated",
-        description: "Gallery folders assigned successfully",
+        title: 'Updated',
+        description: 'Gallery folders assigned successfully',
       });
     },
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "draft"], context.previousData);
+        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign gallery folders",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign gallery folders',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
     },
   });
 
@@ -331,19 +307,17 @@ export function Draft() {
       deviationIds: string[];
       description: string;
     }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { description }))
-      );
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { description })));
     },
     onMutate: async ({ deviationIds, description }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["deviations", "draft"] });
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(["deviations", "draft"]);
+      const previousData = queryClient.getQueryData(['deviations', 'draft']);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["deviations", "draft"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -358,51 +332,43 @@ export function Draft() {
     },
     onSuccess: () => {
       setSelectedIds(new Set());
-      setBulkDescription("");
+      setBulkDescription('');
       setDescriptionOpen(false);
       toast({
-        title: "Updated",
-        description: "Description assigned successfully",
+        title: 'Updated',
+        description: 'Description assigned successfully',
       });
     },
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "draft"], context.previousData);
+        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign description",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign description',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
     },
   });
 
   const batchAssignTagsMutation = useMutation({
-    mutationFn: async ({
-      deviationIds,
-      tags,
-    }: {
-      deviationIds: string[];
-      tags: string[];
-    }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { tags }))
-      );
+    mutationFn: async ({ deviationIds, tags }: { deviationIds: string[]; tags: string[] }) => {
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { tags })));
     },
     onMutate: async ({ deviationIds, tags }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["deviations", "draft"] });
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(["deviations", "draft"]);
+      const previousData = queryClient.getQueryData(['deviations', 'draft']);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(["deviations", "draft"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -419,22 +385,22 @@ export function Draft() {
       setSelectedIds(new Set());
       setBulkTags([]);
       setTagsOpen(false);
-      toast({ title: "Updated", description: "Tags assigned successfully" });
+      toast({ title: 'Updated', description: 'Tags assigned successfully' });
     },
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "draft"], context.previousData);
+        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign tags",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign tags',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
     },
   });
 
@@ -443,9 +409,10 @@ export function Draft() {
 
   // Filter drafts based on search query
   const drafts = searchQuery
-    ? allDrafts.filter((d) =>
-        d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? allDrafts.filter(
+        (d) =>
+          d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : allDrafts;
 
@@ -530,7 +497,7 @@ export function Draft() {
     });
   };
 
-  const handleModeSelected = (mode: "single" | "multiple") => {
+  const handleModeSelected = (mode: 'single' | 'multiple') => {
     setUploadMode(mode);
     setShowModeDialog(false);
     setShowUploadDialog(true);
@@ -632,27 +599,19 @@ export function Draft() {
                         <Input
                           placeholder="Add tag and press Enter..."
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                            if (e.key === 'Enter') {
                               e.preventDefault();
                               addBulkTag(e.currentTarget.value);
-                              e.currentTarget.value = "";
+                              e.currentTarget.value = '';
                             }
                           }}
                         />
                         <div className="flex justify-between gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleBulkClearTags}
-                          >
+                          <Button variant="outline" size="sm" onClick={handleBulkClearTags}>
                             Clear Tags
                           </Button>
                           <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setTagsOpen(false)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => setTagsOpen(false)}>
                               Cancel
                             </Button>
                             <Button size="sm" onClick={handleBulkAssignTags}>
@@ -700,12 +659,7 @@ export function Draft() {
                     </PopoverContent>
                   </Popover>
                   <div className="h-4 w-px bg-border" />
-                  <Button
-                    onClick={handleBulkDelete}
-                    variant="outline"
-                    size="sm"
-                    className="h-8"
-                  >
+                  <Button onClick={handleBulkDelete} variant="outline" size="sm" className="h-8">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Selected
                   </Button>
@@ -737,9 +691,7 @@ export function Draft() {
               <div className="text-center text-muted-foreground">
                 <FileImage className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No drafts yet</p>
-                <p className="text-sm">
-                  Upload your first deviation to get started
-                </p>
+                <p className="text-sm">Upload your first deviation to get started</p>
               </div>
             </div>
           ) : (
@@ -749,10 +701,7 @@ export function Draft() {
                   <TableRow className="border-b border-border hover:bg-transparent">
                     <TableHead className="w-12 pl-4 bg-card text-center">
                       <Checkbox
-                        checked={
-                          selectedIds.size === drafts.length &&
-                          drafts.length > 0
-                        }
+                        checked={selectedIds.size === drafts.length && drafts.length > 0}
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
@@ -811,22 +760,17 @@ export function Draft() {
         onModeSelected={handleModeSelected}
       />
 
-      <UploadDialog
-        open={showUploadDialog}
-        onOpenChange={setShowUploadDialog}
-        mode={uploadMode}
-      />
+      <UploadDialog open={showUploadDialog} onOpenChange={setShowUploadDialog} mode={uploadMode} />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {selectedIds.size} draft{selectedIds.size > 1 ? "s" : ""}?
+              Delete {selectedIds.size} draft{selectedIds.size > 1 ? 's' : ''}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              selected draft{selectedIds.size > 1 ? "s" : ""} and remove the
-              associated files from storage.
+              This action cannot be undone. This will permanently delete the selected draft
+              {selectedIds.size > 1 ? 's' : ''} and remove the associated files from storage.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

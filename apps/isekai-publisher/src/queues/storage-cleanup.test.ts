@@ -137,8 +137,20 @@ describe('storage-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
-        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
+        {
+          id: 'file-1',
+          deviationId: 'dev-1',
+          storageKey: 'key-1',
+          originalFilename: 'file1.jpg',
+          fileSize: 1000,
+        },
+        {
+          id: 'file-2',
+          deviationId: 'dev-1',
+          storageKey: 'key-2',
+          originalFilename: 'file2.jpg',
+          fileSize: 2000,
+        },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -160,8 +172,14 @@ describe('storage-cleanup', () => {
         where: { deviationId: 'dev-1' },
       });
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Starting storage cleanup job', expect.any(Object));
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Storage cleanup completed successfully', expect.any(Object));
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        'Starting storage cleanup job',
+        expect.any(Object)
+      );
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        'Storage cleanup completed successfully',
+        expect.any(Object)
+      );
     });
 
     it('should handle case with no files to clean up', async () => {
@@ -182,10 +200,9 @@ describe('storage-cleanup', () => {
       expect(mockDelete).not.toHaveBeenCalled();
       expect(prisma.deviationFile.deleteMany).not.toHaveBeenCalled();
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
-        'No files to clean up for published deviation',
-        { deviationId: 'dev-1' }
-      );
+      expect(mockLoggerInfo).toHaveBeenCalledWith('No files to clean up for published deviation', {
+        deviationId: 'dev-1',
+      });
     });
 
     it('should throw error if file deletion fails', async () => {
@@ -195,7 +212,13 @@ describe('storage-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
+        {
+          id: 'file-1',
+          deviationId: 'dev-1',
+          storageKey: 'key-1',
+          originalFilename: 'file1.jpg',
+          fileSize: 1000,
+        },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -222,9 +245,27 @@ describe('storage-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 1000 },
-        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 2000 },
-        { id: 'file-3', deviationId: 'dev-1', storageKey: 'key-3', originalFilename: 'file3.jpg', fileSize: 3000 },
+        {
+          id: 'file-1',
+          deviationId: 'dev-1',
+          storageKey: 'key-1',
+          originalFilename: 'file1.jpg',
+          fileSize: 1000,
+        },
+        {
+          id: 'file-2',
+          deviationId: 'dev-1',
+          storageKey: 'key-2',
+          originalFilename: 'file2.jpg',
+          fileSize: 2000,
+        },
+        {
+          id: 'file-3',
+          deviationId: 'dev-1',
+          storageKey: 'key-3',
+          originalFilename: 'file3.jpg',
+          fileSize: 3000,
+        },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -267,8 +308,20 @@ describe('storage-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'file1.jpg', fileSize: 5000 },
-        { id: 'file-2', deviationId: 'dev-1', storageKey: 'key-2', originalFilename: 'file2.jpg', fileSize: 3000 },
+        {
+          id: 'file-1',
+          deviationId: 'dev-1',
+          storageKey: 'key-1',
+          originalFilename: 'file1.jpg',
+          fileSize: 5000,
+        },
+        {
+          id: 'file-2',
+          deviationId: 'dev-1',
+          storageKey: 'key-2',
+          originalFilename: 'file2.jpg',
+          fileSize: 3000,
+        },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -290,7 +343,13 @@ describe('storage-cleanup', () => {
       };
 
       const mockFiles = [
-        { id: 'file-1', deviationId: 'dev-1', storageKey: 'key-1', originalFilename: 'test.jpg', fileSize: 1000 },
+        {
+          id: 'file-1',
+          deviationId: 'dev-1',
+          storageKey: 'key-1',
+          originalFilename: 'test.jpg',
+          fileSize: 1000,
+        },
       ];
 
       prisma.deviationFile.findMany.mockResolvedValueOnce(mockFiles);
@@ -330,5 +389,4 @@ describe('storage-cleanup', () => {
       expect(call[2].jobId).toBe('storage-cleanup-dev-123');
     });
   });
-
 });

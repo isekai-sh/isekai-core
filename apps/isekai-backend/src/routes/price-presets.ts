@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const createPresetSchema = z
     price: z.number().int().min(100).max(1000000).optional(), // Fixed price ($1 to $10,000 in cents)
     minPrice: z.number().int().min(100).max(1000000).optional(), // Min for random range
     maxPrice: z.number().int().min(100).max(1000000).optional(), // Max for random range
-    currency: z.string().default("USD"),
+    currency: z.string().default('USD'),
     description: z.string().optional(),
     isDefault: z.boolean().optional().default(false),
     sortOrder: z.number().int().optional().default(0),
@@ -38,13 +38,11 @@ const createPresetSchema = z
     (data) => {
       // Must have either fixed price OR range, not both
       const hasFixed = data.price !== undefined;
-      const hasRange =
-        data.minPrice !== undefined && data.maxPrice !== undefined;
+      const hasRange = data.minPrice !== undefined && data.maxPrice !== undefined;
       return (hasFixed && !hasRange) || (!hasFixed && hasRange);
     },
     {
-      message:
-        "Must specify either fixed price or price range (minPrice and maxPrice), not both",
+      message: 'Must specify either fixed price or price range (minPrice and maxPrice), not both',
     }
   )
   .refine(
@@ -55,7 +53,7 @@ const createPresetSchema = z
       }
       return true;
     },
-    { message: "minPrice must be less than maxPrice" }
+    { message: 'minPrice must be less than maxPrice' }
   );
 
 const updatePresetSchema = z.object({
@@ -70,19 +68,19 @@ const updatePresetSchema = z.object({
 });
 
 // GET /api/price-presets - List all price presets for current user
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const user = req.user!;
 
   const presets = await prisma.pricePreset.findMany({
     where: { userId: user.id },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
   });
 
   res.json({ presets });
 });
 
 // GET /api/price-presets/:id - Get single preset
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -91,14 +89,14 @@ router.get("/:id", async (req, res) => {
   });
 
   if (!preset) {
-    throw new AppError(404, "Price preset not found");
+    throw new AppError(404, 'Price preset not found');
   }
 
   res.json(preset);
 });
 
 // POST /api/price-presets - Create new preset
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const user = req.user!;
   const data = createPresetSchema.parse(req.body);
 
@@ -128,7 +126,7 @@ router.post("/", async (req, res) => {
 });
 
 // PATCH /api/price-presets/:id - Update preset
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
   const data = updatePresetSchema.parse(req.body);
@@ -138,7 +136,7 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!existing) {
-    throw new AppError(404, "Price preset not found");
+    throw new AppError(404, 'Price preset not found');
   }
 
   // Handle default flag
@@ -158,7 +156,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // DELETE /api/price-presets/:id - Delete preset
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -168,14 +166,14 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!existing) {
-    throw new AppError(404, "Price preset not found");
+    throw new AppError(404, 'Price preset not found');
   }
 
   // Check if preset is in use by pending queue items
   const queueCount = await prisma.saleQueue.count({
     where: {
       pricePresetId: id,
-      status: { in: ["pending", "processing"] },
+      status: { in: ['pending', 'processing'] },
     },
   });
 

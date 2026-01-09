@@ -406,9 +406,7 @@ describe('circuit-breaker', () => {
       const status = CircuitBreaker.getStatus(key);
       expect(status?.state).toBe(CircuitState.CLOSED);
       expect(status?.failures).toBe(0);
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Circuit reset to CLOSED')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Circuit reset to CLOSED'));
     });
 
     it('should do nothing for non-existent circuit', () => {
@@ -442,9 +440,7 @@ describe('circuit-breaker', () => {
       CircuitBreaker.resetAll();
 
       expect(Object.keys(CircuitBreaker.getAllStatuses()).length).toBe(0);
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('All circuits reset')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('All circuits reset'));
     });
 
     it('should work when no circuits exist', () => {

@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FIELD_LABELS } from "@/components/DefaultValueEditor";
-import { Trash2 } from "lucide-react";
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FIELD_LABELS } from '@/components/DefaultValueEditor';
+import { Trash2 } from 'lucide-react';
 
 interface DefaultValue {
   id: string;
@@ -36,47 +36,39 @@ interface DefaultValuesListProps {
 
 function formatValue(fieldName: string, value: any): string {
   switch (fieldName) {
-    case "description":
-    case "categoryPath":
-      return value || "(empty)";
+    case 'description':
+    case 'categoryPath':
+      return value || '(empty)';
 
-    case "tags":
+    case 'tags':
+      return Array.isArray(value) && value.length > 0 ? value.join(', ') : '(no tags)';
+
+    case 'galleryIds':
       return Array.isArray(value) && value.length > 0
-        ? value.join(", ")
-        : "(no tags)";
+        ? `${value.length} ${value.length === 1 ? 'gallery' : 'galleries'} selected`
+        : '(no galleries)';
 
-    case "galleryIds":
-      return Array.isArray(value) && value.length > 0
-        ? `${value.length} ${
-            value.length === 1 ? "gallery" : "galleries"
-          } selected`
-        : "(no galleries)";
+    case 'isMature':
+    case 'allowComments':
+    case 'allowFreeDownload':
+    case 'isAiGenerated':
+    case 'noAi':
+      return value ? 'Yes' : 'No';
 
-    case "isMature":
-    case "allowComments":
-    case "allowFreeDownload":
-    case "isAiGenerated":
-    case "noAi":
-      return value ? "Yes" : "No";
-
-    case "matureLevel":
-      return value === "moderate" ? "Moderate" : "Strict";
+    case 'matureLevel':
+      return value === 'moderate' ? 'Moderate' : 'Strict';
 
     default:
       return String(value);
   }
 }
 
-export function DefaultValuesList({
-  values,
-  onDelete,
-  deletingId,
-}: DefaultValuesListProps) {
+export function DefaultValuesList({ values, onDelete, deletingId }: DefaultValuesListProps) {
   if (values.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No default values configured. Add a default value to automatically apply
-        settings to scheduled drafts.
+        No default values configured. Add a default value to automatically apply settings to
+        scheduled drafts.
       </p>
     );
   }
@@ -88,9 +80,7 @@ export function DefaultValuesList({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-1">
               <div className="flex items-center gap-2">
-                <h4 className="font-medium text-sm">
-                  {FIELD_LABELS[defaultValue.fieldName]}
-                </h4>
+                <h4 className="font-medium text-sm">{FIELD_LABELS[defaultValue.fieldName]}</h4>
                 {defaultValue.applyIfEmpty && (
                   <Badge variant="secondary" className="text-xs">
                     If empty
@@ -99,24 +89,23 @@ export function DefaultValuesList({
               </div>
 
               <div className="text-sm">
-                {defaultValue.fieldName === "description" && (
+                {defaultValue.fieldName === 'description' && (
                   <p className="whitespace-pre-wrap text-muted-foreground">
                     {formatValue(defaultValue.fieldName, defaultValue.value)}
                   </p>
                 )}
 
-                {defaultValue.fieldName === "tags" &&
-                  Array.isArray(defaultValue.value) && (
-                    <div className="flex flex-wrap gap-1">
-                      {defaultValue.value.map((tag) => (
-                        <Badge key={tag} variant="outline">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                {defaultValue.fieldName === 'tags' && Array.isArray(defaultValue.value) && (
+                  <div className="flex flex-wrap gap-1">
+                    {defaultValue.value.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
-                {!["description", "tags"].includes(defaultValue.fieldName) && (
+                {!['description', 'tags'].includes(defaultValue.fieldName) && (
                   <p className="text-muted-foreground">
                     {formatValue(defaultValue.fieldName, defaultValue.value)}
                   </p>

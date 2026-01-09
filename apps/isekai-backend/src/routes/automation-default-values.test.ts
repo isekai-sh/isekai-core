@@ -66,8 +66,8 @@ describe('automation-default-values routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (automationDefaultValuesRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -175,7 +175,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('description must be a string');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'description must be a string'
+      );
     });
   });
 
@@ -257,7 +259,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('Tags cannot be empty strings');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'Tags cannot be empty strings'
+      );
     });
 
     it('should reject tag exceeding 100 characters', async () => {
@@ -271,7 +275,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('Tags cannot exceed 100 characters');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'Tags cannot exceed 100 characters'
+      );
     });
 
     it('should reject duplicate tags', async () => {
@@ -353,7 +359,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('Gallery IDs cannot be empty strings');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'Gallery IDs cannot be empty strings'
+      );
     });
 
     it('should reject duplicate galleryIds', async () => {
@@ -367,7 +375,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('Duplicate gallery IDs detected');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'Duplicate gallery IDs detected'
+      );
     });
   });
 
@@ -407,7 +417,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('allowComments must be a boolean');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'allowComments must be a boolean'
+      );
     });
   });
 
@@ -513,7 +525,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('displayResolution must be a number');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'displayResolution must be a number'
+      );
     });
 
     it('should reject non-integer displayResolution', async () => {
@@ -527,7 +541,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('displayResolution must be an integer');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'displayResolution must be an integer'
+      );
     });
 
     it('should reject displayResolution below 0', async () => {
@@ -541,7 +557,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('displayResolution must be between 0 and 8');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'displayResolution must be between 0 and 8'
+      );
     });
 
     it('should reject displayResolution above 8', async () => {
@@ -555,7 +573,9 @@ describe('automation-default-values routes', () => {
       });
       const res = createMockResponse();
 
-      await expect(callRoute('POST', '/', req, res)).rejects.toThrow('displayResolution must be between 0 and 8');
+      await expect(callRoute('POST', '/', req, res)).rejects.toThrow(
+        'displayResolution must be between 0 and 8'
+      );
     });
   });
 
@@ -661,7 +681,9 @@ describe('automation-default-values routes', () => {
         automation: mockAutomation,
       });
 
-      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow('description must be a string');
+      await expect(callRoute('PATCH', '/:id', req, res)).rejects.toThrow(
+        'description must be a string'
+      );
     });
 
     it('should return 404 when default value not found', async () => {
@@ -726,7 +748,9 @@ describe('automation-default-values routes', () => {
 
       (prisma.automationDefaultValue.findUnique as any).mockResolvedValue(null);
 
-      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('Default value not found');
+      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow(
+        'Default value not found'
+      );
     });
 
     it('should return 404 when user does not own default value', async () => {
@@ -741,7 +765,9 @@ describe('automation-default-values routes', () => {
         automation: { ...mockAutomation, userId: 'different-user' },
       });
 
-      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow('Default value not found');
+      await expect(callRoute('DELETE', '/:id', req, res)).rejects.toThrow(
+        'Default value not found'
+      );
     });
   });
 });

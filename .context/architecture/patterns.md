@@ -12,6 +12,7 @@
 **Solution:** Dedicated worker microservice for job processing.
 
 **Implementation:**
+
 ```
 Backend API → BullMQ Queue (Redis) → Publisher Worker
                                             ↓
@@ -19,6 +20,7 @@ Backend API → BullMQ Queue (Redis) → Publisher Worker
 ```
 
 **Benefits:**
+
 - **Fault Isolation:** Publisher crashes don't affect API
 - **Independent Scaling:** Scale workers based on queue depth
 - **Resource Isolation:** CPU-intensive jobs don't block API threads
@@ -26,6 +28,7 @@ Backend API → BullMQ Queue (Redis) → Publisher Worker
 - **Graceful Shutdown:** 30-second drain period completes in-flight jobs
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/index.ts` - Worker lifecycle
 - `apps/isekai-publisher/src/queues/deviation-publisher.ts` - Main job processor
 
@@ -89,6 +92,7 @@ try {
 ```
 
 **Why `updateMany` instead of `update`:**
+
 - `updateMany` returns `{ count: number }` - can detect if lock acquisition failed
 - `update` throws error if row doesn't match - harder to distinguish "not found" from "already locked"
 
@@ -96,6 +100,7 @@ try {
 Stale locks (>1 hour old) are cleaned every 30 minutes by `lock-cleanup` job.
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/jobs/auto-scheduler.ts:150-200`
 - `apps/isekai-publisher/src/queues/deviation-publisher.ts:50-100`
 - `apps/isekai-publisher/src/jobs/lock-cleanup.ts`
@@ -111,6 +116,7 @@ Stale locks (>1 hour old) are cleaned every 30 minutes by `lock-cleanup` job.
 **Solution:** State machine that "opens" (blocks requests) after threshold failures, allowing service to recover.
 
 **States:**
+
 ```
 CLOSED (normal) ─┬─ 3 failures ──→ OPEN (reject all)
                  └─ success ─────→ CLOSED
@@ -128,8 +134,8 @@ CLOSED (normal) ─┬─ 3 failures ──→ OPEN (reject all)
 
 ```typescript
 enum CircuitState {
-  CLOSED = 'CLOSED',       // Normal operation
-  OPEN = 'OPEN',           // Too many failures, reject requests
+  CLOSED = 'CLOSED', // Normal operation
+  OPEN = 'OPEN', // Too many failures, reject requests
   HALF_OPEN = 'HALF_OPEN', // Testing recovery
 }
 
@@ -179,11 +185,13 @@ class CircuitBreaker {
 
 **Redis Persistence (v0.1.0+):**
 State persisted to Redis for survival across worker restarts:
+
 ```typescript
 await redis.set(`circuit:${key}`, JSON.stringify(state), 'EX', 600);
 ```
 
 **Configuration:**
+
 ```bash
 CIRCUIT_BREAKER_THRESHOLD=3            # Failures before opening
 CIRCUIT_BREAKER_OPEN_DURATION_MS=300000  # 5 minutes
@@ -253,16 +261,19 @@ class AdaptiveRateLimiter {
 
 **Retry-After Header Parsing:**
 Supports both formats:
+
 - `Retry-After: 120` (seconds)
 - `Retry-After: Wed, 21 Oct 2026 07:28:00 GMT` (HTTP-date)
 
 **Redis Coordination (v0.1.0-alpha.3+):**
 State stored in Redis for cross-worker coordination:
+
 ```typescript
 await redis.set(`rate-limit:${userId}`, JSON.stringify(state), 'EX', 3600);
 ```
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/lib/rate-limiter.ts`
 
 ---
@@ -346,6 +357,7 @@ async function cleanupStaleLocks() {
 ```
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/jobs/stuck-job-recovery.ts`
 - `apps/isekai-publisher/src/jobs/past-due-recovery.ts`
 - `apps/isekai-publisher/src/jobs/lock-cleanup.ts`
@@ -386,23 +398,20 @@ async function getGalleries(userId: string, forceRefresh = false) {
   // Cache miss or too old - fetch fresh
   const fresh = await deviantArtApi.getGalleries(userId);
 
-  await redis.set(
-    cacheKey,
-    JSON.stringify({ data: fresh, cachedAt: Date.now() }),
-    'EX',
-    STALE_TTL
-  );
+  await redis.set(cacheKey, JSON.stringify({ data: fresh, cachedAt: Date.now() }), 'EX', STALE_TTL);
 
   return fresh;
 }
 ```
 
 **TTL Configuration:**
+
 - **Fresh**: 5 minutes (return immediately)
 - **Stale**: 2 hours (return but revalidate)
 - **Expired**: > 2 hours (force fetch)
 
 **Database Cache Models (v0.1.0-alpha.1+):**
+
 - `GalleryCache` - Persistent cache with TTL
 - `BrowseCache` - Browse results cache
 
@@ -419,7 +428,11 @@ async function getGalleries(userId: string, forceRefresh = false) {
 ```typescript
 interface StorageService {
   upload(file: Buffer, key: string, contentType: string): Promise<void>;
-  getPresignedUrl(key: string, operation: 'getObject' | 'putObject', expiresIn?: number): Promise<string>;
+  getPresignedUrl(
+    key: string,
+    operation: 'getObject' | 'putObject',
+    expiresIn?: number
+  ): Promise<string>;
   delete(key: string): Promise<void>;
   deleteMany(keys: string[]): Promise<void>;
 }
@@ -458,6 +471,7 @@ class StorageService {
 ```
 
 **Key Files:**
+
 - `apps/isekai-backend/src/lib/storage.ts`
 - `apps/isekai-publisher/src/lib/storage.ts`
 
@@ -494,11 +508,13 @@ export async function createSessionStore() {
 ```
 
 **Benefits:**
+
 - Production: Use Redis for performance
 - Development: No Redis requirement
 - Fallback: Automatic if Redis fails
 
 **Key Files:**
+
 - `apps/isekai-backend/src/lib/session-store.ts`
 
 ---
@@ -527,11 +543,13 @@ if (!deviation.postCountIncremented) {
 ```
 
 **Why Important:**
+
 - BullMQ retries jobs on failure (up to 7 attempts)
 - Without guard, user's postCount increments 7 times
 - Breaks analytics and metrics
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/queues/deviation-publisher.ts:200`
 
 ---
@@ -575,10 +593,11 @@ process.on('SIGTERM', async () => {
 ```
 
 **Container Health Checks:**
+
 ```yaml
 # docker-compose.yml
 healthcheck:
-  test: ["CMD", "wget", "--spider", "http://localhost:8000/health"]
+  test: ['CMD', 'wget', '--spider', 'http://localhost:8000/health']
   interval: 30s
   timeout: 10s
   retries: 3
@@ -586,6 +605,7 @@ healthcheck:
 ```
 
 **Key Files:**
+
 - `apps/isekai-publisher/src/index.ts:130-160`
 
 ---

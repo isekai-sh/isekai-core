@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Request, Response, NextFunction } from "express";
-import { prisma } from "../db/index.js";
-import { hashApiKey, isValidApiKeyFormat } from "../lib/api-key-utils.js";
+import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../db/index.js';
+import { hashApiKey, isValidApiKeyFormat } from '../lib/api-key-utils.js';
 
 // Extend Express Request type for API key auth
 declare global {
@@ -32,18 +32,14 @@ declare global {
   }
 }
 
-export async function apiKeyAuthMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function apiKeyAuthMiddleware(req: Request, res: Response, next: NextFunction) {
   // Extract Bearer token from Authorization header
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
-      error: "Unauthorized",
-      message: "API key required. Use: Authorization: Bearer isk_...",
+      error: 'Unauthorized',
+      message: 'API key required. Use: Authorization: Bearer isk_...',
     });
   }
 
@@ -52,8 +48,8 @@ export async function apiKeyAuthMiddleware(
   // Validate format
   if (!isValidApiKeyFormat(apiKey)) {
     return res.status(401).json({
-      error: "Unauthorized",
-      message: "Invalid API key format",
+      error: 'Unauthorized',
+      message: 'Invalid API key format',
     });
   }
 
@@ -73,8 +69,8 @@ export async function apiKeyAuthMiddleware(
 
     if (!apiKeyRecord || !apiKeyRecord.user) {
       return res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid or revoked API key",
+        error: 'Unauthorized',
+        message: 'Invalid or revoked API key',
       });
     }
 
@@ -84,7 +80,7 @@ export async function apiKeyAuthMiddleware(
         where: { id: apiKeyRecord.id },
         data: { lastUsedAt: new Date() },
       })
-      .catch((err) => console.error("Failed to update lastUsedAt:", err));
+      .catch((err) => console.error('Failed to update lastUsedAt:', err));
 
     // Attach user to request (same as session auth)
     req.user = apiKeyRecord.user;
@@ -95,7 +91,7 @@ export async function apiKeyAuthMiddleware(
 
     next();
   } catch (error) {
-    console.error("API key auth error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('API key auth error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

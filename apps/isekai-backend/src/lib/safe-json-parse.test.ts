@@ -24,10 +24,7 @@ describe('safeJsonParse', () => {
         name: string;
         age: number;
       }
-      const result = safeJsonParse<User>(
-        '{"name": "Alice", "age": 30}',
-        { name: '', age: 0 }
-      );
+      const result = safeJsonParse<User>('{"name": "Alice", "age": 30}', { name: '', age: 0 });
       expect(result.name).toBe('Alice');
       expect(result.age).toBe(30);
     });

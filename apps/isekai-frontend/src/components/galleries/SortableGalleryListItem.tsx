@@ -15,28 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GalleryListItem } from "./GalleryListItem";
-import type { DeviantArtGalleryFolder } from "@isekai/shared";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GalleryListItem } from './GalleryListItem';
+import type { DeviantArtGalleryFolder } from '@isekai/shared';
 
 interface SortableGalleryListItemProps {
   gallery: DeviantArtGalleryFolder;
   disabled?: boolean;
 }
 
-export function SortableGalleryListItem({
-  gallery,
-  disabled,
-}: SortableGalleryListItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+export function SortableGalleryListItem({ gallery, disabled }: SortableGalleryListItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: gallery.folderid,
     disabled,
   });
@@ -45,7 +35,7 @@ export function SortableGalleryListItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? "grabbing" : "grab",
+    cursor: isDragging ? 'grabbing' : 'grab',
   };
 
   return (

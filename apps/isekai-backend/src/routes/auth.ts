@@ -15,61 +15,59 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { prisma } from "../db/index.js";
-import { authMiddleware } from "../middleware/auth.js";
-import { logger } from "../lib/logger.js";
-import { env } from "../lib/env.js";
+import { Router } from 'express';
+import { prisma } from '../db/index.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { logger } from '../lib/logger.js';
+import { env } from '../lib/env.js';
 
 const router = Router();
 
-const DEVIANTART_AUTH_URL = "https://www.deviantart.com/oauth2/authorize";
-const DEVIANTART_TOKEN_URL = "https://www.deviantart.com/oauth2/token";
-const DEVIANTART_API_URL = "https://www.deviantart.com/api/v1/oauth2";
+const DEVIANTART_AUTH_URL = 'https://www.deviantart.com/oauth2/authorize';
+const DEVIANTART_TOKEN_URL = 'https://www.deviantart.com/oauth2/token';
+const DEVIANTART_API_URL = 'https://www.deviantart.com/api/v1/oauth2';
 
 // Redirect to DeviantArt OAuth
-router.get("/deviantart", (req, res) => {
-  logger.debug("OAuth redirect initiated", {
+router.get('/deviantart', (req, res) => {
+  logger.debug('OAuth redirect initiated', {
     clientId: process.env.DEVIANTART_CLIENT_ID,
     redirectUri: process.env.DEVIANTART_REDIRECT_URI,
   });
 
   const params = new URLSearchParams({
-    response_type: "code",
+    response_type: 'code',
     client_id: process.env.DEVIANTART_CLIENT_ID!,
     redirect_uri: process.env.DEVIANTART_REDIRECT_URI!,
-    scope: "user browse stash publish note message gallery",
+    scope: 'user browse stash publish note message gallery',
   });
 
   const authUrl = `${DEVIANTART_AUTH_URL}?${params}`;
-  logger.debug("Redirecting to DeviantArt OAuth", { authUrl });
+  logger.debug('Redirecting to DeviantArt OAuth', { authUrl });
   res.redirect(authUrl);
 });
 
 // OAuth callback
-router.get("/deviantart/callback", async (req, res) => {
-  logger.debug("OAuth callback received", { query: req.query });
+router.get('/deviantart/callback', async (req, res) => {
+  logger.debug('OAuth callback received', { query: req.query });
   const { code, error } = req.query;
 
   if (error) {
-    logger.error("OAuth error received from DeviantArt", { error });
+    logger.error('OAuth error received from DeviantArt', { error });
     return res.redirect(`${process.env.FRONTEND_URL}/callback?error=${error}`);
   }
 
-  if (!code || typeof code !== "string") {
-    logger.warn("OAuth callback missing authorization code");
-    return res.redirect(
-      `${process.env.FRONTEND_URL}/callback?error=missing_code`
-    );
+  if (!code || typeof code !== 'string') {
+    logger.warn('OAuth callback missing authorization code');
+    return res.redirect(`${process.env.FRONTEND_URL}/callback?error=missing_code`);
   }
 
   try {
     // Exchange code for tokens
     const tokenResponse = await fetch(DEVIANTART_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        grant_type: "authorization_code",
+        grant_type: 'authorization_code',
         client_id: process.env.DEVIANTART_CLIENT_ID!,
         client_secret: process.env.DEVIANTART_CLIENT_SECRET!,
         redirect_uri: process.env.DEVIANTART_REDIRECT_URI!,
@@ -78,7 +76,7 @@ router.get("/deviantart/callback", async (req, res) => {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error("Failed to exchange code for token");
+      throw new Error('Failed to exchange code for token');
     }
 
     const tokenData = await tokenResponse.json();
@@ -91,20 +89,20 @@ router.get("/deviantart/callback", async (req, res) => {
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
-      logger.error("DeviantArt user info fetch failed", {
+      logger.error('DeviantArt user info fetch failed', {
         status: userResponse.status,
         errorText,
       });
       if (
-        errorText.includes("api_threshold") ||
-        errorText.includes("rate limit") ||
+        errorText.includes('api_threshold') ||
+        errorText.includes('rate limit') ||
         userResponse.status === 429
       ) {
         throw new Error(
-          "DeviantArt API rate limit reached. Please wait a few minutes and try logging in again."
+          'DeviantArt API rate limit reached. Please wait a few minutes and try logging in again.'
         );
       }
-      throw new Error("Failed to fetch user info");
+      throw new Error('Failed to fetch user info');
     }
 
     const userData = await userResponse.json();
@@ -129,14 +127,12 @@ router.get("/deviantart/callback", async (req, res) => {
       if (env.MAX_DA_ACCOUNTS > 0) {
         const currentAccountCount = await prisma.user.count();
         if (currentAccountCount >= env.MAX_DA_ACCOUNTS) {
-          logger.warn("Account limit reached", {
+          logger.warn('Account limit reached', {
             limit: env.MAX_DA_ACCOUNTS,
             current: currentAccountCount,
             attemptedUser: userData.username,
           });
-          return res.redirect(
-            `${env.FRONTEND_URL}/callback?error=account_limit_reached`
-          );
+          return res.redirect(`${env.FRONTEND_URL}/callback?error=account_limit_reached`);
         }
       }
     }
@@ -145,7 +141,7 @@ router.get("/deviantart/callback", async (req, res) => {
     if (!existingInstanceUser) {
       const [instanceUserCount, instanceSettings] = await Promise.all([
         prisma.instanceUser.count(),
-        prisma.instanceSettings.findUnique({ where: { id: "singleton" } }),
+        prisma.instanceSettings.findUnique({ where: { id: 'singleton' } }),
       ]);
       const isFirstUser = instanceUserCount === 0;
 
@@ -154,12 +150,10 @@ router.get("/deviantart/callback", async (req, res) => {
 
       // Only allow new users if team invites enabled or this is the first user
       if (!isFirstUser && !teamInvitesEnabled) {
-        logger.warn("Team invites disabled, rejecting new user", {
+        logger.warn('Team invites disabled, rejecting new user', {
           username: userData.username,
         });
-        return res.redirect(
-          `${env.FRONTEND_URL}/callback?error=team_invites_disabled`
-        );
+        return res.redirect(`${env.FRONTEND_URL}/callback?error=team_invites_disabled`);
       }
     }
 
@@ -218,13 +212,13 @@ router.get("/deviantart/callback", async (req, res) => {
           daUserId: userData.userid,
           daUsername: userData.username,
           daAvatar: userData.usericon,
-          role: isFirstUser ? "admin" : "member",
+          role: isFirstUser ? 'admin' : 'member',
           lastLoginAt: new Date(),
         },
       });
       instanceUserRole = newInstanceUser.role;
 
-      logger.info("New instance user created", {
+      logger.info('New instance user created', {
         username: userData.username,
         role: instanceUserRole,
         isFirstUser,
@@ -238,18 +232,16 @@ router.get("/deviantart/callback", async (req, res) => {
     // Save session before redirecting (critical for preventing race conditions)
     req.session.save((err) => {
       if (err) {
-        logger.error("Session save failed during OAuth callback", {
+        logger.error('Session save failed during OAuth callback', {
           error: err.message,
           stack: err.stack,
         });
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/callback?error=session_failed`
-        );
+        return res.redirect(`${process.env.FRONTEND_URL}/callback?error=session_failed`);
       }
       res.redirect(`${process.env.FRONTEND_URL}/callback`);
     });
   } catch (error) {
-    logger.error("OAuth callback error", {
+    logger.error('OAuth callback error', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -258,12 +250,11 @@ router.get("/deviantart/callback", async (req, res) => {
 });
 
 // Get current user
-router.get("/me", authMiddleware, async (req, res) => {
+router.get('/me', authMiddleware, async (req, res) => {
   const user = req.user!;
   const now = new Date();
   const daysUntilTokenExpiry = Math.floor(
-    (user.refreshTokenExpiresAt.getTime() - now.getTime()) /
-      (1000 * 60 * 60 * 24)
+    (user.refreshTokenExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   );
 
   // Get instance user role
@@ -279,8 +270,8 @@ router.get("/me", authMiddleware, async (req, res) => {
     email: user.email,
     createdAt: user.createdAt.toISOString(),
     // Instance role
-    instanceRole: instanceUser?.role || "member",
-    isAdmin: instanceUser?.role === "admin",
+    instanceRole: instanceUser?.role || 'member',
+    isAdmin: instanceUser?.role === 'admin',
     // Token status
     tokenStatus: {
       isValid: user.refreshTokenExpiresAt > now,
@@ -292,12 +283,11 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // Get token status
-router.get("/token-status", authMiddleware, (req, res) => {
+router.get('/token-status', authMiddleware, (req, res) => {
   const user = req.user!;
   const now = new Date();
   const daysUntilExpiry = Math.floor(
-    (user.refreshTokenExpiresAt.getTime() - now.getTime()) /
-      (1000 * 60 * 60 * 24)
+    (user.refreshTokenExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   );
 
   const isValid = user.refreshTokenExpiresAt > now;
@@ -314,13 +304,13 @@ router.get("/token-status", authMiddleware, (req, res) => {
 });
 
 // Trigger manual re-authentication
-router.post("/reauth", authMiddleware, (req, res) => {
+router.post('/reauth', authMiddleware, (req, res) => {
   // Return the OAuth URL for re-authentication
   const params = new URLSearchParams({
-    response_type: "code",
+    response_type: 'code',
     client_id: process.env.DEVIANTART_CLIENT_ID!,
     redirect_uri: process.env.DEVIANTART_REDIRECT_URI!,
-    scope: "user browse stash publish note message gallery",
+    scope: 'user browse stash publish note message gallery',
   });
 
   res.json({
@@ -329,15 +319,15 @@ router.post("/reauth", authMiddleware, (req, res) => {
 });
 
 // Logout
-router.post("/logout", (req, res) => {
+router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      logger.error("Session destroy failed during logout", {
+      logger.error('Session destroy failed during logout', {
         error: err.message,
         stack: err.stack,
       });
     }
-    res.clearCookie("connect.sid");
+    res.clearCookie('connect.sid');
     res.json({ success: true });
   });
 });

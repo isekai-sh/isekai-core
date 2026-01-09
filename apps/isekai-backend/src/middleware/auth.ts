@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Request, Response, NextFunction } from "express";
-import { prisma } from "../db/index.js";
-import type { User } from "../db/index.js";
+import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../db/index.js';
+import type { User } from '../db/index.js';
 
-declare module "express-session" {
+declare module 'express-session' {
   interface SessionData {
     userId?: string;
     instanceUserRole?: string;
@@ -35,17 +35,11 @@ declare global {
   }
 }
 
-export async function authMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userId = req.session.userId;
 
   if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "Unauthorized", message: "Please log in" });
+    return res.status(401).json({ error: 'Unauthorized', message: 'Please log in' });
   }
 
   try {
@@ -55,16 +49,14 @@ export async function authMiddleware(
 
     if (!user) {
       req.session.destroy(() => {});
-      return res
-        .status(401)
-        .json({ error: "Unauthorized", message: "User not found" });
+      return res.status(401).json({ error: 'Unauthorized', message: 'User not found' });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 
@@ -72,21 +64,17 @@ export async function authMiddleware(
  * Middleware that requires admin role.
  * Must be used after authMiddleware.
  */
-export async function requireAdmin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   // First check session for cached role
-  if (req.session.instanceUserRole === "admin") {
+  if (req.session.instanceUserRole === 'admin') {
     return next();
   }
 
   // Fallback: check database (handles session migration)
   if (!req.user) {
     return res.status(401).json({
-      error: "Unauthorized",
-      message: "Authentication required",
+      error: 'Unauthorized',
+      message: 'Authentication required',
     });
   }
 
@@ -95,10 +83,10 @@ export async function requireAdmin(
       where: { daUserId: req.user.deviantartId },
     });
 
-    if (!instanceUser || instanceUser.role !== "admin") {
+    if (!instanceUser || instanceUser.role !== 'admin') {
       return res.status(403).json({
-        error: "Forbidden",
-        message: "Admin access required",
+        error: 'Forbidden',
+        message: 'Admin access required',
       });
     }
 
@@ -106,7 +94,7 @@ export async function requireAdmin(
     req.session.instanceUserRole = instanceUser.role;
     next();
   } catch (error) {
-    console.error("requireAdmin middleware error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('requireAdmin middleware error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

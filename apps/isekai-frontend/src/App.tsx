@@ -15,35 +15,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { useAuthStore } from "@/stores/auth";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import { useAuthStore } from '@/stores/auth';
 // Import whitelabel store to initialize on app load
-import "@/stores/whitelabel";
+import '@/stores/whitelabel';
 
 // Layouts
-import { ScrollableLayout } from "@/components/ScrollableLayout";
-import { FixedLayout } from "@/components/FixedLayout";
-import { AuthLayout } from "@/components/layouts/AuthLayout";
+import { ScrollableLayout } from '@/components/ScrollableLayout';
+import { FixedLayout } from '@/components/FixedLayout';
+import { AuthLayout } from '@/components/layouts/AuthLayout';
 
 // Pages
-import { Login } from "@/pages/Login";
-import { Callback } from "@/pages/Callback";
-import { Dashboard } from "@/pages/Dashboard";
-import { EditDeviation } from "@/pages/EditDeviation";
-import { Draft } from "@/pages/Draft";
-import { Scheduled } from "@/pages/Scheduled";
-import { Published } from "@/pages/Published";
-import { Templates } from "@/pages/Templates";
-import { Settings } from "@/pages/Settings";
-import { Inspiration } from "@/pages/Inspiration";
-import { Galleries } from "@/pages/Galleries";
-import { GalleryDetail } from "@/pages/GalleryDetail";
-import { ApiKeys } from "@/pages/ApiKeys";
-import { Review } from "@/pages/Review";
-import { AutomationList } from "@/pages/AutomationList";
-import { AutomationDetail } from "@/pages/AutomationDetail";
-import { ExclusivesQueue } from "@/pages/ExclusivesQueue";
+import { Login } from '@/pages/Login';
+import { Callback } from '@/pages/Callback';
+import { Dashboard } from '@/pages/Dashboard';
+import { EditDeviation } from '@/pages/EditDeviation';
+import { Draft } from '@/pages/Draft';
+import { Scheduled } from '@/pages/Scheduled';
+import { Published } from '@/pages/Published';
+import { Templates } from '@/pages/Templates';
+import { Settings } from '@/pages/Settings';
+import { Inspiration } from '@/pages/Inspiration';
+import { Galleries } from '@/pages/Galleries';
+import { GalleryDetail } from '@/pages/GalleryDetail';
+import { ApiKeys } from '@/pages/ApiKeys';
+import { Review } from '@/pages/Review';
+import { AutomationList } from '@/pages/AutomationList';
+import { AutomationDetail } from '@/pages/AutomationDetail';
+import { ExclusivesQueue } from '@/pages/ExclusivesQueue';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -106,8 +106,14 @@ function App() {
           <Route path="/templates" element={<Templates />} />
           {/* Legacy template routes redirect to new unified page */}
           <Route path="/templates/tags" element={<Navigate to="/templates?tab=tags" replace />} />
-          <Route path="/templates/descriptions" element={<Navigate to="/templates?tab=descriptions" replace />} />
-          <Route path="/templates/prices" element={<Navigate to="/templates?tab=prices" replace />} />
+          <Route
+            path="/templates/descriptions"
+            element={<Navigate to="/templates?tab=descriptions" replace />}
+          />
+          <Route
+            path="/templates/prices"
+            element={<Navigate to="/templates?tab=prices" replace />}
+          />
           {/* Other routes */}
           <Route path="/settings" element={<Settings />} />
           <Route path="/api-keys" element={<ApiKeys />} />

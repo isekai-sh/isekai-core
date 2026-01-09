@@ -74,73 +74,45 @@ describe('UploadDialog', () => {
   });
 
   it('should render dialog when open', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     expect(screen.getByText('Upload Files')).toBeInTheDocument();
   });
 
   it('should not render dialog when closed', () => {
-    render(
-      <UploadDialog
-        open={false}
-        onOpenChange={mockOnOpenChange}
-        mode="single"
-      />
-    );
+    render(<UploadDialog open={false} onOpenChange={mockOnOpenChange} mode="single" />);
 
     expect(screen.queryByText('Upload Files')).not.toBeInTheDocument();
   });
 
   it('should display dropzone when no files are uploading', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     expect(screen.getByText('Drag & drop files here')).toBeInTheDocument();
     expect(screen.getByText('or click to browse')).toBeInTheDocument();
   });
 
   it('should show correct description for single mode', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
-    expect(
-      screen.getByText('Drop your files here to start uploading')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Drop your files here to start uploading')).toBeInTheDocument();
   });
 
   it('should show correct description for multiple mode', () => {
-    render(
-      <UploadDialog
-        open={true}
-        onOpenChange={mockOnOpenChange}
-        mode="multiple"
-      />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="multiple" />);
 
-    expect(
-      screen.getByText('Drop your files here to start uploading')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Drop your files here to start uploading')).toBeInTheDocument();
   });
 
   it('should display supported file formats', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
-    expect(
-      screen.getByText(/Images .* and Videos .* up to 50MB/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Images .* and Videos .* up to 50MB/i)).toBeInTheDocument();
   });
 
   it('should call onOpenChange when dialog is closed', async () => {
     const user = userEvent.setup();
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Find and click the close button (usually an X icon)
     const closeButton = screen.getByRole('button', { name: /close/i });
@@ -156,18 +128,14 @@ describe('UploadDialog', () => {
       storageKey: 'test-key',
     } as any);
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Note: Actual file upload testing requires more complex setup
     // This test verifies the component structure
   });
 
   it('should display overall progress bar during upload', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Progress bar only appears during upload
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
@@ -183,74 +151,56 @@ describe('UploadDialog', () => {
       storageKey: 'test-key',
     } as any);
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Completion state is tested through integration
   });
 
   it('should display file preview during upload', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // File previews appear only when files are being uploaded
     expect(screen.queryByAltText(/test/i)).not.toBeInTheDocument();
   });
 
   it('should show error message when upload fails', async () => {
-    vi.mocked(uploads.getPresignedUrl).mockRejectedValue(
-      new Error('Upload failed')
-    );
+    vi.mocked(uploads.getPresignedUrl).mockRejectedValue(new Error('Upload failed'));
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Error handling is verified through integration tests
   });
 
   it('should filter files by allowed extensions', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // File filtering happens in onDrop callback
     // This is tested through integration
   });
 
   it('should accept image files', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     const dropzone = screen.getByTestId('dropzone');
     expect(dropzone).toBeInTheDocument();
   });
 
   it('should accept video files', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     const dropzone = screen.getByTestId('dropzone');
     expect(dropzone).toBeInTheDocument();
   });
 
   it('should enforce 50MB file size limit', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Size limit is enforced by react-dropzone config
     expect(screen.getByText(/up to 50MB/i)).toBeInTheDocument();
   });
 
   it('should show "Done" button when upload is complete', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Done button appears only after successful upload
     expect(screen.queryByText('Done')).not.toBeInTheDocument();
@@ -261,9 +211,7 @@ describe('UploadDialog', () => {
 
     vi.mocked(deviations.create).mockResolvedValue(mockDeviation as any);
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Single draft creation is tested through integration
   });
@@ -273,21 +221,13 @@ describe('UploadDialog', () => {
 
     vi.mocked(deviations.create).mockResolvedValue(mockDeviation as any);
 
-    render(
-      <UploadDialog
-        open={true}
-        onOpenChange={mockOnOpenChange}
-        mode="multiple"
-      />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="multiple" />);
 
     // Multiple draft creation is tested through integration
   });
 
   it('should show upload count during progress', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Upload count appears during active upload
     expect(screen.queryByText(/of .* files uploaded/i)).not.toBeInTheDocument();
@@ -298,9 +238,7 @@ describe('UploadDialog', () => {
 
     vi.mocked(deviations.create).mockResolvedValue(mockDeviation as any);
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Auto-close behavior is tested through integration
   });
@@ -310,34 +248,26 @@ describe('UploadDialog', () => {
 
     vi.mocked(deviations.create).mockResolvedValue(mockDeviation as any);
 
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Query invalidation is handled by React Query
   });
 
   it('should display uploading state in title', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Title changes based on upload state
     expect(screen.getByText('Upload Files')).toBeInTheDocument();
   });
 
   it('should show check icon for completed files', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Check icons appear only for completed files
   });
 
   it('should show error icon for failed files', () => {
-    render(
-      <UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />
-    );
+    render(<UploadDialog open={true} onOpenChange={mockOnOpenChange} mode="single" />);
 
     // Error icons appear only for failed files
   });

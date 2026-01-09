@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 
 export class AppError extends Error {
   constructor(
@@ -24,17 +24,12 @@ export class AppError extends Error {
     public upgradeRequired?: boolean
   ) {
     super(message);
-    this.name = "AppError";
+    this.name = 'AppError';
   }
 }
 
-export function errorHandler(
-  err: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-) {
-  console.error("Error:", err);
+export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
+  console.error('Error:', err);
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
@@ -45,10 +40,7 @@ export function errorHandler(
   }
 
   return res.status(500).json({
-    error: "Internal Server Error",
-    message:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Something went wrong",
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
   });
 }

@@ -399,9 +399,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 rule(s) triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1 rule(s) triggered'));
     });
 
     it('should not trigger fixed_time rule when time is in future', async () => {
@@ -442,9 +440,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No rules triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No rules triggered'));
     });
 
     it('should not trigger fixed_time rule when time window has passed', async () => {
@@ -485,9 +481,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No rules triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No rules triggered'));
     });
 
     it('should respect daysOfWeek filter for fixed_time rule', async () => {
@@ -528,9 +522,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No rules triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No rules triggered'));
     });
   });
 
@@ -573,9 +565,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 rule(s) triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1 rule(s) triggered'));
     });
 
     it('should trigger fixed_interval rule when interval has elapsed', async () => {
@@ -621,9 +611,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 rule(s) triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1 rule(s) triggered'));
     });
 
     it('should not trigger fixed_interval rule when interval has not elapsed', async () => {
@@ -667,9 +655,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No rules triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No rules triggered'));
     });
   });
 
@@ -718,9 +704,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 rule(s) triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1 rule(s) triggered'));
     });
 
     it('should not trigger daily_quota rule when quota is met', async () => {
@@ -766,9 +750,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No rules triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No rules triggered'));
     });
 
     it('should handle null scheduledCount in aggregate', async () => {
@@ -815,9 +797,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 rule(s) triggered')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1 rule(s) triggered'));
     });
   });
 
@@ -1312,9 +1292,7 @@ describe('auto-scheduler', () => {
       await runAutoSchedulerManually();
 
       // When lock fails, selected array is empty, so we get "No drafts available"
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No drafts available')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No drafts available'));
     });
 
     it('should handle lock error gracefully', async () => {
@@ -1367,9 +1345,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to lock draft')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to lock draft'));
     });
   });
 
@@ -1414,9 +1390,7 @@ describe('auto-scheduler', () => {
       const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
       await runAutoSchedulerManually();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('No drafts available')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No drafts available'));
       expect(mockPrismaAutomationExecutionLogCreate).toHaveBeenCalledWith({
         data: {
           automationId: 'auto-1',

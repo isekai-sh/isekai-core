@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
-import type { TemplateType } from "../db/index.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
+import type { TemplateType } from '../db/index.js';
 
 const router = Router();
 
@@ -39,35 +39,27 @@ const commentContentSchema = z.object({
 });
 
 const createTemplateSchema = z.object({
-  type: z.enum(["tag", "description", "comment"]),
+  type: z.enum(['tag', 'description', 'comment']),
   name: z.string().min(1).max(100),
-  content: z.union([
-    tagContentSchema,
-    descriptionContentSchema,
-    commentContentSchema,
-  ]),
+  content: z.union([tagContentSchema, descriptionContentSchema, commentContentSchema]),
 });
 
 const updateTemplateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  content: z
-    .union([tagContentSchema, descriptionContentSchema, commentContentSchema])
-    .optional(),
+  content: z.union([tagContentSchema, descriptionContentSchema, commentContentSchema]).optional(),
 });
 
 // List templates
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const { type } = req.query;
   const userId = req.user!.id;
 
   const userTemplates = await prisma.template.findMany({
     where: {
       userId,
-      ...(type && typeof type === "string"
-        ? { type: type as TemplateType }
-        : {}),
+      ...(type && typeof type === 'string' ? { type: type as TemplateType } : {}),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 
   // Transform to match frontend types
@@ -81,7 +73,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get single template
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -90,7 +82,7 @@ router.get("/:id", async (req, res) => {
   });
 
   if (!template) {
-    throw new AppError(404, "Template not found");
+    throw new AppError(404, 'Template not found');
   }
 
   res.json({
@@ -101,7 +93,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Create template
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const userId = req.user!.id;
   const data = createTemplateSchema.parse(req.body);
 
@@ -122,7 +114,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update template
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -131,7 +123,7 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!template) {
-    throw new AppError(404, "Template not found");
+    throw new AppError(404, 'Template not found');
   }
 
   const data = updateTemplateSchema.parse(req.body);
@@ -153,7 +145,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete template
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -162,7 +154,7 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!template) {
-    throw new AppError(404, "Template not found");
+    throw new AppError(404, 'Template not found');
   }
 
   await prisma.template.delete({ where: { id } });

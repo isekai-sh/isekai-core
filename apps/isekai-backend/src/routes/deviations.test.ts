@@ -101,10 +101,10 @@ vi.mock('../queues/deviation-publisher.js', () => ({
 
 // Mock S3
 vi.mock('@aws-sdk/client-s3', () => ({
-  S3Client: vi.fn(function(this: any) {
+  S3Client: vi.fn(function (this: any) {
     this.send = vi.fn();
   }),
-  DeleteObjectCommand: vi.fn(function(this: any, params: any) {
+  DeleteObjectCommand: vi.fn(function (this: any, params: any) {
     Object.assign(this, params);
   }),
 }));
@@ -112,7 +112,12 @@ vi.mock('@aws-sdk/client-s3', () => ({
 import { deviationsRouter } from './deviations.js';
 import { prisma } from '../db/index.js';
 import { refreshTokenIfNeeded } from '../lib/deviantart.js';
-import { scheduleDeviation, publishDeviationNow, cancelScheduledDeviation, deviationPublisherQueue } from '../queues/deviation-publisher.js';
+import {
+  scheduleDeviation,
+  publishDeviationNow,
+  cancelScheduledDeviation,
+  deviationPublisherQueue,
+} from '../queues/deviation-publisher.js';
 
 const mockPrisma = vi.mocked(prisma);
 const mockRefreshTokenIfNeeded = vi.mocked(refreshTokenIfNeeded);
@@ -161,26 +166,22 @@ describe('Deviations Routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (deviationsRouter as any).stack;
-    const route = routes.find(
-      (r: any) => {
-        if (!r.route?.path) return false;
-        if (!r.route.methods?.[method.toLowerCase()]) return false;
+    const route = routes.find((r: any) => {
+      if (!r.route?.path) return false;
+      if (!r.route.methods?.[method.toLowerCase()]) return false;
 
-        // Exact match for non-param routes
-        if (!r.route.path.includes(':')) {
-          return r.route.path === path;
-        }
-
-        // Param match for routes like /:id
-        const pathParts = path.split('/');
-        const routeParts = r.route.path.split('/');
-        if (pathParts.length !== routeParts.length) return false;
-
-        return routeParts.every((part, i) =>
-          part.startsWith(':') || part === pathParts[i]
-        );
+      // Exact match for non-param routes
+      if (!r.route.path.includes(':')) {
+        return r.route.path === path;
       }
-    );
+
+      // Param match for routes like /:id
+      const pathParts = path.split('/');
+      const routeParts = r.route.path.split('/');
+      if (pathParts.length !== routeParts.length) return false;
+
+      return routeParts.every((part, i) => part.startsWith(':') || part === pathParts[i]);
+    });
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
 
@@ -324,9 +325,11 @@ describe('Deviations Routes', () => {
 
       expect(mockPrisma.deviation.create).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        id: expect.any(String),
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: expect.any(String),
+        })
+      );
     });
 
     it('should validate title (min 1, max 200 chars)', async () => {

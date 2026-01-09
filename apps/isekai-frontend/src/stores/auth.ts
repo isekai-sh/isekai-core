@@ -15,13 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { create } from "zustand";
-import type { User } from "@isekai/shared";
-import { auth } from "@/lib/api";
+import { create } from 'zustand';
+import type { User } from '@isekai/shared';
+import { auth } from '@/lib/api';
 
 // Extended user type with instance role
 interface ExtendedUser extends User {
-  instanceRole?: "admin" | "member";
+  instanceRole?: 'admin' | 'member';
   isAdmin?: boolean;
 }
 
@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     try {
       set({ isLoading: true, error: null });
-      const user = await auth.getMe() as ExtendedUser;
+      const user = (await auth.getMe()) as ExtendedUser;
       set({
         user,
         isAuthenticated: true,

@@ -15,19 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import {
-  Heart,
-  MessageCircle,
-  Sparkles,
-  ExternalLink,
-  Lock,
-  Printer,
-  Crown,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import type { BrowseDeviation } from "@/lib/api";
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Heart, MessageCircle, Sparkles, ExternalLink, Lock, Printer, Crown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import type { BrowseDeviation } from '@/lib/api';
 
 interface JustifiedGalleryProps {
   deviations: BrowseDeviation[];
@@ -49,9 +41,7 @@ interface JustifiedRow {
 }
 
 // Parse dimensions from DeviantArt preview URL if available
-function parseDimensionsFromUrl(
-  url: string
-): { width: number; height: number } | null {
+function parseDimensionsFromUrl(url: string): { width: number; height: number } | null {
   // DeviantArt URLs often contain dimensions like "w_300,h_400"
   const match = url.match(/w_(\d+),h_(\d+)/);
   if (match) {
@@ -75,19 +65,14 @@ function calculateJustifiedRows(
 
   for (const deviation of deviations) {
     // Try to get dimensions from URL, or use default aspect ratio
-    const dims = parseDimensionsFromUrl(
-      deviation.previewUrl || deviation.thumbUrl || ""
-    );
+    const dims = parseDimensionsFromUrl(deviation.previewUrl || deviation.thumbUrl || '');
     const aspectRatio = dims ? dims.width / dims.height : 4 / 5; // Default to 4:5 (portrait)
     const scaledWidth = targetRowHeight * aspectRatio;
 
     const itemWithGap = scaledWidth + gap;
 
     // Check if adding this item would exceed container width
-    if (
-      currentRowWidth + itemWithGap > containerWidth &&
-      currentRowItems.length > 0
-    ) {
+    if (currentRowWidth + itemWithGap > containerWidth && currentRowItems.length > 0) {
       // Finalize current row
       const row = finalizeRow(currentRowItems, containerWidth, gap, false);
       rows.push(row);
@@ -156,13 +141,13 @@ function JustifiedItem({
   const [isHovered, setIsHovered] = useState(false);
   const { deviation, width, height } = item;
 
-  const imageUrl = deviation.previewUrl || deviation.thumbUrl || "";
+  const imageUrl = deviation.previewUrl || deviation.thumbUrl || '';
 
   const handleClick = () => {
     if (onSelect) {
       onSelect(deviation);
     } else {
-      window.open(deviation.url, "_blank", "noopener,noreferrer");
+      window.open(deviation.url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -180,17 +165,15 @@ function JustifiedItem({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Skeleton placeholder while loading */}
-      {!isLoaded && (
-        <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
-      )}
+      {!isLoaded && <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />}
 
       {/* Image */}
       <img
         src={imageUrl}
         alt={deviation.title}
         className={cn(
-          "w-full h-full object-cover transition-opacity duration-300",
-          isLoaded ? "opacity-100" : "opacity-0"
+          'w-full h-full object-cover transition-opacity duration-300',
+          isLoaded ? 'opacity-100' : 'opacity-0'
         )}
         loading="lazy"
         onLoad={() => setIsLoaded(true)}
@@ -199,8 +182,8 @@ function JustifiedItem({
       {/* Hover overlay */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-200",
-          isHovered ? "opacity-100" : "opacity-0"
+          'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-200',
+          isHovered ? 'opacity-100' : 'opacity-0'
         )}
       >
         {/* Top actions */}
@@ -217,7 +200,7 @@ function JustifiedItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              window.open(deviation.url, "_blank", "noopener,noreferrer");
+              window.open(deviation.url, '_blank', 'noopener,noreferrer');
             }}
             className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
             title="Open in DeviantArt"
@@ -229,18 +212,13 @@ function JustifiedItem({
         {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           {/* Title */}
-          <h3 className="text-white text-sm font-medium line-clamp-1 mb-2">
-            {deviation.title}
-          </h3>
+          <h3 className="text-white text-sm font-medium line-clamp-1 mb-2">{deviation.title}</h3>
 
           {/* Author and stats */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 border border-white/20">
-                <AvatarImage
-                  src={deviation.author.avatarUrl}
-                  alt={deviation.author.username}
-                />
+                <AvatarImage src={deviation.author.avatarUrl} alt={deviation.author.username} />
                 <AvatarFallback className="text-[10px] bg-black/50 text-white">
                   {deviation.author.username[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -285,7 +263,7 @@ function JustifiedItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              window.open(deviation.url, "_blank", "noopener,noreferrer");
+              window.open(deviation.url, '_blank', 'noopener,noreferrer');
             }}
             className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/90 text-white flex items-center gap-0.5 hover:bg-emerald-600/90 transition-colors"
             title="Print available on DeviantArt"
@@ -332,8 +310,7 @@ export function JustifiedGallery({
 
   // Calculate justified rows
   const rows = useMemo(
-    () =>
-      calculateJustifiedRows(deviations, containerWidth, targetRowHeight, gap),
+    () => calculateJustifiedRows(deviations, containerWidth, targetRowHeight, gap),
     [deviations, containerWidth, targetRowHeight, gap]
   );
 

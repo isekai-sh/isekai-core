@@ -35,21 +35,23 @@ DEVIANTART_REDIRECT_URI=http://localhost:4000/api/auth/deviantart/callback
 ## OAuth Scopes
 
 **Requested Scopes:**
+
 ```
 user browse stash publish note message gallery
 ```
 
-| Scope | Purpose | Required |
-|-------|---------|----------|
-| `user` | Basic user info (username, ID, avatar) | Yes |
-| `browse` | Browse DeviantArt content | Yes |
-| `stash` | Upload files to stash | Yes |
-| `publish` | Publish deviations | Yes |
-| `note` | Send notes (future feature) | Optional |
-| `message` | Send messages (future feature) | Optional |
-| `gallery` | Manage galleries/folders | Yes |
+| Scope     | Purpose                                | Required |
+| --------- | -------------------------------------- | -------- |
+| `user`    | Basic user info (username, ID, avatar) | Yes      |
+| `browse`  | Browse DeviantArt content              | Yes      |
+| `stash`   | Upload files to stash                  | Yes      |
+| `publish` | Publish deviations                     | Yes      |
+| `note`    | Send notes (future feature)            | Optional |
+| `message` | Send messages (future feature)         | Optional |
+| `gallery` | Manage galleries/folders               | Yes      |
 
 **Why These Scopes?**
+
 - `user`: Identify user, display profile info
 - `browse`: Browse content for inspiration
 - `stash`: Upload deviation files before publishing
@@ -63,6 +65,7 @@ user browse stash publish note message gallery
 See `.context/auth/overview.md` for complete flow.
 
 **Key Endpoints:**
+
 - Authorize: `https://www.deviantart.com/oauth2/authorize`
 - Token: `https://www.deviantart.com/oauth2/token`
 - User Info: `https://www.deviantart.com/api/v1/oauth2/user/whoami`
@@ -72,12 +75,14 @@ See `.context/auth/overview.md` for complete flow.
 ## Callback Handling
 
 **Success:**
+
 - User authorized
 - Tokens stored
 - Session created
 - Redirect to frontend dashboard
 
 **Error Codes:**
+
 - `access_denied`: User declined authorization
 - `invalid_request`: Malformed OAuth request
 - `missing_code`: No authorization code received
@@ -90,6 +95,7 @@ See `.context/auth/overview.md` for complete flow.
 **Refresh Token:** 90 days expiry
 
 **Refresh Request:**
+
 ```http
 POST https://www.deviantart.com/oauth2/token
 Content-Type: application/x-www-form-urlencoded
@@ -101,6 +107,7 @@ grant_type=refresh_token
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "new_access_token",

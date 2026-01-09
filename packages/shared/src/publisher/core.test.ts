@@ -303,9 +303,7 @@ describe('publishDeviationJob', () => {
         .mockResolvedValueOnce({ count: 1 });
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
         status: 'scheduled',
@@ -430,9 +428,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -473,9 +469,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -545,9 +539,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -621,9 +613,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -678,9 +668,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -745,9 +733,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -809,9 +795,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -853,9 +837,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -900,9 +882,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({}); // Status update to draft
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({}); // Status update to draft
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -941,9 +921,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',
@@ -1001,9 +979,7 @@ describe('publishDeviationJob', () => {
       mockDeps.CircuitBreaker.shouldAllowRequest.mockResolvedValueOnce(true);
       mockDeps.rateLimiter.shouldAllowRequest.mockResolvedValueOnce({ allowed: true });
 
-      mockPrisma.deviation.update
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({});
+      mockPrisma.deviation.update.mockResolvedValueOnce({}).mockResolvedValueOnce({});
 
       mockPrisma.deviation.findFirst.mockResolvedValueOnce({
         id: 'dev-123',

@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ const addToQueueSchema = z.object({
 });
 
 const updateStatusSchema = z.object({
-  status: z.enum(["pending", "processing", "completed", "failed", "skipped"]),
+  status: z.enum(['pending', 'processing', 'completed', 'failed', 'skipped']),
   errorMessage: z.string().optional(),
   errorDetails: z.any().optional(),
   screenshotKey: z.string().optional(),
@@ -40,9 +40,9 @@ const updateStatusSchema = z.object({
 // ============================================================================
 
 // GET /api/sale-queue - List queue items with filters
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const user = req.user!;
-  const { status, page = "1", limit = "50" } = req.query;
+  const { status, page = '1', limit = '50' } = req.query;
 
   const pageNum = parseInt(page as string, 10);
   const limitNum = Math.min(parseInt(limit as string, 10), 100); // Cap at 100
@@ -79,7 +79,7 @@ router.get("/", async (req, res) => {
           },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
       take: limitNum,
       skip: offset,
     }),
@@ -90,7 +90,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/sale-queue - Add deviations to sale queue
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const user = req.user!;
   const { deviationIds, pricePresetId } = addToQueueSchema.parse(req.body);
 
@@ -100,7 +100,7 @@ router.post("/", async (req, res) => {
   });
 
   if (!preset) {
-    throw new AppError(404, "Price preset not found");
+    throw new AppError(404, 'Price preset not found');
   }
 
   // Verify deviations exist, are published, and belong to user
@@ -108,22 +108,20 @@ router.post("/", async (req, res) => {
     where: {
       id: { in: deviationIds },
       userId: user.id,
-      status: "published", // Only published deviations can be set for sale
+      status: 'published', // Only published deviations can be set for sale
       deviationUrl: { not: null }, // Must have DeviantArt URL
     },
     select: { id: true },
   });
 
   if (deviations.length === 0) {
-    throw new AppError(400, "No valid published deviations found");
+    throw new AppError(400, 'No valid published deviations found');
   }
 
   if (deviations.length !== deviationIds.length) {
     const foundIds = new Set(deviations.map((d) => d.id));
     const notFound = deviationIds.filter((id) => !foundIds.has(id));
-    console.warn(
-      `Some deviations not found or not published: ${notFound.join(", ")}`
-    );
+    console.warn(`Some deviations not found or not published: ${notFound.join(', ')}`);
   }
 
   // Check for existing queue entries
@@ -135,15 +133,13 @@ router.post("/", async (req, res) => {
   });
 
   const existingIds = new Set(existing.map((e) => e.deviationId));
-  const newIds = deviations
-    .map((d) => d.id)
-    .filter((id) => !existingIds.has(id));
+  const newIds = deviations.map((d) => d.id).filter((id) => !existingIds.has(id));
 
   if (newIds.length === 0) {
     return res.json({
       created: 0,
       skipped: existingIds.size,
-      message: "All deviations already in queue",
+      message: 'All deviations already in queue',
     });
   }
 
@@ -176,7 +172,7 @@ router.post("/", async (req, res) => {
 });
 
 // PATCH /api/sale-queue/:id - Update queue item status (user-facing)
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
   const data = updateStatusSchema.parse(req.body);
@@ -186,7 +182,7 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!item) {
-    throw new AppError(404, "Queue item not found");
+    throw new AppError(404, 'Queue item not found');
   }
 
   const updated = await prisma.saleQueue.update({
@@ -196,7 +192,7 @@ router.patch("/:id", async (req, res) => {
       errorMessage: data.errorMessage,
       errorDetails: data.errorDetails,
       screenshotKey: data.screenshotKey,
-      completedAt: data.status === "completed" ? new Date() : null,
+      completedAt: data.status === 'completed' ? new Date() : null,
     },
   });
 
@@ -204,7 +200,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // DELETE /api/sale-queue/:id - Remove from queue
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -213,16 +209,12 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!item) {
-    throw new AppError(404, "Queue item not found");
+    throw new AppError(404, 'Queue item not found');
   }
 
   // Prevent deletion if currently processing
-  if (item.status === "processing") {
-    throw new AppError(
-      400,
-      "Cannot delete item currently being processed",
-      true
-    );
+  if (item.status === 'processing') {
+    throw new AppError(400, 'Cannot delete item currently being processed', true);
   }
 
   await prisma.saleQueue.delete({
@@ -237,12 +229,12 @@ router.delete("/:id", async (req, res) => {
 // ============================================================================
 
 // GET /api/sale-queue/next - Fetch next pending item (for automation client)
-router.get("/next", async (req, res) => {
+router.get('/next', async (req, res) => {
   const user = req.user!;
   const { clientId } = req.query;
 
-  if (!clientId || typeof clientId !== "string") {
-    throw new AppError(400, "clientId query parameter required");
+  if (!clientId || typeof clientId !== 'string') {
+    throw new AppError(400, 'clientId query parameter required');
   }
 
   // Find next pending item and lock it atomically
@@ -250,7 +242,7 @@ router.get("/next", async (req, res) => {
     const pending = await tx.saleQueue.findFirst({
       where: {
         userId: user.id,
-        status: "pending",
+        status: 'pending',
         OR: [
           { lockedAt: null }, // Not locked
           {
@@ -265,7 +257,7 @@ router.get("/next", async (req, res) => {
         deviation: true,
         pricePreset: true,
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: 'asc' },
     });
 
     if (!pending) return null;
@@ -274,7 +266,7 @@ router.get("/next", async (req, res) => {
     return await tx.saleQueue.update({
       where: { id: pending.id },
       data: {
-        status: "processing",
+        status: 'processing',
         processingBy: clientId,
         lockedAt: new Date(),
         lastAttemptAt: new Date(),
@@ -288,14 +280,14 @@ router.get("/next", async (req, res) => {
   });
 
   if (!item) {
-    return res.json({ item: null, message: "Queue empty" });
+    return res.json({ item: null, message: 'Queue empty' });
   }
 
   res.json({ item });
 });
 
 // POST /api/sale-queue/:id/complete - Mark item as completed
-router.post("/:id/complete", async (req, res) => {
+router.post('/:id/complete', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -304,13 +296,13 @@ router.post("/:id/complete", async (req, res) => {
   });
 
   if (!item) {
-    throw new AppError(404, "Queue item not found");
+    throw new AppError(404, 'Queue item not found');
   }
 
   const updated = await prisma.saleQueue.update({
     where: { id },
     data: {
-      status: "completed",
+      status: 'completed',
       completedAt: new Date(),
       processingBy: null,
       lockedAt: null,
@@ -323,7 +315,7 @@ router.post("/:id/complete", async (req, res) => {
 });
 
 // POST /api/sale-queue/:id/fail - Mark item as failed
-router.post("/:id/fail", async (req, res) => {
+router.post('/:id/fail', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -333,16 +325,14 @@ router.post("/:id/fail", async (req, res) => {
     screenshotKey: z.string().optional(),
   });
 
-  const { errorMessage, errorDetails, screenshotKey } = failSchema.parse(
-    req.body
-  );
+  const { errorMessage, errorDetails, screenshotKey } = failSchema.parse(req.body);
 
   const item = await prisma.saleQueue.findFirst({
     where: { id, userId: user.id },
   });
 
   if (!item) {
-    throw new AppError(404, "Queue item not found");
+    throw new AppError(404, 'Queue item not found');
   }
 
   // Retry logic: max 3 attempts, then mark as failed
@@ -351,7 +341,7 @@ router.post("/:id/fail", async (req, res) => {
   const updated = await prisma.saleQueue.update({
     where: { id },
     data: {
-      status: shouldRetry ? "pending" : "failed",
+      status: shouldRetry ? 'pending' : 'failed',
       errorMessage,
       errorDetails,
       screenshotKey,
@@ -366,14 +356,14 @@ router.post("/:id/fail", async (req, res) => {
 });
 
 // POST /api/sale-queue/cleanup - Unlock stale jobs (admin/manual cleanup)
-router.post("/cleanup", async (req, res) => {
+router.post('/cleanup', async (req, res) => {
   const user = req.user!;
 
   // Find all stuck jobs in 'processing' status (manual cleanup, no time limit)
   const staleItems = await prisma.saleQueue.findMany({
     where: {
       userId: user.id,
-      status: "processing",
+      status: 'processing',
     },
   });
 
@@ -383,7 +373,7 @@ router.post("/cleanup", async (req, res) => {
       id: { in: staleItems.map((item) => item.id) },
     },
     data: {
-      status: "pending",
+      status: 'pending',
       processingBy: null,
       lockedAt: null,
     },

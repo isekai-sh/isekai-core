@@ -75,9 +75,7 @@ vi.mock('@/components/TemplateSelector', () => ({
     <button onClick={() => onSelect(['tag1', 'tag2'])}>Select Tag Template</button>
   ),
   DescriptionTemplateSelector: ({ onSelect }: any) => (
-    <button onClick={() => onSelect('Template description')}>
-      Select Description Template
-    </button>
+    <button onClick={() => onSelect('Template description')}>Select Description Template</button>
   ),
 }));
 

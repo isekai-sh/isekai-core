@@ -37,26 +37,30 @@ time_starttransfer: %{time_starttransfer}s
 **Add timing logs:**
 
 ```typescript
-router.get("/deviations", asyncHandler(async (req, res) => {
-  const start = Date.now();
+router.get(
+  '/deviations',
+  asyncHandler(async (req, res) => {
+    const start = Date.now();
 
-  // Query 1
-  const deviations = await prisma.deviation.findMany({ where: { userId } });
-  console.log(`[PERF] Query deviations: ${Date.now() - start}ms`);
+    // Query 1
+    const deviations = await prisma.deviation.findMany({ where: { userId } });
+    console.log(`[PERF] Query deviations: ${Date.now() - start}ms`);
 
-  // Query 2
-  for (const deviation of deviations) {
-    const files = await prisma.deviationFile.findMany({
-      where: { deviationId: deviation.id },
-    });
-    console.log(`[PERF] Query files for ${deviation.id}: ${Date.now() - start}ms`);
-  }
+    // Query 2
+    for (const deviation of deviations) {
+      const files = await prisma.deviationFile.findMany({
+        where: { deviationId: deviation.id },
+      });
+      console.log(`[PERF] Query files for ${deviation.id}: ${Date.now() - start}ms`);
+    }
 
-  res.json({ deviations });
-}));
+    res.json({ deviations });
+  })
+);
 ```
 
 **Result:**
+
 ```
 [PERF] Query deviations: 50ms
 [PERF] Query files for dev1: 70ms  ← N+1 problem!
@@ -183,27 +187,30 @@ const deviations = await prisma.deviation.findMany({
 ### Backend Caching (Redis)
 
 ```typescript
-import { redis } from "../redis";
+import { redis } from '../redis';
 
-router.get("/browse/:mode", asyncHandler(async (req, res) => {
-  const { mode } = req.params;
-  const cacheKey = `browse:${mode}:${req.query.offset || 0}`;
+router.get(
+  '/browse/:mode',
+  asyncHandler(async (req, res) => {
+    const { mode } = req.params;
+    const cacheKey = `browse:${mode}:${req.query.offset || 0}`;
 
-  // Check cache
-  const cached = await redis.get(cacheKey);
-  if (cached) {
-    console.log("[CACHE] Hit");
-    return res.json(JSON.parse(cached));
-  }
+    // Check cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log('[CACHE] Hit');
+      return res.json(JSON.parse(cached));
+    }
 
-  // Fetch from DeviantArt API
-  const data = await deviantartApi.browse(mode, req.query);
+    // Fetch from DeviantArt API
+    const data = await deviantartApi.browse(mode, req.query);
 
-  // Cache for 5 minutes
-  await redis.setex(cacheKey, 5 * 60, JSON.stringify(data));
+    // Cache for 5 minutes
+    await redis.setex(cacheKey, 5 * 60, JSON.stringify(data));
 
-  res.json(data);
-}));
+    res.json(data);
+  })
+);
 ```
 
 ### Frontend Caching (TanStack Query)
@@ -211,7 +218,7 @@ router.get("/browse/:mode", asyncHandler(async (req, res) => {
 ```typescript
 // ✅ GOOD: Cache with stale time
 const { data } = useQuery({
-  queryKey: ["browse", mode],
+  queryKey: ['browse', mode],
   queryFn: () => browse.fetch(mode),
   staleTime: 5 * 60 * 1000, // 5 minutes
 });
@@ -239,7 +246,7 @@ const deviations = await prisma.deviation.findMany({
   where: { userId },
   take: 50,
   skip: req.query.offset ? parseInt(req.query.offset) : 0,
-  orderBy: { createdAt: "desc" },
+  orderBy: { createdAt: 'desc' },
 });
 
 res.json({
@@ -266,7 +273,7 @@ export const DeviationCard = React.memo(({ deviation }: Props) => {
 ### Virtualize Long Lists
 
 ```tsx
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 function DeviationList({ deviations }: Props) {
   const parentRef = React.useRef<HTMLDivElement>(null);
@@ -278,7 +285,7 @@ function DeviationList({ deviations }: Props) {
   });
 
   return (
-    <div ref={parentRef} style={{ height: "600px", overflow: "auto" }}>
+    <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
       <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
         {virtualizer.getVirtualItems().map((virtualRow) => (
           <div key={virtualRow.index} style={{ transform: `translateY(${virtualRow.start}px)` }}>
@@ -301,7 +308,7 @@ function DeviationList({ deviations }: Props) {
 // Track API endpoint latency
 app.use((req, res, next) => {
   const start = Date.now();
-  res.on("finish", () => {
+  res.on('finish', () => {
     const duration = Date.now() - start;
     console.log(`[METRICS] ${req.method} ${req.path}: ${duration}ms`);
   });
@@ -312,6 +319,7 @@ app.use((req, res, next) => {
 ### Set Performance Budgets
 
 **Target Metrics:**
+
 - API response time: < 200ms (p95)
 - Database query time: < 50ms
 - Frontend page load: < 1 second

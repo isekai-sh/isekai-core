@@ -12,11 +12,13 @@
 **Access and refresh tokens encrypted at rest in database.**
 
 **Encryption Key:**
+
 ```bash
 ENCRYPTION_KEY=your-32-character-secret-key-here
 ```
 
 **Encryption:**
+
 ```typescript
 import crypto from 'crypto';
 
@@ -34,6 +36,7 @@ export function encrypt(text: string): string {
 ```
 
 **Decryption:**
+
 ```typescript
 export function decrypt(text: string): string {
   const parts = text.split(':');
@@ -52,6 +55,7 @@ export function decrypt(text: string): string {
 ```
 
 **Why AES-256-GCM?**
+
 - Industry standard
 - Authenticated encryption (prevents tampering)
 - Fast performance
@@ -90,8 +94,8 @@ await prisma.apiKey.create({
   data: {
     userId,
     name,
-    keyHash,    // Hashed version
-    keyPrefix,  // For lookup
+    keyHash, // Hashed version
+    keyPrefix, // For lookup
   },
 });
 
@@ -113,12 +117,12 @@ const apiKeyRecord = await prisma.apiKey.findFirst({
 });
 
 if (!apiKeyRecord) {
-  throw new Error("Invalid API key");
+  throw new Error('Invalid API key');
 }
 
 const isValid = await bcrypt.compare(apiKey, apiKeyRecord.keyHash);
 if (!isValid) {
-  throw new Error("Invalid API key");
+  throw new Error('Invalid API key');
 }
 ```
 
@@ -141,6 +145,7 @@ await prisma.apiKey.update({
 ## Session Security
 
 **Cookie Settings:**
+
 ```typescript
 {
   secure: true,        // HTTPS only (production)
@@ -151,11 +156,13 @@ await prisma.apiKey.update({
 ```
 
 **Session Secret:**
+
 ```bash
 SESSION_SECRET=your-long-random-secret-minimum-32-chars
 ```
 
 **Generate with:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -171,8 +178,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## HTTPS Enforcement
 
 **Production:**
+
 ```typescript
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
     if (req.headers['x-forwarded-proto'] !== 'https') {
       return res.redirect(`https://${req.hostname}${req.url}`);
@@ -187,6 +195,7 @@ if (process.env.NODE_ENV === "production") {
 ## Environment Variable Security
 
 **Sensitive Variables:**
+
 - `DEVIANTART_CLIENT_SECRET`
 - `ENCRYPTION_KEY`
 - `SESSION_SECRET`

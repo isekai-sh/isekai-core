@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import multer from "multer";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import multer from 'multer';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 import {
   validateFileType,
   validateFileSize,
@@ -27,10 +27,10 @@ import {
   uploadToStorage,
   getPublicUrl,
   checkStorageLimit,
-} from "../lib/upload-service.js";
-import { apiKeyAuthMiddleware } from "../middleware/api-key-auth.js";
-import { comfyUIUploadLimiter } from "../middleware/rate-limit.js";
-import sharp from "sharp";
+} from '../lib/upload-service.js';
+import { apiKeyAuthMiddleware } from '../middleware/api-key-auth.js';
+import { comfyUIUploadLimiter } from '../middleware/rate-limit.js';
+import sharp from 'sharp';
 
 const router = Router();
 
@@ -52,30 +52,27 @@ const uploadMetadataSchema = z.object({
   description: z.string().optional(),
   tags: z.string().optional(), // JSON string array
   isMature: z.string().optional(), // "true" or "false"
-  matureLevel: z.enum(["moderate", "strict"]).optional(),
+  matureLevel: z.enum(['moderate', 'strict']).optional(),
   isAiGenerated: z.string().optional(), // "true" or "false"
 });
 
 // ComfyUI Upload Endpoint
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   const user = req.user!;
   const file = req.file;
 
   if (!file) {
-    throw new AppError(400, "No file provided");
+    throw new AppError(400, 'No file provided');
   }
 
   // Validate file type
   if (!validateFileType(file.mimetype)) {
-    throw new AppError(
-      400,
-      "Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, MOV"
-    );
+    throw new AppError(400, 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, MOV');
   }
 
   // Validate file size
   if (!validateFileSize(file.size)) {
-    throw new AppError(400, "File size exceeds 50MB limit");
+    throw new AppError(400, 'File size exceeds 50MB limit');
   }
 
   // Parse metadata from form fields
@@ -87,7 +84,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     try {
       tags = JSON.parse(metadata.tags);
     } catch {
-      throw new AppError(400, "Invalid tags format (must be JSON array)");
+      throw new AppError(400, 'Invalid tags format (must be JSON array)');
     }
   }
 
@@ -96,13 +93,13 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   let height: number | null = null;
   const duration: number | null = null; // For videos, would need ffprobe
 
-  if (file.mimetype.startsWith("image/")) {
+  if (file.mimetype.startsWith('image/')) {
     try {
       const imageMetadata = await sharp(file.buffer).metadata();
       width = imageMetadata.width || null;
       height = imageMetadata.height || null;
     } catch (error) {
-      console.error("Failed to extract image metadata:", error);
+      console.error('Failed to extract image metadata:', error);
     }
   }
 
@@ -115,14 +112,14 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   const deviation = await prisma.deviation.create({
     data: {
       userId: user.id,
-      status: "review",
-      title: metadata.title || file.originalname.replace(/\.[^/.]+$/, ""),
+      status: 'review',
+      title: metadata.title || file.originalname.replace(/\.[^/.]+$/, ''),
       description: metadata.description,
       tags: tags,
-      isMature: metadata.isMature === "true",
+      isMature: metadata.isMature === 'true',
       matureLevel: metadata.matureLevel,
-      isAiGenerated: metadata.isAiGenerated !== "false", // Default true for ComfyUI
-      uploadMode: "single",
+      isAiGenerated: metadata.isAiGenerated !== 'false', // Default true for ComfyUI
+      uploadMode: 'single',
     },
   });
 
@@ -145,8 +142,8 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   res.status(201).json({
     success: true,
     deviationId: deviation.id,
-    status: "review",
-    message: "Upload successful. Deviation pending review.",
+    status: 'review',
+    message: 'Upload successful. Deviation pending review.',
   });
 });
 

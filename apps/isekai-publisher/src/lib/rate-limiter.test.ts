@@ -106,13 +106,17 @@ describe('AdaptiveRateLimiter', () => {
     it('should deny request when retry-after is active', async () => {
       // Set a retry-after in the future
       const retryAfter = Date.now() + 5000;
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 3000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 3000,
+        })
+      );
 
       const result = await limiter.shouldAllowRequest('user-1');
 
@@ -125,13 +129,17 @@ describe('AdaptiveRateLimiter', () => {
     it('should allow request when retry-after has expired', async () => {
       // Set a retry-after in the past
       const retryAfter = Date.now() - 1000;
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter,
-        lastRequestTime: Date.now() - 10000,
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 3000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter,
+          lastRequestTime: Date.now() - 10000,
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 3000,
+        })
+      );
 
       const result = await limiter.shouldAllowRequest('user-1');
 
@@ -170,13 +178,17 @@ describe('AdaptiveRateLimiter', () => {
 
     it('should decrease base delay after 3 consecutive successes', async () => {
       // Set initial state with high base delay
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 2,
-        consecutiveFailures: 0,
-        baseDelay: 10000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 2,
+          consecutiveFailures: 0,
+          baseDelay: 10000,
+        })
+      );
 
       await limiter.recordSuccess('user-1');
 
@@ -189,13 +201,17 @@ describe('AdaptiveRateLimiter', () => {
     });
 
     it('should not decrease below base delay', async () => {
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 2,
-        consecutiveFailures: 0,
-        baseDelay: 3000, // Already at minimum
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 2,
+          consecutiveFailures: 0,
+          baseDelay: 3000, // Already at minimum
+        })
+      );
 
       await limiter.recordSuccess('user-1');
 
@@ -249,13 +265,17 @@ describe('AdaptiveRateLimiter', () => {
     });
 
     it('should increase base delay exponentially', async () => {
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 3000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 3000,
+        })
+      );
 
       await limiter.recordFailure('user-1');
 
@@ -266,13 +286,17 @@ describe('AdaptiveRateLimiter', () => {
     });
 
     it('should not exceed max delay', async () => {
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 200000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 200000,
+        })
+      );
 
       await limiter.recordFailure('user-1');
 
@@ -335,13 +359,17 @@ describe('AdaptiveRateLimiter', () => {
 
   describe('resetUserLimits', () => {
     it('should delete user rate limit state', async () => {
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 3000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 3000,
+        })
+      );
 
       await limiter.resetUserLimits('user-1');
 
@@ -372,21 +400,29 @@ describe('AdaptiveRateLimiter', () => {
 
     it('should calculate metrics for multiple users', async () => {
       // Add state for multiple users
-      await redis.setex('rate_limit:user-1:state', 3600, JSON.stringify({
-        retryAfter: Date.now() + 5000,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 3000,
-      }));
+      await redis.setex(
+        'rate_limit:user-1:state',
+        3600,
+        JSON.stringify({
+          retryAfter: Date.now() + 5000,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 3000,
+        })
+      );
 
-      await redis.setex('rate_limit:user-2:state', 3600, JSON.stringify({
-        retryAfter: null,
-        lastRequestTime: Date.now(),
-        consecutiveSuccesses: 0,
-        consecutiveFailures: 0,
-        baseDelay: 6000,
-      }));
+      await redis.setex(
+        'rate_limit:user-2:state',
+        3600,
+        JSON.stringify({
+          retryAfter: null,
+          lastRequestTime: Date.now(),
+          consecutiveSuccesses: 0,
+          consecutiveFailures: 0,
+          baseDelay: 6000,
+        })
+      );
 
       const metrics = await limiter.getGlobalMetrics();
 

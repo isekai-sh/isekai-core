@@ -90,8 +90,8 @@ describe('review routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (reviewRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -208,9 +208,7 @@ describe('review routes', () => {
       });
       const res = createMockResponse();
 
-      (prisma.deviation.findMany as any).mockResolvedValue([
-        { ...mockDeviation, files: [] },
-      ]);
+      (prisma.deviation.findMany as any).mockResolvedValue([{ ...mockDeviation, files: [] }]);
       (prisma.deviation.count as any).mockResolvedValue(1);
 
       await callRoute('GET', '/', req, res);
@@ -235,9 +233,7 @@ describe('review routes', () => {
       });
       const res = createMockResponse();
 
-      (prisma.deviation.findMany as any).mockResolvedValue([
-        { ...mockDeviation, files: null },
-      ]);
+      (prisma.deviation.findMany as any).mockResolvedValue([{ ...mockDeviation, files: null }]);
       (prisma.deviation.count as any).mockResolvedValue(1);
 
       await callRoute('GET', '/', req, res);
@@ -622,10 +618,7 @@ describe('review routes', () => {
         {
           ...mockDeviation,
           id: 'deviation-1',
-          files: [
-            mockDeviationFile,
-            { ...mockDeviationFile, id: 'file-2' },
-          ],
+          files: [mockDeviationFile, { ...mockDeviationFile, id: 'file-2' }],
         },
       ];
 

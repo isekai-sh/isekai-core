@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { randomUUID } from "crypto";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { randomUUID } from 'crypto';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 import {
   validateFileType,
   validateFileSize,
@@ -26,30 +26,27 @@ import {
   getPublicUrl,
   deleteFromStorage,
   getPresignedUploadUrl,
-} from "../lib/upload-service.js";
+} from '../lib/upload-service.js';
 
 const router = Router();
 
 // Get presigned URL for upload
-router.post("/presigned", async (req, res) => {
+router.post('/presigned', async (req, res) => {
   const user = req.user!;
   const { filename, contentType, fileSize } = req.body;
 
   if (!filename || !contentType || !fileSize) {
-    throw new AppError(400, "filename, contentType, and fileSize are required");
+    throw new AppError(400, 'filename, contentType, and fileSize are required');
   }
 
   // Validate file type
   if (!validateFileType(contentType)) {
-    throw new AppError(
-      400,
-      "Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, MOV"
-    );
+    throw new AppError(400, 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, MOV');
   }
 
   // Validate file size
   if (!validateFileSize(fileSize)) {
-    throw new AppError(400, "File size exceeds 50MB limit");
+    throw new AppError(400, 'File size exceeds 50MB limit');
   }
 
   const fileId = randomUUID();
@@ -65,7 +62,7 @@ router.post("/presigned", async (req, res) => {
 });
 
 // Complete upload (link file to deviation)
-router.post("/complete", async (req, res) => {
+router.post('/complete', async (req, res) => {
   const user = req.user!;
   const {
     fileId,
@@ -79,15 +76,8 @@ router.post("/complete", async (req, res) => {
     duration,
   } = req.body;
 
-  if (
-    !fileId ||
-    !deviationId ||
-    !storageKey ||
-    !originalFilename ||
-    !mimeType ||
-    !fileSize
-  ) {
-    throw new AppError(400, "Missing required fields");
+  if (!fileId || !deviationId || !storageKey || !originalFilename || !mimeType || !fileSize) {
+    throw new AppError(400, 'Missing required fields');
   }
 
   const storageUrl = getPublicUrl(storageKey);
@@ -99,7 +89,7 @@ router.post("/complete", async (req, res) => {
 
   // Validate max 100 files per deviation
   if (existingFiles.length >= 100) {
-    throw new AppError(400, "Maximum 100 files per deviation");
+    throw new AppError(400, 'Maximum 100 files per deviation');
   }
 
   await prisma.deviationFile.create({
@@ -122,7 +112,7 @@ router.post("/complete", async (req, res) => {
 });
 
 // Delete file
-router.delete("/:fileId", async (req, res) => {
+router.delete('/:fileId', async (req, res) => {
   const { fileId } = req.params;
   const user = req.user!;
 
@@ -134,14 +124,14 @@ router.delete("/:fileId", async (req, res) => {
   });
 
   if (!file || file.deviation?.userId !== user.id) {
-    throw new AppError(404, "File not found");
+    throw new AppError(404, 'File not found');
   }
 
   // Delete from storage
   try {
     await deleteFromStorage(file.storageKey);
   } catch (error) {
-    console.error("Failed to delete from storage:", error);
+    console.error('Failed to delete from storage:', error);
     // Continue with DB deletion even if storage fails
   }
 
@@ -160,12 +150,12 @@ router.delete("/:fileId", async (req, res) => {
 });
 
 // Batch delete files
-router.post("/batch-delete", async (req, res) => {
+router.post('/batch-delete', async (req, res) => {
   const { fileIds } = req.body;
   const user = req.user!;
 
   if (!Array.isArray(fileIds) || fileIds.length === 0) {
-    throw new AppError(400, "fileIds array is required");
+    throw new AppError(400, 'fileIds array is required');
   }
 
   // Fetch files with deviation info
@@ -176,7 +166,7 @@ router.post("/batch-delete", async (req, res) => {
 
   // Verify ownership
   if (files.some((f) => f.deviation?.userId !== user.id)) {
-    throw new AppError(403, "Unauthorized");
+    throw new AppError(403, 'Unauthorized');
   }
 
   // Delete from storage (parallel, ignore failures)

@@ -132,11 +132,7 @@ describe('redis-cache', () => {
       const result = await RedisCache.set('test-key', mockData, 300);
 
       expect(result).toBe(true);
-      expect(mockRedisClient.setex).toHaveBeenCalledWith(
-        'test-key',
-        300,
-        JSON.stringify(mockData)
-      );
+      expect(mockRedisClient.setex).toHaveBeenCalledWith('test-key', 300, JSON.stringify(mockData));
     });
 
     it('should return false when Redis unavailable', async () => {
@@ -420,9 +416,7 @@ describe('redis-cache', () => {
       expect(result.data).toEqual({ id: '123', stale: true });
       expect(mockCacheStats.recordRateLimitError).toHaveBeenCalledWith('browse');
       expect(mockCacheStats.recordStaleServe).toHaveBeenCalledWith('browse');
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('429: Serving stale cache')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('429: Serving stale cache'));
     });
 
     it('should throw error when fetch fails and no stale cache', async () => {
@@ -531,9 +525,7 @@ describe('redis-cache', () => {
       const result = await RedisCache.invalidate('test:*');
 
       expect(result).toBe(0);
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Invalidated 0 keys')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Invalidated 0 keys'));
     });
   });
 

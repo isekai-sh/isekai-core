@@ -52,15 +52,16 @@ vi.mock('@isekai/shared/storage', () => ({
     'video/quicktime',
   ],
   MAX_FILE_SIZE: 50 * 1024 * 1024,
-  validateFileType: (mimeType: string) => [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'video/mp4',
-    'video/webm',
-    'video/quicktime',
-  ].includes(mimeType),
+  validateFileType: (mimeType: string) =>
+    [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+    ].includes(mimeType),
   validateFileSize: (fileSize: number) => fileSize > 0 && fileSize <= 50 * 1024 * 1024,
   checkStorageLimit: (currentUsage: number, fileSize: number, tierLimit: number) =>
     currentUsage + fileSize <= tierLimit,

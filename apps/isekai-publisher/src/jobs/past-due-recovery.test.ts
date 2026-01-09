@@ -111,7 +111,9 @@ describe('past-due-recovery', () => {
         expect.any(Date),
         'single'
       );
-      expect(console.log).toHaveBeenCalledWith('[Past Due Recovery] Re-queued deviation dev-1 (no job found)');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Past Due Recovery] Re-queued deviation dev-1 (no job found)'
+      );
     });
 
     it('should re-queue when job is in completed state', async () => {
@@ -365,7 +367,9 @@ describe('past-due-recovery', () => {
       // Fast-forward 10 seconds
       await vi.advanceTimersByTimeAsync(10000);
 
-      expect(console.log).toHaveBeenCalledWith('[Past Due Recovery] Running initial recovery check...');
+      expect(console.log).toHaveBeenCalledWith(
+        '[Past Due Recovery] Running initial recovery check...'
+      );
       expect(prisma.deviation.findMany).toHaveBeenCalled();
     });
 

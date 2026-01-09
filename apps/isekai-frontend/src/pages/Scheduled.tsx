@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Clock,
   X,
@@ -30,14 +30,14 @@ import {
   Check,
   FileImage,
   Loader2,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -45,13 +45,9 @@ import {
   TableHeader,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/table';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,15 +57,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { GallerySelector } from "@/components/GallerySelector";
-import {
-  TagTemplateSelector,
-  DescriptionTemplateSelector,
-} from "@/components/TemplateSelector";
-import { deviations } from "@/lib/api";
-import { toast } from "@/hooks/use-toast";
-import type { Deviation } from "@isekai/shared";
+} from '@/components/ui/alert-dialog';
+import { GallerySelector } from '@/components/GallerySelector';
+import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
+import { deviations } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import type { Deviation } from '@isekai/shared';
 
 const PAGE_SIZE = 50;
 
@@ -80,29 +73,23 @@ export function Scheduled() {
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Bulk operation states
   const [bulkScheduleDate, setBulkScheduleDate] = useState<Date | undefined>(undefined);
   const [bulkGalleryIds, setBulkGalleryIds] = useState<string[]>([]);
   const [bulkTags, setBulkTags] = useState<string[]>([]);
-  const [bulkDescription, setBulkDescription] = useState<string>("");
+  const [bulkDescription, setBulkDescription] = useState<string>('');
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [showPublishNowDialog, setShowPublishNowDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Fetch scheduled deviations with infinite scroll
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["deviations", "scheduled"],
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['deviations', 'scheduled'],
     queryFn: async ({ pageParam = 1 }) => {
-      return await deviations.list({ status: "scheduled", page: pageParam, limit: PAGE_SIZE });
+      return await deviations.list({ status: 'scheduled', page: pageParam, limit: PAGE_SIZE });
     },
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * PAGE_SIZE;
@@ -128,7 +115,7 @@ export function Scheduled() {
 
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
-      rootMargin: "100px",
+      rootMargin: '100px',
       threshold: 0,
     });
 
@@ -141,9 +128,10 @@ export function Scheduled() {
 
   // Filter based on search query
   const scheduledDeviations = searchQuery
-    ? allScheduled.filter((d) =>
-        d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? allScheduled.filter(
+        (d) =>
+          d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : allScheduled;
 
@@ -159,10 +147,10 @@ export function Scheduled() {
       return await deviations.batchReschedule(deviationIds, scheduledAt);
     },
     onMutate: async ({ deviationIds, scheduledAt }) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -176,18 +164,18 @@ export function Scheduled() {
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to reschedule",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to reschedule',
+        variant: 'destructive',
       });
     },
     onSuccess: () => {
       setSelectedIds(new Set());
       setBulkScheduleDate(undefined);
-      toast({ title: "Rescheduled", description: "Successfully rescheduled" });
+      toast({ title: 'Rescheduled', description: 'Successfully rescheduled' });
     },
   });
 
@@ -196,16 +184,14 @@ export function Scheduled() {
       return await deviations.batchCancel(deviationIds);
     },
     onMutate: async (deviationIds) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
-          deviations: old.deviations.filter(
-            (dev: Deviation) => !deviationIds.includes(dev.id)
-          ),
+          deviations: old.deviations.filter((dev: Deviation) => !deviationIds.includes(dev.id)),
         };
       });
 
@@ -213,19 +199,19 @@ export function Scheduled() {
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to cancel schedule",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to cancel schedule',
+        variant: 'destructive',
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "draft"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
       setSelectedIds(new Set());
       setShowCancelDialog(false);
-      toast({ title: "Cancelled", description: "Moved back to drafts" });
+      toast({ title: 'Cancelled', description: 'Moved back to drafts' });
     },
   });
 
@@ -234,16 +220,14 @@ export function Scheduled() {
       return await deviations.batchPublishNow(deviationIds);
     },
     onMutate: async (deviationIds) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
-          deviations: old.deviations.filter(
-            (dev: Deviation) => !deviationIds.includes(dev.id)
-          ),
+          deviations: old.deviations.filter((dev: Deviation) => !deviationIds.includes(dev.id)),
         };
       });
 
@@ -251,18 +235,18 @@ export function Scheduled() {
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to publish",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to publish',
+        variant: 'destructive',
       });
     },
     onSuccess: () => {
       setSelectedIds(new Set());
       setShowPublishNowDialog(false);
-      toast({ title: "Publishing", description: "Publishing now..." });
+      toast({ title: 'Publishing', description: 'Publishing now...' });
     },
   });
 
@@ -274,15 +258,13 @@ export function Scheduled() {
       deviationIds: string[];
       galleryIds: string[];
     }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { galleryIds }))
-      );
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { galleryIds })));
     },
     onMutate: async ({ deviationIds, galleryIds }) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -296,40 +278,32 @@ export function Scheduled() {
     },
     onSuccess: () => {
       setBulkGalleryIds([]);
-      toast({ title: "Updated", description: "Gallery folders assigned" });
+      toast({ title: 'Updated', description: 'Gallery folders assigned' });
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign gallery folders",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign gallery folders',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
     },
   });
 
   const batchAssignTagsMutation = useMutation({
-    mutationFn: async ({
-      deviationIds,
-      tags,
-    }: {
-      deviationIds: string[];
-      tags: string[];
-    }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { tags }))
-      );
+    mutationFn: async ({ deviationIds, tags }: { deviationIds: string[]; tags: string[] }) => {
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { tags })));
     },
     onMutate: async ({ deviationIds, tags }) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -344,20 +318,20 @@ export function Scheduled() {
     onSuccess: () => {
       setBulkTags([]);
       setTagsOpen(false);
-      toast({ title: "Updated", description: "Tags assigned" });
+      toast({ title: 'Updated', description: 'Tags assigned' });
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign tags",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign tags',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
     },
   });
 
@@ -369,15 +343,13 @@ export function Scheduled() {
       deviationIds: string[];
       description: string;
     }) => {
-      await Promise.all(
-        deviationIds.map((id) => deviations.update(id, { description }))
-      );
+      await Promise.all(deviationIds.map((id) => deviations.update(id, { description })));
     },
     onMutate: async ({ deviationIds, description }) => {
-      await queryClient.cancelQueries({ queryKey: ["deviations", "scheduled"] });
-      const previousData = queryClient.getQueryData(["deviations", "scheduled"]);
+      await queryClient.cancelQueries({ queryKey: ['deviations', 'scheduled'] });
+      const previousData = queryClient.getQueryData(['deviations', 'scheduled']);
 
-      queryClient.setQueryData(["deviations", "scheduled"], (old: any) => {
+      queryClient.setQueryData(['deviations', 'scheduled'], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -390,22 +362,22 @@ export function Scheduled() {
       return { previousData };
     },
     onSuccess: () => {
-      setBulkDescription("");
+      setBulkDescription('');
       setDescriptionOpen(false);
-      toast({ title: "Updated", description: "Description assigned" });
+      toast({ title: 'Updated', description: 'Description assigned' });
     },
     onError: (error: any, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(["deviations", "scheduled"], context.previousData);
+        queryClient.setQueryData(['deviations', 'scheduled'], context.previousData);
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to assign description",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to assign description',
+        variant: 'destructive',
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["deviations", "scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'scheduled'] });
     },
   });
 
@@ -481,7 +453,12 @@ export function Scheduled() {
                     className="h-8 w-64 pl-8 text-sm"
                   />
                 </div>
-                <Button onClick={() => navigate("/draft")} variant="outline" size="sm" className="h-8">
+                <Button
+                  onClick={() => navigate('/draft')}
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                >
                   Go to Drafts
                 </Button>
               </>
@@ -560,27 +537,19 @@ export function Scheduled() {
                         <Input
                           placeholder="Add tag and press Enter..."
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                            if (e.key === 'Enter') {
                               e.preventDefault();
                               addBulkTag(e.currentTarget.value);
-                              e.currentTarget.value = "";
+                              e.currentTarget.value = '';
                             }
                           }}
                         />
                         <div className="flex justify-between gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleBulkClearTags}
-                          >
+                          <Button variant="outline" size="sm" onClick={handleBulkClearTags}>
                             Clear Tags
                           </Button>
                           <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setTagsOpen(false)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => setTagsOpen(false)}>
                               Cancel
                             </Button>
                             <Button size="sm" onClick={handleBulkAssignTags}>
@@ -638,11 +607,7 @@ export function Scheduled() {
                     Cancel Selected
                   </Button>
                 </div>
-                <Button
-                  onClick={() => setShowPublishNowDialog(true)}
-                  size="sm"
-                  className="h-8"
-                >
+                <Button onClick={() => setShowPublishNowDialog(true)} size="sm" className="h-8">
                   <Zap className="h-4 w-4 mr-2" />
                   Publish Now
                 </Button>
@@ -664,9 +629,7 @@ export function Scheduled() {
               <div className="text-center text-muted-foreground">
                 <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">No scheduled deviations</p>
-                <p className="text-sm">
-                  Schedule deviations from your drafts to see them here
-                </p>
+                <p className="text-sm">Schedule deviations from your drafts to see them here</p>
               </div>
             </div>
           ) : (
@@ -737,11 +700,11 @@ export function Scheduled() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Publish {selectedIds.size} deviation{selectedIds.size > 1 ? "s" : ""} now?
+              Publish {selectedIds.size} deviation{selectedIds.size > 1 ? 's' : ''} now?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will bypass the schedule and publish immediately. The
-              deviations will be uploaded to DeviantArt right away.
+              This will bypass the schedule and publish immediately. The deviations will be uploaded
+              to DeviantArt right away.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -760,7 +723,7 @@ export function Scheduled() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Cancel {selectedIds.size} scheduled deviation{selectedIds.size > 1 ? "s" : ""}?
+              Cancel {selectedIds.size} scheduled deviation{selectedIds.size > 1 ? 's' : ''}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               This will move the selected deviations back to drafts. You can reschedule them later.
@@ -768,9 +731,7 @@ export function Scheduled() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep Scheduled</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => batchCancelMutation.mutate(Array.from(selectedIds))}
-            >
+            <AlertDialogAction onClick={() => batchCancelMutation.mutate(Array.from(selectedIds))}>
               Move to Drafts
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -792,35 +753,31 @@ function ScheduledTableRow({
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const scheduledDate = deviation.scheduledAt
-    ? new Date(deviation.scheduledAt)
-    : null;
+  const scheduledDate = deviation.scheduledAt ? new Date(deviation.scheduledAt) : null;
   const timeUntil = scheduledDate ? getTimeUntil(scheduledDate) : null;
 
   // Status logic: scheduled -> queued (T+1 hour) -> past due (T+1 hour+)
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
   const isPastDue = scheduledDate ? scheduledDate < oneHourAgo : false;
-  const isQueued = scheduledDate
-    ? scheduledDate < now && scheduledDate >= oneHourAgo
-    : false;
+  const isQueued = scheduledDate ? scheduledDate < now && scheduledDate >= oneHourAgo : false;
 
   // Handle ESC key to close lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
+      if (e.key === 'Escape' && lightboxOpen) {
         setLightboxOpen(false);
       }
     };
 
     if (lightboxOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [lightboxOpen]);
 
@@ -879,7 +836,7 @@ function ScheduledTableRow({
       <TableCell className="py-1">
         {deviation.tags && deviation.tags.length > 0 ? (
           <span className="text-sm text-muted-foreground">
-            {deviation.tags.length} tag{deviation.tags.length !== 1 ? "s" : ""}
+            {deviation.tags.length} tag{deviation.tags.length !== 1 ? 's' : ''}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -899,7 +856,7 @@ function ScheduledTableRow({
       <TableCell className="py-1">
         {deviation.galleryIds && deviation.galleryIds.length > 0 ? (
           <span className="text-sm text-muted-foreground">
-            {deviation.galleryIds.length} folder{deviation.galleryIds.length !== 1 ? "s" : ""}
+            {deviation.galleryIds.length} folder{deviation.galleryIds.length !== 1 ? 's' : ''}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
@@ -909,13 +866,14 @@ function ScheduledTableRow({
       {/* Schedule */}
       <TableCell className="py-1">
         <span className="text-sm text-muted-foreground">
-          {scheduledDate && scheduledDate.toLocaleString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}
+          {scheduledDate &&
+            scheduledDate.toLocaleString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
         </span>
       </TableCell>
 
@@ -926,9 +884,7 @@ function ScheduledTableRow({
             Past Due
           </Badge>
         ) : isQueued ? (
-          <Badge className="text-xs bg-blue-500 hover:bg-blue-600">
-            Queued
-          </Badge>
+          <Badge className="text-xs bg-blue-500 hover:bg-blue-600">Queued</Badge>
         ) : timeUntil ? (
           <Badge variant="secondary" className="text-xs">
             in {timeUntil}
@@ -970,7 +926,7 @@ function getTimeUntil(date: Date): string {
   const now = new Date();
   const diff = date.getTime() - now.getTime();
 
-  if (diff < 0) return "past due";
+  if (diff < 0) return 'past due';
 
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
@@ -979,5 +935,5 @@ function getTimeUntil(date: Date): string {
   if (days > 0) return `${days}d`;
   if (hours > 0) return `${hours}h`;
   if (minutes > 0) return `${minutes}m`;
-  return "<1m";
+  return '<1m';
 }

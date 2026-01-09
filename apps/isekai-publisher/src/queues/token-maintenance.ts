@@ -2,7 +2,10 @@ import { Queue, Worker, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import { prisma } from '../db/index.js';
 import { refreshTokenIfNeeded } from '../lib/deviantart.js';
-import { sendRefreshTokenWarningEmail, sendRefreshTokenExpiredEmail } from '../lib/email-service.js';
+import {
+  sendRefreshTokenWarningEmail,
+  sendRefreshTokenExpiredEmail,
+} from '../lib/email-service.js';
 
 const redisUrl = process.env.REDIS_URL!;
 const connection = new Redis(redisUrl, {
@@ -61,7 +64,9 @@ export const tokenMaintenanceWorker = new Worker<TokenMaintenanceJobData>(
       },
     });
 
-    console.log(`[Token Maintenance] Found ${usersToCheck.length} users with tokens expiring within 80 days`);
+    console.log(
+      `[Token Maintenance] Found ${usersToCheck.length} users with tokens expiring within 80 days`
+    );
 
     const results = {
       proactiveRefreshSuccess: 0,
@@ -73,9 +78,13 @@ export const tokenMaintenanceWorker = new Worker<TokenMaintenanceJobData>(
 
     for (const user of usersToCheck) {
       const hasScheduledPosts = user.deviations.length > 0;
-      const daysUntilExpiry = Math.floor((user.refreshTokenExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntilExpiry = Math.floor(
+        (user.refreshTokenExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-      console.log(`[Token Maintenance] Checking user ${user.username} - ${daysUntilExpiry} days until expiry, ${user.deviations.length} scheduled posts`);
+      console.log(
+        `[Token Maintenance] Checking user ${user.username} - ${daysUntilExpiry} days until expiry, ${user.deviations.length} scheduled posts`
+      );
 
       // CASE 1: Token already expired - pause scheduled posts and notify
       if (user.refreshTokenExpiresAt <= now) {
@@ -90,13 +99,16 @@ export const tokenMaintenanceWorker = new Worker<TokenMaintenanceJobData>(
             },
             data: {
               status: 'draft',
-              errorMessage: 'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
+              errorMessage:
+                'DeviantArt authentication expired. Please re-connect your account to schedule posts.',
               updatedAt: now,
             },
           });
 
           results.scheduledPostsPaused += user.deviations.length;
-          console.log(`[Token Maintenance] Paused ${user.deviations.length} scheduled posts for user ${user.username}`);
+          console.log(
+            `[Token Maintenance] Paused ${user.deviations.length} scheduled posts for user ${user.username}`
+          );
         }
 
         // Send notification (if not already sent)
@@ -116,17 +128,24 @@ export const tokenMaintenanceWorker = new Worker<TokenMaintenanceJobData>(
       // CASE 2: Token expiring in 60-80 days AND has scheduled posts - proactively refresh
       if (daysUntilExpiry >= 60 && daysUntilExpiry <= 80 && hasScheduledPosts) {
         try {
-          console.log(`[Token Maintenance] Proactively refreshing token for user ${user.username} (${daysUntilExpiry} days until expiry)`);
+          console.log(
+            `[Token Maintenance] Proactively refreshing token for user ${user.username} (${daysUntilExpiry} days until expiry)`
+          );
           await refreshTokenIfNeeded(user);
           results.proactiveRefreshSuccess++;
           console.log(`[Token Maintenance] Successfully refreshed token for user ${user.username}`);
         } catch (error: any) {
-          console.error(`[Token Maintenance] Failed to refresh token for user ${user.username}:`, error.message);
+          console.error(
+            `[Token Maintenance] Failed to refresh token for user ${user.username}:`,
+            error.message
+          );
           results.proactiveRefreshFailed++;
 
           // If refresh failed due to expired token, handle it
           if (error.code === 'REFRESH_TOKEN_EXPIRED') {
-            console.warn(`[Token Maintenance] Proactive refresh failed - token already expired for ${user.username}`);
+            console.warn(
+              `[Token Maintenance] Proactive refresh failed - token already expired for ${user.username}`
+            );
 
             // Pause scheduled posts
             await prisma.deviation.updateMany({
@@ -163,7 +182,9 @@ export const tokenMaintenanceWorker = new Worker<TokenMaintenanceJobData>(
           data: { refreshTokenWarningEmailSent: true },
         });
         results.warningEmailsSent++;
-        console.log(`[Token Maintenance] Sent warning email to user ${user.username} (${daysUntilExpiry} days until expiry)`);
+        console.log(
+          `[Token Maintenance] Sent warning email to user ${user.username} (${daysUntilExpiry} days until expiry)`
+        );
       }
     }
 

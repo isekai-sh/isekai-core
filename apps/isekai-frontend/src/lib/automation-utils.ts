@@ -23,9 +23,7 @@ export function calculateNextRunTime(automation: any): Date | null {
     return null;
   }
 
-  const activeRules = automation.scheduleRules.filter(
-    (rule: any) => rule.enabled
-  );
+  const activeRules = automation.scheduleRules.filter((rule: any) => rule.enabled);
   if (activeRules.length === 0) {
     return null;
   }
@@ -36,18 +34,14 @@ export function calculateNextRunTime(automation: any): Date | null {
   for (const rule of activeRules) {
     let nextRunTime: Date | null = null;
 
-    if (rule.type === "fixed_time") {
+    if (rule.type === 'fixed_time') {
       // Calculate next occurrence of this time
-      nextRunTime = calculateNextFixedTime(
-        rule.timeOfDay,
-        rule.daysOfWeek,
-        now
-      );
-    } else if (rule.type === "fixed_interval") {
+      nextRunTime = calculateNextFixedTime(rule.timeOfDay, rule.daysOfWeek, now);
+    } else if (rule.type === 'fixed_interval') {
       // Intervals run every X minutes, estimate next run (assuming it runs every 5 min check)
       // This is approximate since we don't know exact last execution
       nextRunTime = new Date(now.getTime() + 5 * 60 * 1000); // Next cron check (5 min)
-    } else if (rule.type === "daily_quota") {
+    } else if (rule.type === 'daily_quota') {
       // Daily quota runs throughout the day, estimate next run
       nextRunTime = new Date(now.getTime() + 5 * 60 * 1000); // Next cron check (5 min)
     }
@@ -72,18 +66,10 @@ function calculateNextFixedTime(
 ): Date | null {
   if (!timeOfDay) return null;
 
-  const [hours, minutes] = timeOfDay.split(":").map(Number);
+  const [hours, minutes] = timeOfDay.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return null;
 
-  const dayNames = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-  ];
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
   // If no days specified, check today and tomorrow
   if (!daysOfWeek || daysOfWeek.length === 0) {
@@ -122,7 +108,7 @@ export function formatNextRunTime(automation: any): string {
   const nextRun = calculateNextRunTime(automation);
 
   if (!nextRun) {
-    return "Not scheduled";
+    return 'Not scheduled';
   }
 
   const now = new Date();
@@ -132,7 +118,7 @@ export function formatNextRunTime(automation: any): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffMinutes < 1) {
-    return "In < 1 min";
+    return 'In < 1 min';
   } else if (diffMinutes < 60) {
     return `In ${diffMinutes} min`;
   } else if (diffHours < 24) {
@@ -142,10 +128,10 @@ export function formatNextRunTime(automation: any): string {
   } else {
     // Show actual date if more than a week away
     return nextRun.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 }

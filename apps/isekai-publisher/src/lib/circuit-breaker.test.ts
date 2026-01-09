@@ -95,7 +95,7 @@ describe('CircuitBreaker', () => {
       expect(status?.state).toBe(CircuitState.OPEN);
 
       // Wait for open duration to expire
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Should allow request and transition to HALF_OPEN
       const allowed = await CircuitBreaker.shouldAllowRequest(key, config);
@@ -114,7 +114,7 @@ describe('CircuitBreaker', () => {
       await CircuitBreaker.recordFailure(key, config);
 
       // Wait and transition to HALF_OPEN
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
       await CircuitBreaker.shouldAllowRequest(key, config);
 
       // Record success
@@ -134,7 +134,7 @@ describe('CircuitBreaker', () => {
       await CircuitBreaker.recordFailure(key, config);
 
       // Wait and transition to HALF_OPEN
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
       await CircuitBreaker.shouldAllowRequest(key, config);
 
       // Record another failure
@@ -315,7 +315,7 @@ describe('CircuitBreaker', () => {
       await CircuitBreaker.recordFailure(key, config);
 
       // Wait and transition to HALF_OPEN
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
       // Transition to HALF_OPEN (resets attempts to 0, returns true)
       let allowed = await CircuitBreaker.shouldAllowRequest(key, config);
@@ -346,7 +346,7 @@ describe('CircuitBreaker', () => {
       await CircuitBreaker.recordFailure(key, config);
 
       // Wait and transition to HALF_OPEN
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
       // Transition to HALF_OPEN (resets attempts to 0, returns true)
       let allowed = await CircuitBreaker.shouldAllowRequest(key, config);
@@ -407,7 +407,7 @@ describe('CircuitBreaker', () => {
       const config = { failureThreshold: 1, openDuration: 50 };
 
       await CircuitBreaker.recordFailure(key, config);
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
       await CircuitBreaker.shouldAllowRequest(key, config);
 
       const status = CircuitBreaker.getStatus(key);
@@ -461,7 +461,7 @@ describe('CircuitBreaker', () => {
 
       // Open and transition to HALF_OPEN
       await CircuitBreaker.recordFailure(key, config);
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
       await CircuitBreaker.shouldAllowRequest(key, config);
 
       CircuitBreaker.reset(key);
@@ -548,7 +548,7 @@ describe('CircuitBreaker', () => {
       const status1 = CircuitBreaker.getStatus(key);
       const time1 = status1?.lastFailureTime?.getTime() || 0;
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       await CircuitBreaker.recordFailure(key);
       const status2 = CircuitBreaker.getStatus(key);
@@ -568,12 +568,12 @@ describe('CircuitBreaker', () => {
       expect(allowed).toBe(false);
 
       // Wait less than open duration
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       allowed = await CircuitBreaker.shouldAllowRequest(key, config);
       expect(allowed).toBe(false);
 
       // Wait for full duration
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
       allowed = await CircuitBreaker.shouldAllowRequest(key, config);
       expect(allowed).toBe(true);
     });
@@ -599,7 +599,7 @@ describe('CircuitBreaker', () => {
       let allowed = await CircuitBreaker.shouldAllowRequest(key, config);
       expect(allowed).toBe(false);
 
-      await new Promise(resolve => setTimeout(resolve, 110));
+      await new Promise((resolve) => setTimeout(resolve, 110));
       allowed = await CircuitBreaker.shouldAllowRequest(key, config);
       expect(allowed).toBe(true);
     });
@@ -609,7 +609,7 @@ describe('CircuitBreaker', () => {
       const config = { failureThreshold: 1, openDuration: 50, halfOpenMaxAttempts: 5 };
 
       await CircuitBreaker.recordFailure(key, config);
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
       // Transition + 5 attempts = 6 total allowed requests
       for (let i = 0; i < 6; i++) {
@@ -942,7 +942,7 @@ describe('withCircuitBreaker', () => {
       await withCircuitBreaker('test-key', fn, fallback, config);
       expect(fn).toHaveBeenCalledTimes(2);
 
-      let status = CircuitBreaker.getStatus('test-key');
+      const status = CircuitBreaker.getStatus('test-key');
       expect(status?.state).toBe(CircuitState.OPEN);
 
       // Third call should use fallback without calling fn
@@ -1037,7 +1037,7 @@ describe('withCircuitBreaker', () => {
       expect(status?.state).toBe(CircuitState.OPEN);
 
       // Wait for circuit to go half-open
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
       // Should attempt request and close circuit on success
       const result = await withCircuitBreaker('test-key', fn, fallback, config);
@@ -1064,7 +1064,7 @@ describe('withCircuitBreaker', () => {
       expect(status?.state).toBe(CircuitState.OPEN);
 
       // Wait for circuit to go half-open
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise((resolve) => setTimeout(resolve, 60));
 
       // Should attempt request and return to open on failure
       await withCircuitBreaker('test-key', fn, fallback, config);

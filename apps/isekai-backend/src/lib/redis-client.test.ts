@@ -65,9 +65,7 @@ describe('redis-client', () => {
       const client = await RedisClientManager.getClient();
 
       expect(client).toBeNull();
-      expect(console.log).toHaveBeenCalledWith(
-        '[Redis] No REDIS_URL configured, caching disabled'
-      );
+      expect(console.log).toHaveBeenCalledWith('[Redis] No REDIS_URL configured, caching disabled');
     });
 
     it('should return existing instance on subsequent calls', async () => {
@@ -176,10 +174,7 @@ describe('redis-client', () => {
       // Trigger error event
       errorHandler!(new Error('Connection lost'));
 
-      expect(console.error).toHaveBeenCalledWith(
-        '[Redis] Runtime error:',
-        'Connection lost'
-      );
+      expect(console.error).toHaveBeenCalledWith('[Redis] Runtime error:', 'Connection lost');
     });
 
     it('should log reconnecting events', async () => {

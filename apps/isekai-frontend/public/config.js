@@ -7,7 +7,7 @@
 // Using relative "/api" allows the frontend to work with any domain
 // by proxying /api requests to your backend
 window.ISEKAI_CONFIG = {
-  API_URL: "/api",  // Default: relative path (works with reverse proxy)
-  DEVIANTART_CLIENT_ID: "",  // Must be set for OAuth to work
-  S3_PUBLIC_URL: "http://localhost:9000/isekai-uploads"  // S3-compatible storage public URL
+  API_URL: '/api', // Default: relative path (works with reverse proxy)
+  DEVIANTART_CLIENT_ID: '', // Must be set for OAuth to work
+  S3_PUBLIC_URL: 'http://localhost:9000/isekai-uploads', // S3-compatible storage public URL
 };

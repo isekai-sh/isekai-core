@@ -15,9 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { randomBytes, createHash } from "crypto";
+import { randomBytes, createHash } from 'crypto';
 
-const API_KEY_PREFIX = "isk_";
+const API_KEY_PREFIX = 'isk_';
 const KEY_LENGTH = 32; // Random bytes (64 hex chars after prefix)
 
 /**
@@ -29,7 +29,7 @@ export function generateApiKey(): {
   hash: string;
   prefix: string;
 } {
-  const randomPart = randomBytes(KEY_LENGTH).toString("hex");
+  const randomPart = randomBytes(KEY_LENGTH).toString('hex');
   const key = `${API_KEY_PREFIX}${randomPart}`;
   const hash = hashApiKey(key);
   const prefix = key.substring(0, 12); // isk_abc12345
@@ -41,7 +41,7 @@ export function generateApiKey(): {
  * Hash an API key using SHA-256 for secure storage
  */
 export function hashApiKey(key: string): string {
-  return createHash("sha256").update(key).digest("hex");
+  return createHash('sha256').update(key).digest('hex');
 }
 
 /**

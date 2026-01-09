@@ -16,7 +16,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createMockRequest, createMockResponse, createMockNext } from '../test-helpers/express-mock.js';
+import {
+  createMockRequest,
+  createMockResponse,
+  createMockNext,
+} from '../test-helpers/express-mock.js';
 
 // Mock the prisma module
 vi.mock('../db/index.js', () => {

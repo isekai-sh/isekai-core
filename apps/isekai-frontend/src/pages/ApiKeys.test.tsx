@@ -154,7 +154,9 @@ describe('ApiKeys', () => {
     await user.click(createButton);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Give your API key a descriptive name to help identify it later')).toBeInTheDocument();
+    expect(
+      screen.getByText('Give your API key a descriptive name to help identify it later')
+    ).toBeInTheDocument();
   });
 
   it('should create new API key successfully', async () => {
@@ -198,7 +200,9 @@ describe('ApiKeys', () => {
 
     // Should show the key display dialog
     await waitFor(() => {
-      expect(screen.getByText('Copy this key now - it will never be shown again')).toBeInTheDocument();
+      expect(
+        screen.getByText('Copy this key now - it will never be shown again')
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByDisplayValue('isk_newapikey123456789')).toBeInTheDocument();
@@ -268,12 +272,14 @@ describe('ApiKeys', () => {
 
     // Wait for key display dialog
     await waitFor(() => {
-      expect(screen.getByText('Copy this key now - it will never be shown again')).toBeInTheDocument();
+      expect(
+        screen.getByText('Copy this key now - it will never be shown again')
+      ).toBeInTheDocument();
     });
 
     // Click copy button
     const copyButtons = screen.getAllByRole('button');
-    const copyButton = copyButtons.find(btn => btn.querySelector('.lucide-copy'));
+    const copyButton = copyButtons.find((btn) => btn.querySelector('.lucide-copy'));
     await user.click(copyButton!);
 
     expect(writeTextMock).toHaveBeenCalledWith('isk_newapikey123456789');
@@ -402,7 +408,9 @@ describe('ApiKeys', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Copy this key now - it will never be shown again')).toBeInTheDocument();
+      expect(
+        screen.getByText('Copy this key now - it will never be shown again')
+      ).toBeInTheDocument();
     });
 
     // Click Done
@@ -410,7 +418,9 @@ describe('ApiKeys', () => {
     await user.click(doneButton);
 
     await waitFor(() => {
-      expect(screen.queryByText('Copy this key now - it will never be shown again')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Copy this key now - it will never be shown again')
+      ).not.toBeInTheDocument();
     });
   });
 });

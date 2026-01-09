@@ -23,33 +23,32 @@
  */
 
 // Cache version - increment to invalidate all caches
-export const CACHE_VERSION = "v1";
+export const CACHE_VERSION = 'v1';
 
 // Cache key prefix
-export const CACHE_PREFIX = "isekai";
+export const CACHE_PREFIX = 'isekai';
 
 /**
  * Cache namespaces for different data types
  */
 export const CacheNamespace = {
-  BROWSE: "browse",
-  ANALYTICS: "analytics",
-  MESSAGES: "messages",
-  DEVIATION: "deviation",
-  GALLERY: "gallery",
-  CATEGORY: "category",
-  TOPIC: "topic",
-  TAG: "tag",
-  USER: "user",
+  BROWSE: 'browse',
+  ANALYTICS: 'analytics',
+  MESSAGES: 'messages',
+  DEVIATION: 'deviation',
+  GALLERY: 'gallery',
+  CATEGORY: 'category',
+  TOPIC: 'topic',
+  TAG: 'tag',
+  USER: 'user',
 } as const;
 
-export type CacheNamespaceType =
-  (typeof CacheNamespace)[keyof typeof CacheNamespace];
+export type CacheNamespaceType = (typeof CacheNamespace)[keyof typeof CacheNamespace];
 
 /**
  * Cache scope - determines if cache is per-user or global
  */
-export type CacheScope = "user" | "global";
+export type CacheScope = 'user' | 'global';
 
 /**
  * Generate a cache key
@@ -84,8 +83,8 @@ export function generateCacheKey(
       const value = params[key];
       // Convert to string and handle special values
       if (value === null || value === undefined) {
-        parts.push("null");
-      } else if (typeof value === "object") {
+        parts.push('null');
+      } else if (typeof value === 'object') {
         // Hash objects to prevent huge keys
         parts.push(hashObject(value));
       } else {
@@ -94,7 +93,7 @@ export function generateCacheKey(
     }
   }
 
-  return parts.join(":");
+  return parts.join(':');
 }
 
 /**
@@ -142,7 +141,7 @@ export function parseCacheKey(key: string): {
   identifier: string;
   params: string[];
 } | null {
-  const parts = key.split(":");
+  const parts = key.split(':');
 
   if (parts.length < 5) {
     return null;
@@ -182,35 +181,25 @@ export const CacheKeys = {
    * Browse feed cache keys
    */
   browse: {
-    feed: (
-      userId: string | null,
-      mode: string,
-      source: string,
-      mature: boolean,
-      offset: number
-    ) =>
+    feed: (userId: string | null, mode: string, source: string, mature: boolean, offset: number) =>
       userId
-        ? generateCacheKey(CacheNamespace.BROWSE, "user", userId, {
+        ? generateCacheKey(CacheNamespace.BROWSE, 'user', userId, {
             mode,
             source,
             mature,
             offset,
           })
-        : generateCacheKey(CacheNamespace.BROWSE, "global", mode, {
+        : generateCacheKey(CacheNamespace.BROWSE, 'global', mode, {
             source,
             mature,
             offset,
           }),
 
     deviation: (deviationId: string) =>
-      generateCacheKey(CacheNamespace.DEVIATION, "global", deviationId),
+      generateCacheKey(CacheNamespace.DEVIATION, 'global', deviationId),
 
     morelikethis: (deviationId: string) =>
-      generateCacheKey(
-        CacheNamespace.BROWSE,
-        "global",
-        `morelikethis:${deviationId}`
-      ),
+      generateCacheKey(CacheNamespace.BROWSE, 'global', `morelikethis:${deviationId}`),
   },
 
   /**
@@ -218,34 +207,34 @@ export const CacheKeys = {
    */
   analytics: {
     overview: (userId: string, period: string) =>
-      generateCacheKey(CacheNamespace.ANALYTICS, "user", userId, {
-        type: "overview",
+      generateCacheKey(CacheNamespace.ANALYTICS, 'user', userId, {
+        type: 'overview',
         period,
       }),
 
     posts: (userId: string, offset: number, limit: number) =>
-      generateCacheKey(CacheNamespace.ANALYTICS, "user", userId, {
-        type: "posts",
+      generateCacheKey(CacheNamespace.ANALYTICS, 'user', userId, {
+        type: 'posts',
         offset,
         limit,
       }),
 
     bestTimes: (userId: string, period: string) =>
-      generateCacheKey(CacheNamespace.ANALYTICS, "user", userId, {
-        type: "best-times",
+      generateCacheKey(CacheNamespace.ANALYTICS, 'user', userId, {
+        type: 'best-times',
         period,
       }),
 
     whofaved: (userId: string, deviationId: string, offset: number) =>
-      generateCacheKey(CacheNamespace.ANALYTICS, "user", userId, {
-        type: "whofaved",
+      generateCacheKey(CacheNamespace.ANALYTICS, 'user', userId, {
+        type: 'whofaved',
         deviationId,
         offset,
       }),
 
     audience: (userId: string, period: string) =>
-      generateCacheKey(CacheNamespace.ANALYTICS, "user", userId, {
-        type: "audience",
+      generateCacheKey(CacheNamespace.ANALYTICS, 'user', userId, {
+        type: 'audience',
         period,
       }),
   },
@@ -255,21 +244,21 @@ export const CacheKeys = {
    */
   messages: {
     notifications: (userId: string, type: string, cursor: string | null) =>
-      generateCacheKey(CacheNamespace.MESSAGES, "user", userId, {
-        type: "notifications",
+      generateCacheKey(CacheNamespace.MESSAGES, 'user', userId, {
+        type: 'notifications',
         feed: type,
         cursor,
       }),
 
     note: (userId: string, noteId: string) =>
-      generateCacheKey(CacheNamespace.MESSAGES, "user", userId, {
-        type: "note",
+      generateCacheKey(CacheNamespace.MESSAGES, 'user', userId, {
+        type: 'note',
         noteId,
       }),
 
     folders: (userId: string) =>
-      generateCacheKey(CacheNamespace.MESSAGES, "user", userId, {
-        type: "folders",
+      generateCacheKey(CacheNamespace.MESSAGES, 'user', userId, {
+        type: 'folders',
       }),
   },
 
@@ -277,16 +266,15 @@ export const CacheKeys = {
    * Category/topic cache keys
    */
   category: {
-    tree: () => generateCacheKey(CacheNamespace.CATEGORY, "global", "tree"),
+    tree: () => generateCacheKey(CacheNamespace.CATEGORY, 'global', 'tree'),
   },
 
   topic: {
-    list: () => generateCacheKey(CacheNamespace.TOPIC, "global", "list"),
+    list: () => generateCacheKey(CacheNamespace.TOPIC, 'global', 'list'),
 
-    top: () => generateCacheKey(CacheNamespace.TOPIC, "global", "top"),
+    top: () => generateCacheKey(CacheNamespace.TOPIC, 'global', 'top'),
 
-    trendingTags: () =>
-      generateCacheKey(CacheNamespace.TOPIC, "global", "trending-tags"),
+    trendingTags: () => generateCacheKey(CacheNamespace.TOPIC, 'global', 'trending-tags'),
   },
 
   /**
@@ -294,7 +282,7 @@ export const CacheKeys = {
    */
   tag: {
     search: (query: string) =>
-      generateCacheKey(CacheNamespace.TAG, "global", "search", {
+      generateCacheKey(CacheNamespace.TAG, 'global', 'search', {
         q: query.toLowerCase().trim(),
       }),
   },
@@ -304,15 +292,15 @@ export const CacheKeys = {
    */
   gallery: {
     folders: (userId: string) =>
-      generateCacheKey(CacheNamespace.GALLERY, "user", userId, {
-        type: "folders",
+      generateCacheKey(CacheNamespace.GALLERY, 'user', userId, {
+        type: 'folders',
       }),
   },
 
   user: {
     profile: (userId: string) =>
-      generateCacheKey(CacheNamespace.USER, "user", userId, {
-        type: "profile",
+      generateCacheKey(CacheNamespace.USER, 'user', userId, {
+        type: 'profile',
       }),
   },
 };

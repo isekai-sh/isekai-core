@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface PageWrapperProps {
   children: React.ReactNode;
@@ -27,11 +27,7 @@ interface PageWrapperProps {
  * All pages should use this as their root element.
  */
 export function PageWrapper({ children, className }: PageWrapperProps) {
-  return (
-    <div className={cn("flex flex-col h-full min-h-0", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex flex-col h-full min-h-0', className)}>{children}</div>;
 }
 
 /**
@@ -39,11 +35,7 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
  * Use for page titles, action buttons, filters.
  */
 export function PageHeader({ children, className }: PageWrapperProps) {
-  return (
-    <div className={cn("flex-shrink-0 pb-4", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex-shrink-0 pb-4', className)}>{children}</div>;
 }
 
 /**
@@ -51,11 +43,7 @@ export function PageHeader({ children, className }: PageWrapperProps) {
  * All main page content should go here.
  */
 export function PageContent({ children, className }: PageWrapperProps) {
-  return (
-    <div className={cn("flex-1 min-h-0 overflow-y-auto", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex-1 min-h-0 overflow-y-auto', className)}>{children}</div>;
 }
 
 /**
@@ -63,9 +51,5 @@ export function PageContent({ children, className }: PageWrapperProps) {
  * Use for pages like Review with twin scroll panels.
  */
 export function PageSplitContent({ children, className }: PageWrapperProps) {
-  return (
-    <div className={cn("flex-1 min-h-0 flex gap-4", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex-1 min-h-0 flex gap-4', className)}>{children}</div>;
 }

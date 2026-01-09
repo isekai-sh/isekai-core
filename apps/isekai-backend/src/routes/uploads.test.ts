@@ -42,7 +42,6 @@ vi.mock('../lib/upload-service.js', () => ({
   getPresignedUploadUrl: vi.fn(),
 }));
 
-
 vi.mock('crypto', () => ({
   randomUUID: vi.fn(),
 }));
@@ -88,8 +87,8 @@ describe('uploads routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (uploadsRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -232,7 +231,9 @@ describe('uploads routes', () => {
       });
       const res = createMockResponse();
 
-      (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test---abc123.jpg');
+      (getPublicUrl as any).mockReturnValue(
+        'https://cdn.example.com/deviations/user-123/test---abc123.jpg'
+      );
       (prisma.deviationFile.findMany as any).mockResolvedValue([]);
       (prisma.deviationFile.create as any).mockResolvedValue(mockDeviationFile);
 
@@ -274,7 +275,9 @@ describe('uploads routes', () => {
       });
       const res = createMockResponse();
 
-      (getPublicUrl as any).mockReturnValue('https://cdn.example.com/deviations/user-123/test2---abc123.jpg');
+      (getPublicUrl as any).mockReturnValue(
+        'https://cdn.example.com/deviations/user-123/test2---abc123.jpg'
+      );
       (prisma.deviationFile.findMany as any).mockResolvedValue([
         mockDeviationFile,
         { ...mockDeviationFile, id: 'file-2' },

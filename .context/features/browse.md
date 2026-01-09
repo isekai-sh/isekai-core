@@ -10,6 +10,7 @@
 The **Browse System** allows users to discover artwork on DeviantArt through multiple modes (home feed, daily deviations, tags, topics, etc.). It implements Redis caching with request coalescing and stale cache fallback to handle rate limits gracefully.
 
 **Key Features:**
+
 - **6 browse modes:** home, daily, following, tags, topic, user-gallery
 - **Redis caching:** Reduces API calls, handles rate limits
 - **Request coalescing:** Prevents duplicate concurrent requests
@@ -18,6 +19,7 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 - **Topics discovery:** Browse trending topics and categories
 
 **Related Files:**
+
 - `/apps/isekai-backend/src/routes/browse.ts` - Browse routes
 - `/apps/isekai-backend/src/lib/browse-cache.ts` - Cache logic
 - `/apps/isekai-backend/src/lib/browse-source.ts` - Source configuration
@@ -29,14 +31,14 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 
 ### Mode Overview
 
-| Mode | Description | Endpoint | Per-User Cache |
-|------|-------------|----------|----------------|
-| `home` | User's personalized feed | `/browse/home` | Yes |
-| `daily` | Daily deviations (staff picks) | `/browse/dailydeviations` | No |
-| `following` | Deviations from watched users | `/browse/deviantsyouwatch` | Yes |
-| `tags` | Browse by tag | `/browse/tags` | No |
-| `topic` | Browse by topic/category | `/browse/topic` | No |
-| `user-gallery` | User's all gallery | `/gallery/all` | Yes (per username) |
+| Mode           | Description                    | Endpoint                   | Per-User Cache     |
+| -------------- | ------------------------------ | -------------------------- | ------------------ |
+| `home`         | User's personalized feed       | `/browse/home`             | Yes                |
+| `daily`        | Daily deviations (staff picks) | `/browse/dailydeviations`  | No                 |
+| `following`    | Deviations from watched users  | `/browse/deviantsyouwatch` | Yes                |
+| `tags`         | Browse by tag                  | `/browse/tags`             | No                 |
+| `topic`        | Browse by topic/category       | `/browse/topic`            | No                 |
+| `user-gallery` | User's all gallery             | `/gallery/all`             | Yes (per username) |
 
 **Per-User Cache:** Some modes have personalized results, so cache is user-specific.
 
@@ -47,6 +49,7 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 **Description:** Personalized feed based on user's watch list and preferences.
 
 **Query Params:**
+
 ```typescript
 {
   offset: number = 0,
@@ -56,6 +59,7 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 ```
 
 **Response:**
+
 ```json
 {
   "deviations": [
@@ -99,6 +103,7 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 **Description:** Staff-picked daily featured deviations.
 
 **Query Params:**
+
 ```typescript
 {
   date: string = "YYYY-MM-DD",  // Optional, defaults to today
@@ -109,6 +114,7 @@ The **Browse System** allows users to discover artwork on DeviantArt through mul
 ```
 
 **Example:**
+
 ```bash
 GET /api/browse/daily?date=2025-01-10&offset=0&limit=24
 ```
@@ -124,6 +130,7 @@ GET /api/browse/daily?date=2025-01-10&offset=0&limit=24
 **Description:** Deviations from users you watch.
 
 **Query Params:**
+
 ```typescript
 {
   offset: number = 0,
@@ -141,6 +148,7 @@ GET /api/browse/daily?date=2025-01-10&offset=0&limit=24
 **Description:** Browse deviations by tag name.
 
 **Query Params:**
+
 ```typescript
 {
   tag: string,                    // REQUIRED
@@ -151,6 +159,7 @@ GET /api/browse/daily?date=2025-01-10&offset=0&limit=24
 ```
 
 **Example:**
+
 ```bash
 GET /api/browse/tags?tag=fantasy&offset=0&limit=24
 ```
@@ -163,11 +172,12 @@ GET /api/browse/tags?tag=fantasy&offset=0&limit=24
 
 ```typescript
 {
-  tag_name: string  // Min 2 characters
+  tag_name: string; // Min 2 characters
 }
 ```
 
 **Response:**
+
 ```json
 {
   "tags": ["fantasy", "fantasy art", "fantasy character", "fantasy landscape"]
@@ -183,6 +193,7 @@ GET /api/browse/tags?tag=fantasy&offset=0&limit=24
 **Description:** Browse by DeviantArt topic (curated categories).
 
 **Query Params:**
+
 ```typescript
 {
   topic: string,                  // REQUIRED (canonical name)
@@ -193,6 +204,7 @@ GET /api/browse/tags?tag=fantasy&offset=0&limit=24
 ```
 
 **Example:**
+
 ```bash
 GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 ```
@@ -204,13 +216,16 @@ GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 **GET /api/browse/topics/list**
 
 **Response:**
+
 ```json
 {
   "topics": [
     {
       "name": "Digital Art",
       "canonicalName": "digitalart",
-      "exampleDeviations": [/* 4 sample deviations */]
+      "exampleDeviations": [
+        /* 4 sample deviations */
+      ]
     }
   ],
   "hasMore": false
@@ -224,13 +239,16 @@ GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 **GET /api/browse/toptopics**
 
 **Response:**
+
 ```json
 {
   "topics": [
     {
       "name": "Fantasy",
       "canonicalName": "fantasy",
-      "exampleDeviation": {/* single example */}
+      "exampleDeviation": {
+        /* single example */
+      }
     }
   ]
 }
@@ -243,6 +261,7 @@ GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 **GET /api/browse/trendingtags**
 
 **Response:**
+
 ```json
 {
   "tags": [
@@ -263,6 +282,7 @@ GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 **Description:** Browse a specific user's gallery.
 
 **Query Params:**
+
 ```typescript
 {
   username: string,               // REQUIRED
@@ -273,6 +293,7 @@ GET /api/browse/topic?topic=digitalart&offset=0&limit=24
 ```
 
 **Example:**
+
 ```bash
 GET /api/browse/user-gallery?username=someartist&offset=0&limit=24
 ```
@@ -286,20 +307,22 @@ GET /api/browse/user-gallery?username=someartist&offset=0&limit=24
 ### Cache Architecture
 
 **Layers:**
+
 1. **Redis Cache** - Primary cache (shared across all API instances)
 2. **Request Coalescing** - Prevents duplicate concurrent requests
 3. **Stale Cache Fallback** - Returns old data on rate limit (up to 2 hours old)
 
 **Cache Key Format:**
+
 ```typescript
 // Global modes (tags, daily, topic)
 `browse:${mode}:${tag}:${topic}:${mature}:${offset}`
-
 // Per-user modes (home, following, user-gallery)
-`browse:${userId}:${mode}:${username}:${offset}`
+`browse:${userId}:${mode}:${username}:${offset}`;
 ```
 
 **Examples:**
+
 ```
 browse:tags:fantasy::false:0
 browse:daily:::false:0
@@ -310,17 +333,19 @@ browse:user-gallery:someartist::0
 ### Cache TTLs
 
 **TTL Configuration:**
+
 ```typescript
 export const CacheTTL = {
-  TAG_SEARCH: 24 * 60 * 60,        // 24 hours (stable)
-  TOPICS: 60 * 60,                 // 1 hour
-  DEVIATION_METADATA: 15 * 60,     // 15 minutes
-  BROWSE_GLOBAL: 10 * 60,          // 10 minutes (tags, daily, topic)
-  BROWSE_PERSONALIZED: 5 * 60,     // 5 minutes (home, following)
+  TAG_SEARCH: 24 * 60 * 60, // 24 hours (stable)
+  TOPICS: 60 * 60, // 1 hour
+  DEVIATION_METADATA: 15 * 60, // 15 minutes
+  BROWSE_GLOBAL: 10 * 60, // 10 minutes (tags, daily, topic)
+  BROWSE_PERSONALIZED: 5 * 60, // 5 minutes (home, following)
 };
 ```
 
 **Stale Cache Window:**
+
 ```typescript
 // If cache is older than TTL but < 2 hours, still usable on rate limit
 const STALE_CACHE_MAX_AGE = 2 * 60 * 60; // 2 hours
@@ -333,6 +358,7 @@ const STALE_CACHE_MAX_AGE = 2 * 60 * 60; // 2 hours
 **Solution:** Lock mechanism prevents concurrent fetches.
 
 **Implementation:**
+
 ```typescript
 export async function getOrFetch<T>(
   cacheKey: string,
@@ -382,6 +408,7 @@ export async function getOrFetch<T>(
 ```
 
 **Benefits:**
+
 - Only 1 API call for 100 concurrent requests
 - Stale cache prevents errors on rate limit
 - Lock timeout (30s) prevents deadlocks
@@ -391,6 +418,7 @@ export async function getOrFetch<T>(
 **Scenario:** DeviantArt returns 429 (rate limited).
 
 **Behavior:**
+
 ```typescript
 if (response.status === 429) {
   // Try to return cached data even if expired (up to 2 hours old)
@@ -402,13 +430,14 @@ if (response.status === 429) {
 
   // No cache available
   return res.status(429).json({
-    error: "Rate limited by DeviantArt. Please try again later.",
-    retryAfter: 300 // 5 minutes
+    error: 'Rate limited by DeviantArt. Please try again later.',
+    retryAfter: 300, // 5 minutes
   });
 }
 ```
 
 **Why 2 Hours?**
+
 - Browse results don't change dramatically in 2 hours
 - Better UX than showing error to user
 - Prevents thundering herd on rate limit recovery
@@ -424,10 +453,15 @@ if (response.status === 429) {
 **Description:** Find similar deviations to a seed deviation.
 
 **Response:**
+
 ```json
 {
-  "deviations": [/* similar deviations */],
-  "seed": {/* the seed deviation */},
+  "deviations": [
+    /* similar deviations */
+  ],
+  "seed": {
+    /* the seed deviation */
+  },
   "author": {
     "username": "artist",
     "avatarUrl": "..."
@@ -446,11 +480,13 @@ if (response.status === 429) {
 **Description:** Get full deviation details with metadata.
 
 **Fetches:**
+
 - Basic deviation info
 - Extended metadata (tags, description, stats)
 - Download URL (if downloadable, not cached)
 
 **Response:**
+
 ```json
 {
   "deviationId": "abc123",
@@ -478,16 +514,18 @@ if (response.status === 429) {
   "isDownloadable": true,
   "isMature": false,
   "matureLevel": null,
-  "downloadUrl": "https://signed-url...",  // Fresh, not cached
+  "downloadUrl": "https://signed-url...", // Fresh, not cached
   "downloadFilesize": 2048576
 }
 ```
 
 **Cache Strategy:**
+
 - **Metadata cached:** 15 minutes
 - **Download URL NOT cached:** Time-limited signed URL fetched fresh each request
 
 **Why Not Cache Download URL?**
+
 - DeviantArt download URLs are signed with expiration (typically 1 hour)
 - Caching would serve expired URLs
 
@@ -498,11 +536,13 @@ if (response.status === 429) {
 ### Expand Parameter
 
 **All modes use expand:**
+
 ```typescript
-params.set("expand", "user.details,deviation.tier,deviation.premium_folder_data");
+params.set('expand', 'user.details,deviation.tier,deviation.premium_folder_data');
 ```
 
 **Why?**
+
 - Reduces API calls (1 request instead of N+1)
 - Gets author details, tier info, premium status in single request
 
@@ -515,6 +555,7 @@ const limit = Math.min(parseInt(req.query.limit as string) || 24, 50);
 ```
 
 **Why 50?**
+
 - DeviantArt API limit
 - Balances payload size vs. number of requests
 
@@ -527,10 +568,10 @@ function transformDeviation(deviation: any): BrowseDeviation {
   const tierAccess = deviation.tier_access || null;
 
   // Exclusive: Requires purchase
-  const isExclusive = tierAccess === "locked";
+  const isExclusive = tierAccess === 'locked';
 
   // Premium: Requires subscription
-  const isPremium = tierAccess === "locked-subscribed" || !!deviation.premium_folder_data;
+  const isPremium = tierAccess === 'locked-subscribed' || !!deviation.premium_folder_data;
 
   return {
     /* ... */
@@ -561,13 +602,14 @@ if (response.status === 429) {
 
   // 2. No cache, return error
   return res.status(429).json({
-    error: "Rate limited by DeviantArt. Please try again later.",
-    retryAfter: 300 // 5 minutes
+    error: 'Rate limited by DeviantArt. Please try again later.',
+    retryAfter: 300, // 5 minutes
   });
 }
 ```
 
 **Client Behavior:**
+
 - Disable browse for 5 minutes
 - Show cached data if available
 - Notify user of rate limit
@@ -581,7 +623,7 @@ try {
   const response = await fetch(url, { headers });
   // ...
 } catch (error) {
-  console.error("[API] Browse error:", error);
+  console.error('[API] Browse error:', error);
 
   // Try stale cache
   const cached = await getCachedBrowseResponse(cacheKey, userId, true);
@@ -589,7 +631,7 @@ try {
     return res.json(cached);
   }
 
-  res.status(500).json({ error: "Internal server error" });
+  res.status(500).json({ error: 'Internal server error' });
 }
 ```
 
@@ -604,6 +646,7 @@ try {
 **Cause:** Invalid parameters (e.g., missing required `tag` for tags mode).
 
 **Check:**
+
 ```bash
 # Tags mode requires tag param
 GET /api/browse/tags?tag=fantasy
@@ -620,6 +663,7 @@ GET /api/browse/user-gallery?username=someartist
 **Cause:** `allowStale` parameter not set to `true`.
 
 **Check:**
+
 ```typescript
 // Correct - allows stale cache on rate limit
 const result = await RedisCache.getOrFetch(
@@ -647,10 +691,9 @@ const result = await RedisCache.getOrFetch(
 ```typescript
 // Fetch fresh download URL if downloadable (not cached)
 if (result.data.isDownloadable) {
-  const downloadResponse = await fetch(
-    `${DEVIANTART_API_URL}/deviation/download/${deviationId}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  const downloadResponse = await fetch(`${DEVIANTART_API_URL}/deviation/download/${deviationId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   // ...
 }
 ```
@@ -660,6 +703,7 @@ if (result.data.isDownloadable) {
 **Cause:** Redis lock key collision or lock timeout.
 
 **Debug:**
+
 ```bash
 # Check Redis for active locks
 redis-cli KEYS "lock:browse:*"
@@ -669,6 +713,7 @@ redis-cli TTL "lock:browse:tags:fantasy::false:0"
 ```
 
 **Fix:** If locks are stuck (TTL=-1), manually delete:
+
 ```bash
 redis-cli DEL "lock:browse:tags:fantasy::false:0"
 ```
@@ -691,10 +736,12 @@ await redis.del(await redis.keys(`browse:${userId}:*`));
 ```
 
 **Automatic Expiration:**
+
 - All cache entries have TTL, auto-expire
 - No manual invalidation needed in normal operation
 
 **When to Invalidate:**
+
 - User changes watch list (invalidate `home` and `following` modes)
 - User blocks/unblocks content (invalidate personal caches)
 
@@ -712,11 +759,13 @@ await redis.del(await redis.keys(`browse:${userId}:*`));
 ## Future Enhancements
 
 **Planned Features:**
+
 - **Search:** Keyword search across all deviations
 - **Filters:** Category, date range, sort order
 - **Saved searches:** Save browse configurations
 - **Infinite scroll:** Auto-load next offset
 
 **Not Planned:**
+
 - Client-side caching (use server cache only)
 - Offline mode (requires DeviantArt API)

@@ -95,8 +95,8 @@ describe('sale-queue routes', () => {
 
   async function callRoute(method: string, path: string, req: any, res: any) {
     const routes = (saleQueueRouter as any).stack;
-    const route = routes.find((r: any) =>
-      r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
+    const route = routes.find(
+      (r: any) => r.route?.path === path && r.route?.methods?.[method.toLowerCase()]
     );
     if (!route) throw new Error(`Route not found: ${method} ${path}`);
     const handler = route.route.stack[route.route.stack.length - 1].handle;
@@ -328,7 +328,10 @@ describe('sale-queue routes', () => {
       const req = createMockRequest({
         user: mockUser,
         body: {
-          deviationIds: ['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003'],
+          deviationIds: [
+            '00000000-0000-0000-0000-000000000002',
+            '00000000-0000-0000-0000-000000000003',
+          ],
           pricePresetId: '00000000-0000-0000-0000-000000000001',
         },
       });
@@ -371,7 +374,9 @@ describe('sale-queue routes', () => {
       const res = createMockResponse();
 
       (prisma.pricePreset.findFirst as any).mockResolvedValue(mockPricePreset);
-      (prisma.deviation.findMany as any).mockResolvedValue([{ id: '00000000-0000-0000-0000-000000000002' }]);
+      (prisma.deviation.findMany as any).mockResolvedValue([
+        { id: '00000000-0000-0000-0000-000000000002' },
+      ]);
       (prisma.saleQueue.findMany as any).mockResolvedValue([
         { deviationId: '00000000-0000-0000-0000-000000000002' },
       ]);
@@ -736,7 +741,9 @@ describe('sale-queue routes', () => {
 
       (prisma.saleQueue.findFirst as any).mockResolvedValue(null);
 
-      await expect(callRoute('POST', '/:id/fail', req, res)).rejects.toThrow('Queue item not found');
+      await expect(callRoute('POST', '/:id/fail', req, res)).rejects.toThrow(
+        'Queue item not found'
+      );
     });
   });
 

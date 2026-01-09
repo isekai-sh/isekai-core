@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
 
 const router = Router();
 
@@ -32,7 +32,7 @@ const createAutomationSchema = z
       .regex(/^#[0-9A-Fa-f]{6}$/)
       .optional(),
     icon: z.string().max(10).optional(),
-    draftSelectionMethod: z.enum(["random", "fifo", "lifo"]).default("fifo"),
+    draftSelectionMethod: z.enum(['random', 'fifo', 'lifo']).default('fifo'),
     stashOnlyByDefault: z.boolean().default(false),
     jitterMinSeconds: z.number().int().min(0).max(3600).default(0),
     jitterMaxSeconds: z.number().int().min(0).max(3600).default(300),
@@ -48,7 +48,7 @@ const createAutomationSchema = z
       }
       return true;
     },
-    { message: "Must select price preset when sale queue is enabled" }
+    { message: 'Must select price preset when sale queue is enabled' }
   );
 
 const updateAutomationSchema = z.object({
@@ -60,7 +60,7 @@ const updateAutomationSchema = z.object({
     .optional(),
   icon: z.string().max(10).optional(),
   enabled: z.boolean().optional(),
-  draftSelectionMethod: z.enum(["random", "fifo", "lifo"]).optional(),
+  draftSelectionMethod: z.enum(['random', 'fifo', 'lifo']).optional(),
   stashOnlyByDefault: z.boolean().optional(),
   jitterMinSeconds: z.number().int().min(0).max(3600).optional(),
   jitterMaxSeconds: z.number().int().min(0).max(3600).optional(),
@@ -70,7 +70,7 @@ const updateAutomationSchema = z.object({
 });
 
 // Get all user's automation workflows (list view)
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const userId = req.user!.id;
 
   const automations = await prisma.automation.findMany({
@@ -78,7 +78,7 @@ router.get("/", async (req, res) => {
     include: {
       scheduleRules: {
         where: { enabled: true },
-        orderBy: { priority: "asc" },
+        orderBy: { priority: 'asc' },
       },
       saleQueuePreset: true,
       _count: {
@@ -88,7 +88,7 @@ router.get("/", async (req, res) => {
         },
       },
     },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
   });
 
   res.json({
@@ -106,7 +106,7 @@ router.get("/", async (req, res) => {
 });
 
 // Reorder automations (must come before /:id routes)
-router.patch("/reorder", async (req, res) => {
+router.patch('/reorder', async (req, res) => {
   const userId = req.user!.id;
   const { automationIds } = z
     .object({
@@ -120,7 +120,7 @@ router.patch("/reorder", async (req, res) => {
   });
 
   if (count !== automationIds.length) {
-    throw new AppError(400, "Some automations not found or not owned by user");
+    throw new AppError(400, 'Some automations not found or not owned by user');
   }
 
   // Update sort orders based on array position
@@ -137,7 +137,7 @@ router.patch("/reorder", async (req, res) => {
 });
 
 // Get single automation with full details (detail view)
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -145,19 +145,19 @@ router.get("/:id", async (req, res) => {
     where: { id, userId },
     include: {
       scheduleRules: {
-        orderBy: { priority: "asc" },
+        orderBy: { priority: 'asc' },
       },
       defaultValues: true,
       saleQueuePreset: true,
       executionLogs: {
-        orderBy: { executedAt: "desc" },
+        orderBy: { executedAt: 'desc' },
         take: 20,
       },
     },
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation not found");
+    throw new AppError(404, 'Automation not found');
   }
 
   res.json({
@@ -184,16 +184,13 @@ router.get("/:id", async (req, res) => {
 });
 
 // Create automation workflow
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const userId = req.user!.id;
   const data = createAutomationSchema.parse(req.body);
 
   // Validate jitter range
   if (data.jitterMinSeconds > data.jitterMaxSeconds) {
-    throw new AppError(
-      400,
-      "jitterMinSeconds cannot be greater than jitterMaxSeconds"
-    );
+    throw new AppError(400, 'jitterMinSeconds cannot be greater than jitterMaxSeconds');
   }
 
   // Validate sale queue preset if provided
@@ -206,7 +203,7 @@ router.post("/", async (req, res) => {
     });
 
     if (!preset) {
-      throw new AppError(404, "Price preset not found or not owned by user");
+      throw new AppError(404, 'Price preset not found or not owned by user');
     }
   }
 
@@ -215,7 +212,7 @@ router.post("/", async (req, res) => {
   if (sortOrder === undefined) {
     const maxOrder = await prisma.automation.findFirst({
       where: { userId },
-      orderBy: { sortOrder: "desc" },
+      orderBy: { sortOrder: 'desc' },
       select: { sortOrder: true },
     });
     sortOrder = (maxOrder?.sortOrder ?? 0) + 1;
@@ -248,7 +245,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update automation config
-router.patch("/:id", async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
   const data = updateAutomationSchema.parse(req.body);
@@ -259,45 +256,34 @@ router.patch("/:id", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation config not found");
+    throw new AppError(404, 'Automation config not found');
   }
 
   // Prevent updates while automation is executing
   if (automation.isExecuting) {
     throw new AppError(
       409,
-      "Cannot update automation while it is executing. Please try again in a moment."
+      'Cannot update automation while it is executing. Please try again in a moment.'
     );
   }
 
   // Validate sale queue logic: if enabling autoAddToSaleQueue, must have a preset (either in request or existing)
   if (data.autoAddToSaleQueue === true) {
     const finalPresetId =
-      data.saleQueuePresetId !== undefined
-        ? data.saleQueuePresetId
-        : automation.saleQueuePresetId;
+      data.saleQueuePresetId !== undefined ? data.saleQueuePresetId : automation.saleQueuePresetId;
 
     if (!finalPresetId) {
-      throw new AppError(
-        400,
-        "Must select price preset when enabling sale queue"
-      );
+      throw new AppError(400, 'Must select price preset when enabling sale queue');
     }
   }
 
   // Validate jitter range if being updated
-  if (
-    data.jitterMinSeconds !== undefined ||
-    data.jitterMaxSeconds !== undefined
-  ) {
+  if (data.jitterMinSeconds !== undefined || data.jitterMaxSeconds !== undefined) {
     const minSeconds = data.jitterMinSeconds ?? automation.jitterMinSeconds;
     const maxSeconds = data.jitterMaxSeconds ?? automation.jitterMaxSeconds;
 
     if (minSeconds > maxSeconds) {
-      throw new AppError(
-        400,
-        "jitterMinSeconds cannot be greater than jitterMaxSeconds"
-      );
+      throw new AppError(400, 'jitterMinSeconds cannot be greater than jitterMaxSeconds');
     }
   }
 
@@ -311,7 +297,7 @@ router.patch("/:id", async (req, res) => {
     });
 
     if (!preset) {
-      throw new AppError(404, "Price preset not found or not owned by user");
+      throw new AppError(404, 'Price preset not found or not owned by user');
     }
   }
 
@@ -322,10 +308,7 @@ router.patch("/:id", async (req, res) => {
     });
 
     if (ruleCount === 0) {
-      throw new AppError(
-        400,
-        "Cannot enable automation without at least one active schedule rule"
-      );
+      throw new AppError(400, 'Cannot enable automation without at least one active schedule rule');
     }
   }
 
@@ -344,7 +327,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete automation config
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -354,14 +337,14 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation config not found");
+    throw new AppError(404, 'Automation config not found');
   }
 
   // Prevent deletion while automation is executing
   if (automation.isExecuting) {
     throw new AppError(
       409,
-      "Cannot delete automation while it is executing. Please try again in a moment."
+      'Cannot delete automation while it is executing. Please try again in a moment.'
     );
   }
 
@@ -373,7 +356,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Toggle automation (enable/disable)
-router.post("/:id/toggle", async (req, res) => {
+router.post('/:id/toggle', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -383,7 +366,7 @@ router.post("/:id/toggle", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation config not found");
+    throw new AppError(404, 'Automation config not found');
   }
 
   const newEnabledState = !automation.enabled;
@@ -395,10 +378,7 @@ router.post("/:id/toggle", async (req, res) => {
     });
 
     if (ruleCount === 0) {
-      throw new AppError(
-        400,
-        "Cannot enable automation without at least one active schedule rule"
-      );
+      throw new AppError(400, 'Cannot enable automation without at least one active schedule rule');
     }
   }
 
@@ -417,7 +397,7 @@ router.post("/:id/toggle", async (req, res) => {
 });
 
 // Get execution logs (paginated)
-router.get("/:id/logs", async (req, res) => {
+router.get('/:id/logs', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
   const page = parseInt(req.query.page as string) || 1;
@@ -430,13 +410,13 @@ router.get("/:id/logs", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation config not found");
+    throw new AppError(404, 'Automation config not found');
   }
 
   const [logs, total] = await Promise.all([
     prisma.automationExecutionLog.findMany({
       where: { automationId: id },
-      orderBy: { executedAt: "desc" },
+      orderBy: { executedAt: 'desc' },
       skip,
       take: limit,
     }),
@@ -460,7 +440,7 @@ router.get("/:id/logs", async (req, res) => {
 });
 
 // Test automation (manually trigger)
-router.post("/:id/test", async (req, res) => {
+router.post('/:id/test', async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.id;
 
@@ -474,20 +454,17 @@ router.post("/:id/test", async (req, res) => {
   });
 
   if (!automation) {
-    throw new AppError(404, "Automation config not found");
+    throw new AppError(404, 'Automation config not found');
   }
 
   if (automation.scheduleRules.length === 0) {
-    throw new AppError(
-      400,
-      "Cannot test automation without at least one active schedule rule"
-    );
+    throw new AppError(400, 'Cannot test automation without at least one active schedule rule');
   }
 
   // For testing, we'll just validate the config and return a preview
   // The actual scheduling will be done by the background job
   res.json({
-    message: "Test triggered successfully",
+    message: 'Test triggered successfully',
     config: {
       enabled: automation.enabled,
       draftSelectionMethod: automation.draftSelectionMethod,

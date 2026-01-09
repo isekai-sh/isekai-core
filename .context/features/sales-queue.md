@@ -10,12 +10,14 @@
 The **Sales Queue** allows users to batch-process pricing for exclusive content on DeviantArt. Instead of manually setting prices one-by-one, users can queue deviations with price presets and process them in batches.
 
 **Use Cases:**
+
 - Set pricing for multiple exclusive artworks at once
 - Apply variable pricing (random price within range)
 - Track pricing progress with status tracking
 - Store screenshot proof of pricing
 
 **Workflow:**
+
 ```
 Published Deviation
   ↓ (add to queue with price preset)
@@ -31,6 +33,7 @@ skipped (user manually skipped)
 ```
 
 **Related Files:**
+
 - `/apps/isekai-backend/src/routes/sale-queue.ts` - API routes
 - `/apps/isekai-backend/src/routes/price-presets.ts` - Price preset management
 - `/packages/shared/prisma/schema.prisma` - SaleQueue and PricePreset models
@@ -42,6 +45,7 @@ skipped (user manually skipped)
 ### Sale Queue Entry
 
 **Fields:**
+
 ```typescript
 {
   id: string,
@@ -68,6 +72,7 @@ skipped (user manually skipped)
 **Purpose:** Reusable pricing template for exclusive content.
 
 **Fields:**
+
 ```typescript
 {
   id: string,
@@ -86,10 +91,11 @@ skipped (user manually skipped)
 **Pricing Logic:**
 
 #### Fixed Price
+
 ```json
 {
   "name": "Standard",
-  "price": 5000,     // $50.00
+  "price": 5000, // $50.00
   "minPrice": null,
   "maxPrice": null
 }
@@ -98,16 +104,18 @@ skipped (user manually skipped)
 **Result:** All deviations use $50.00.
 
 #### Variable Price
+
 ```json
 {
   "name": "Variable",
-  "price": 5000,      // Fallback if calculation fails
-  "minPrice": 3000,   // $30.00
-  "maxPrice": 10000   // $100.00
+  "price": 5000, // Fallback if calculation fails
+  "minPrice": 3000, // $30.00
+  "maxPrice": 10000 // $100.00
 }
 ```
 
 **Calculation:**
+
 ```typescript
 const range = maxPrice - minPrice;
 const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
@@ -126,6 +134,7 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 **GET /api/sale-queue**
 
 **Query Params:**
+
 ```typescript
 {
   status?: "pending" | "processing" | "completed" | "failed" | "skipped",
@@ -135,6 +144,7 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 ```
 
 **Response:**
+
 ```json
 {
   "items": [
@@ -181,6 +191,7 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 **POST /api/sale-queue**
 
 **Body:**
+
 ```json
 {
   "deviationIds": ["deviation-uuid-1", "deviation-uuid-2"],
@@ -189,6 +200,7 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 ```
 
 **Validation:**
+
 - Max 50 deviations per request (batch limit)
 - Deviations must be published (`status: "published"`)
 - Deviations must have `deviationUrl` (DeviantArt URL)
@@ -196,6 +208,7 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 - Price preset must belong to requesting user
 
 **Response:**
+
 ```json
 {
   "created": 2,
@@ -205,10 +218,12 @@ const finalPrice = minPrice + Math.floor(Math.random() * (range + 1));
 ```
 
 **De-Duplication:**
+
 - Existing queue entries for same deviation are skipped
 - Only new deviations are added
 
 **Price Calculation:**
+
 ```typescript
 let finalPrice: number;
 if (preset.minPrice !== null && preset.maxPrice !== null) {
@@ -222,12 +237,12 @@ if (preset.minPrice !== null && preset.maxPrice !== null) {
 
 // Create queue entries
 await prisma.saleQueue.createMany({
-  data: deviationIds.map(deviationId => ({
+  data: deviationIds.map((deviationId) => ({
     userId,
     deviationId,
     pricePresetId,
-    price: finalPrice,  // Same price for all in batch
-  }))
+    price: finalPrice, // Same price for all in batch
+  })),
 });
 ```
 
@@ -238,6 +253,7 @@ await prisma.saleQueue.createMany({
 **PATCH /api/sale-queue/:id**
 
 **Body:**
+
 ```json
 {
   "status": "completed",
@@ -248,14 +264,16 @@ await prisma.saleQueue.createMany({
 ```
 
 **Use Cases:**
+
 - Mark as completed after manual pricing
 - Mark as skipped to skip processing
 - Update error message after failed attempt
 
 **Automatic Fields:**
+
 ```typescript
 {
-  completedAt: data.status === "completed" ? new Date() : null
+  completedAt: data.status === 'completed' ? new Date() : null;
 }
 ```
 
@@ -283,6 +301,7 @@ processing
 ```
 
 **Manual Transitions:**
+
 ```
 pending → skipped (user skips)
 failed → pending (user retries)
@@ -290,13 +309,13 @@ failed → pending (user retries)
 
 ### Status Definitions
 
-| Status | Description | Next Actions |
-|--------|-------------|--------------|
-| `pending` | Waiting for processing | Worker picks up |
-| `processing` | Currently being processed | Wait for completion |
-| `completed` | Price successfully set | View on DeviantArt |
-| `failed` | Processing failed (max retries) | View error, fix, retry |
-| `skipped` | User manually skipped | Re-queue if needed |
+| Status       | Description                     | Next Actions           |
+| ------------ | ------------------------------- | ---------------------- |
+| `pending`    | Waiting for processing          | Worker picks up        |
+| `processing` | Currently being processed       | Wait for completion    |
+| `completed`  | Price successfully set          | View on DeviantArt     |
+| `failed`     | Processing failed (max retries) | View error, fix, retry |
+| `skipped`    | User manually skipped           | Re-queue if needed     |
 
 ---
 
@@ -307,6 +326,7 @@ failed → pending (user retries)
 **POST /api/price-presets**
 
 **Fixed Price Example:**
+
 ```json
 {
   "name": "Standard $50",
@@ -317,6 +337,7 @@ failed → pending (user retries)
 ```
 
 **Variable Price Example:**
+
 ```json
 {
   "name": "Variable $30-$100",
@@ -329,33 +350,36 @@ failed → pending (user retries)
 ```
 
 **Validation:**
+
 ```typescript
 const createPresetSchema = z.object({
   name: z.string().min(1).max(100),
-  price: z.number().int().min(100).max(100000),  // $1.00 to $1000.00
+  price: z.number().int().min(100).max(100000), // $1.00 to $1000.00
   minPrice: z.number().int().min(100).max(100000).optional(),
   maxPrice: z.number().int().min(100).max(100000).optional(),
-  currency: z.enum(["USD"]),  // Only USD supported
+  currency: z.enum(['USD']), // Only USD supported
   isDefault: z.boolean().default(false),
 });
 ```
 
 **Range Validation:**
+
 ```typescript
 if (minPrice && maxPrice && minPrice > maxPrice) {
-  throw new AppError(400, "minPrice cannot be greater than maxPrice");
+  throw new AppError(400, 'minPrice cannot be greater than maxPrice');
 }
 ```
 
 ### Default Preset
 
 **Only one preset can be default:**
+
 ```typescript
 if (data.isDefault) {
   // Unset existing default
   await prisma.pricePreset.updateMany({
     where: { userId, isDefault: true },
-    data: { isDefault: false }
+    data: { isDefault: false },
   });
 }
 ```
@@ -369,6 +393,7 @@ if (data.isDefault) {
 ### Auto-Add to Sale Queue
 
 **Automation Config:**
+
 ```json
 {
   "autoAddToSaleQueue": true,
@@ -402,12 +427,13 @@ if (automation.autoAddToSaleQueue && automation.saleQueuePresetId) {
       deviationId,
       pricePresetId: automation.saleQueuePresetId,
       price: calculatePrice(preset),
-    }
+    },
   });
 }
 ```
 
 **Protection Defaults Explained:**
+
 - **displayResolution: 8** - 1920px with watermark support (prevents full-res free downloads)
 - **addWatermark: true** - Adds watermark to preview (protects exclusive content)
 - **allowFreeDownload: false** - Disables free download button (forces purchase)
@@ -432,10 +458,10 @@ const queueItem = await prisma.$transaction(async (tx) => {
       status: 'pending',
       OR: [
         { lockedAt: null },
-        { lockedAt: { lt: new Date(Date.now() - 5 * 60 * 1000) } } // Stale lock (5 min)
-      ]
+        { lockedAt: { lt: new Date(Date.now() - 5 * 60 * 1000) } }, // Stale lock (5 min)
+      ],
     },
-    orderBy: { createdAt: 'asc' }
+    orderBy: { createdAt: 'asc' },
   });
 
   if (!next) return null;
@@ -448,8 +474,8 @@ const queueItem = await prisma.$transaction(async (tx) => {
       processingBy: workerId,
       lockedAt: new Date(),
       lastAttemptAt: new Date(),
-      attempts: { increment: 1 }
-    }
+      attempts: { increment: 1 },
+    },
   });
 
   return next;
@@ -473,8 +499,8 @@ try {
       completedAt: new Date(),
       screenshotKey,
       processingBy: null,
-      lockedAt: null
-    }
+      lockedAt: null,
+    },
   });
 } catch (error) {
   // Handle failure
@@ -488,13 +514,14 @@ try {
       errorMessage: error.message,
       errorDetails: { stack: error.stack, code: error.code },
       processingBy: null,
-      lockedAt: null
-    }
+      lockedAt: null,
+    },
   });
 }
 ```
 
 **Why Not Implemented?**
+
 - Requires browser automation (Puppeteer/Playwright)
 - DeviantArt doesn't have API endpoint for setting prices
 - Must interact with web UI programmatically (complex, fragile)
@@ -508,16 +535,19 @@ try {
 **Max Attempts:** 3
 
 **Transient Errors (Retryable):**
+
 - Network timeout
 - DeviantArt server error (5xx)
 - Temporary UI changes
 
 **Permanent Errors (Not Retryable):**
+
 - Deviation not found (deleted from DeviantArt)
 - Invalid price (out of allowed range)
 - Authentication failure (requires re-login)
 
 **Retry Backoff:**
+
 ```typescript
 const backoffMs = Math.min(2000 * Math.pow(2, attempts), 60000);
 // Attempt 1: 2s
@@ -528,6 +558,7 @@ const backoffMs = Math.min(2000 * Math.pow(2, attempts), 60000);
 ### Error Details
 
 **Stored in `errorDetails` JSON:**
+
 ```json
 {
   "stack": "Error: Failed to set price\n    at ...",
@@ -547,23 +578,26 @@ const backoffMs = Math.min(2000 * Math.pow(2, attempts), 60000);
 **Purpose:** Store proof that price was set correctly (for auditing/disputes).
 
 **Storage:**
+
 ```typescript
 const screenshotKey = `sale-queue/${queueItemId}/proof.png`;
 await storage.upload(screenshot, screenshotKey);
 
 await prisma.saleQueue.update({
   where: { id: queueItemId },
-  data: { screenshotKey }
+  data: { screenshotKey },
 });
 ```
 
 **Retrieval:**
+
 ```typescript
 const presignedUrl = await storage.getPresignedUrl(screenshotKey, 'getObject', 3600);
 // User can download screenshot for 1 hour
 ```
 
 **Use Cases:**
+
 - Verify pricing was applied
 - Resolve disputes ("price not set correctly")
 - Debugging failed attempts
@@ -577,18 +611,19 @@ const presignedUrl = await storage.getPresignedUrl(screenshotKey, 'getObject', 3
 **Cause:** Deviation not published or missing `deviationUrl`.
 
 **Check:**
+
 ```typescript
 const deviation = await prisma.deviation.findUnique({
   where: { id: deviationId },
-  select: { status: true, deviationUrl: true }
+  select: { status: true, deviationUrl: true },
 });
 
 if (deviation.status !== 'published') {
-  throw new AppError(400, "Deviation must be published");
+  throw new AppError(400, 'Deviation must be published');
 }
 
 if (!deviation.deviationUrl) {
-  throw new AppError(400, "Deviation must have DeviantArt URL");
+  throw new AppError(400, 'Deviation must have DeviantArt URL');
 }
 ```
 
@@ -597,20 +632,22 @@ if (!deviation.deviationUrl) {
 **Expected Behavior:** When using variable pricing, all deviations in a single batch get the same random price.
 
 **Reason:**
+
 ```typescript
 // Price calculated ONCE per batch
 const finalPrice = preset.minPrice + Math.floor(Math.random() * (range + 1));
 
 // Applied to ALL deviations
 await prisma.saleQueue.createMany({
-  data: deviationIds.map(deviationId => ({
-    price: finalPrice,  // Same for all
+  data: deviationIds.map((deviationId) => ({
+    price: finalPrice, // Same for all
     /* ... */
-  }))
+  })),
 });
 ```
 
 **Solution:** Add deviations one-by-one for different prices:
+
 ```bash
 # Each request gets different random price
 POST /api/sale-queue {"deviationIds": ["dev-1"], "pricePresetId": "preset-uuid"}
@@ -623,23 +660,24 @@ POST /api/sale-queue {"deviationIds": ["dev-3"], "pricePresetId": "preset-uuid"}
 **Cause:** Worker crashed or stale lock.
 
 **Solution:** Lock cleanup (manual):
+
 ```typescript
 // Find stale locks (>5 minutes old)
 const staleItems = await prisma.saleQueue.findMany({
   where: {
     status: 'processing',
-    lockedAt: { lt: new Date(Date.now() - 5 * 60 * 1000) }
-  }
+    lockedAt: { lt: new Date(Date.now() - 5 * 60 * 1000) },
+  },
 });
 
 // Reset to pending
 await prisma.saleQueue.updateMany({
-  where: { id: { in: staleItems.map(i => i.id) } },
+  where: { id: { in: staleItems.map((i) => i.id) } },
   data: {
     status: 'pending',
     processingBy: null,
-    lockedAt: null
-  }
+    lockedAt: null,
+  },
 });
 ```
 
@@ -650,6 +688,7 @@ await prisma.saleQueue.updateMany({
 ### Batch Limits
 
 **Max 50 deviations per batch:**
+
 ```typescript
 const addToQueueSchema = z.object({
   deviationIds: z.array(z.string().uuid()).min(1).max(50),
@@ -658,17 +697,20 @@ const addToQueueSchema = z.object({
 ```
 
 **Why 50?**
+
 - Prevents large single-transaction payload
 - Balances UX (batch efficiency) vs. safety (rollback on error)
 
 ### Query Optimization
 
 **Index on status + createdAt:**
+
 ```sql
 CREATE INDEX idx_sale_queue_status_created ON sale_queue(status, created_at);
 ```
 
 **Why?** Worker frequently queries:
+
 ```sql
 SELECT * FROM sale_queue WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1;
 ```
@@ -687,11 +729,13 @@ SELECT * FROM sale_queue WHERE status = 'pending' ORDER BY created_at ASC LIMIT 
 ## Future Enhancements
 
 **Planned Features:**
+
 - **Browser automation:** Auto-process queue with Puppeteer
 - **Bulk operations:** Process all pending items
 - **Priority queue:** High-priority items processed first
 - **Scheduling:** Process queue at specific times
 
 **Not Planned:**
+
 - Multi-currency support (DeviantArt uses USD only)
 - Discounts/sales (DeviantArt doesn't support time-limited pricing)

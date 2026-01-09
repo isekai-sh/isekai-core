@@ -16,7 +16,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createMockRequest, createMockResponse, createMockNext } from '../test-helpers/express-mock.js';
+import {
+  createMockRequest,
+  createMockResponse,
+  createMockNext,
+} from '../test-helpers/express-mock.js';
 
 // Mock Prisma
 vi.mock('../db/index.js', () => ({
@@ -47,8 +51,8 @@ describe('hybridAuthMiddleware', () => {
 
     // Restore default mock implementations after clearing
     (hashApiKey as any).mockImplementation((key: string) => `hashed_${key}`);
-    (isValidApiKeyFormat as any).mockImplementation((key: string) =>
-      key.startsWith('isk_') && key.length === 68
+    (isValidApiKeyFormat as any).mockImplementation(
+      (key: string) => key.startsWith('isk_') && key.length === 68
     );
   });
 
@@ -406,10 +410,7 @@ describe('hybridAuthMiddleware', () => {
       await hybridAuthMiddleware(req as any, res as any, next);
 
       expect(destroySpy).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[Auth] Session destroy error:',
-        destroyError
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[Auth] Session destroy error:', destroyError);
       expect(res.status).toHaveBeenCalledWith(401);
 
       consoleErrorSpy.mockRestore();

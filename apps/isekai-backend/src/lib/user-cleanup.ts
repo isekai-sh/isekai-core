@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { prisma } from "../db/index.js";
-import { logger } from "./logger.js";
-import { deviationPublisherQueue } from "../queues/deviation-publisher.js";
-import { queueStorageCleanup } from "../queues/storage-cleanup.js";
-import { RedisClientManager } from "./redis-client.js";
-import { CACHE_PREFIX, CACHE_VERSION, CacheNamespace } from "./cache-keys.js";
+import { prisma } from '../db/index.js';
+import { logger } from './logger.js';
+import { deviationPublisherQueue } from '../queues/deviation-publisher.js';
+import { queueStorageCleanup } from '../queues/storage-cleanup.js';
+import { RedisClientManager } from './redis-client.js';
+import { CACHE_PREFIX, CACHE_VERSION, CacheNamespace } from './cache-keys.js';
 
 export interface CleanupResult {
   userId: string;
@@ -53,13 +53,13 @@ async function cancelUserJobs(userId: string): Promise<number> {
       if (job) {
         const state = await job.getState();
 
-        if (state === "active") {
+        if (state === 'active') {
           // Job is currently running - mark deviation for cleanup
           await prisma.deviation.update({
             where: { id: deviation.id },
-            data: { status: "failed", errorMessage: "User removed from instance" },
+            data: { status: 'failed', errorMessage: 'User removed from instance' },
           });
-          logger.warn("Job active during cleanup, marked as failed", {
+          logger.warn('Job active during cleanup, marked as failed', {
             jobId,
             deviationId: deviation.id,
           });
@@ -70,7 +70,7 @@ async function cancelUserJobs(userId: string): Promise<number> {
         }
       }
     } catch (error) {
-      logger.error("Failed to cancel job", {
+      logger.error('Failed to cancel job', {
         jobId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -107,7 +107,7 @@ async function clearUserRedisCache(userId: string): Promise<number> {
         totalDeleted += keys.length;
       }
     } catch (error) {
-      logger.error("Failed to clear cache keys", {
+      logger.error('Failed to clear cache keys', {
         pattern,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -135,12 +135,12 @@ export async function cleanupUserData(userId: string): Promise<CleanupResult> {
   };
 
   try {
-    logger.info("Starting user cleanup", { userId });
+    logger.info('Starting user cleanup', { userId });
 
     // 1. Cancel all pending jobs for this user
     const cancelledJobs = await cancelUserJobs(userId);
     result.jobsCancelled = cancelledJobs;
-    logger.info("Cancelled pending jobs", { userId, count: cancelledJobs });
+    logger.info('Cancelled pending jobs', { userId, count: cancelledJobs });
 
     // 2. Get all deviations with files and queue storage cleanup
     const deviations = await prisma.deviation.findMany({
@@ -154,27 +154,27 @@ export async function cleanupUserData(userId: string): Promise<CleanupResult> {
         result.filesQueued += deviation.files.length;
       }
     }
-    logger.info("Queued storage cleanup", { userId, files: result.filesQueued });
+    logger.info('Queued storage cleanup', { userId, files: result.filesQueued });
 
     // 3. Clear Redis cache for this user
     const cacheDeleted = await clearUserRedisCache(userId);
     result.cacheKeysDeleted = cacheDeleted;
-    logger.info("Cleared Redis cache", { userId, keys: cacheDeleted });
+    logger.info('Cleared Redis cache', { userId, keys: cacheDeleted });
 
     // 4. Delete User record (cascades: deviations, files, api keys, etc.)
     await prisma.user.delete({
       where: { id: userId },
     });
-    logger.info("Deleted user record", { userId });
+    logger.info('Deleted user record', { userId });
 
     result.success = true;
     return result;
   } catch (error) {
-    logger.error("User cleanup failed", {
+    logger.error('User cleanup failed', {
       userId,
       error: error instanceof Error ? error.message : String(error),
     });
-    result.error = error instanceof Error ? error.message : "Unknown error";
+    result.error = error instanceof Error ? error.message : 'Unknown error';
     throw error;
   }
 }

@@ -10,6 +10,7 @@
 Isekai Core frontend uses **React 18 with TypeScript**, **shadcn/ui + Radix UI** for components, and **Tailwind CSS** for styling.
 
 **Key Libraries:**
+
 - **shadcn/ui** - Accessible, customizable component library
 - **Radix UI** - Unstyled, accessible UI primitives
 - **@dnd-kit** - Drag-and-drop functionality
@@ -26,6 +27,7 @@ Isekai Core frontend uses **React 18 with TypeScript**, **shadcn/ui + Radix UI**
 **Location:** `apps/isekai-frontend/src/components/ui/`
 
 **Available Components:**
+
 - `alert-dialog.tsx` - Modal dialogs with actions
 - `avatar.tsx` - User avatars with fallback
 - `badge.tsx` - Status badges
@@ -50,9 +52,9 @@ Isekai Core frontend uses **React 18 with TypeScript**, **shadcn/ui + Radix UI**
 **Usage Pattern:**
 
 ```tsx
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 function MyComponent() {
   return (
@@ -80,8 +82,8 @@ function MyComponent() {
 **Pattern:**
 
 ```tsx
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 function SortableList({ items }: { items: Item[] }) {
   const [sortedItems, setSortedItems] = useState(items);
@@ -110,6 +112,7 @@ function SortableList({ items }: { items: Item[] }) {
 ```
 
 **Use Cases:**
+
 - File uploader (`DeviationUploader.tsx`)
 - Gallery item reordering
 - Schedule rule priority
@@ -125,7 +128,7 @@ function SortableList({ items }: { items: Item[] }) {
 **Pattern:**
 
 ```tsx
-import { useDropzone } from "react-dropzone";
+import { useDropzone } from 'react-dropzone';
 
 function DeviationUploader() {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -142,8 +145,8 @@ function DeviationUploader() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp"],
-      "video/*": [".mp4", ".webm"],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp'],
+      'video/*': ['.mp4', '.webm'],
     },
     maxSize: 30 * 1024 * 1024, // 30MB
   });
@@ -158,6 +161,7 @@ function DeviationUploader() {
 ```
 
 **Features:**
+
 - File type validation (images, videos)
 - Size limit (30MB)
 - Preview generation
@@ -174,17 +178,17 @@ function DeviationUploader() {
 **Pattern:**
 
 ```tsx
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 function ScheduleCalendar({ deviations }: { deviations: Deviation[] }) {
   const events = deviations.map((deviation) => ({
     id: deviation.id,
     title: deviation.title,
     start: deviation.actualPublishAt,
-    color: deviation.status === "scheduled" ? "#3b82f6" : "#10b981",
+    color: deviation.status === 'scheduled' ? '#3b82f6' : '#10b981',
   }));
 
   return (
@@ -195,9 +199,9 @@ function ScheduleCalendar({ deviations }: { deviations: Deviation[] }) {
       editable={true}
       selectable={true}
       headerToolbar={{
-        left: "prev,next today",
-        center: "title",
-        right: "dayGridMonth,timeGridWeek,timeGridDay",
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay',
       }}
     />
   );
@@ -205,6 +209,7 @@ function ScheduleCalendar({ deviations }: { deviations: Deviation[] }) {
 ```
 
 **Views:**
+
 - Month view (default)
 - Week view
 - Day view
@@ -220,13 +225,13 @@ function ScheduleCalendar({ deviations }: { deviations: Deviation[] }) {
 **Pattern:**
 
 ```tsx
-import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
+import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 
 function DeviationTable({ data }: { data: Deviation[] }) {
   const columns = [
-    { accessorKey: "title", header: "Title" },
-    { accessorKey: "status", header: "Status" },
-    { accessorKey: "actualPublishAt", header: "Publish At" },
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'actualPublishAt', header: 'Publish At' },
   ];
 
   const table = useReactTable({
@@ -252,9 +257,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
         {table.getRowModel().rows.map((row) => (
           <tr key={row.id}>
             {row.getVisibleCells().map((cell) => (
-              <td key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
+              <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
             ))}
           </tr>
         ))}
@@ -275,6 +278,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Location:** `apps/isekai-frontend/src/components/layouts/AppLayout.tsx`
 
 **Features:**
+
 - Sidebar navigation
 - User avatar with dropdown
 - Breadcrumbs
@@ -283,7 +287,13 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Usage:**
 
 ```tsx
-<Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+<Route
+  element={
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  }
+>
   <Route path="/browse" element={<Browse />} />
   <Route path="/draft" element={<Draft />} />
 </Route>
@@ -314,6 +324,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Location:** `apps/isekai-frontend/src/components/FilePreview.tsx`
 
 **Features:**
+
 - Image/video preview
 - Remove button
 - Drag handle (via @dnd-kit)
@@ -322,10 +333,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Usage:**
 
 ```tsx
-<FilePreview
-  file={fileWithPreview}
-  onRemove={() => removeFile(file.id)}
-/>
+<FilePreview file={fileWithPreview} onRemove={() => removeFile(file.id)} />
 ```
 
 ### GallerySelector
@@ -335,6 +343,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Location:** `apps/isekai-frontend/src/components/GallerySelector.tsx`
 
 **Features:**
+
 - Fetch user galleries via API
 - Filter by folder type
 - Create new folders
@@ -346,6 +355,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Location:** `apps/isekai-frontend/src/components/AutomationCard.tsx`
 
 **Features:**
+
 - Rule summary (days, times)
 - Active/inactive toggle
 - Edit/delete actions
@@ -395,6 +405,7 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Location:** `apps/isekai-frontend/src/index.css`
 
 **Theme Variables:**
+
 - `--background` - Page background
 - `--foreground` - Text color
 - `--primary` - Primary color
@@ -413,21 +424,12 @@ function DeviationTable({ data }: { data: Deviation[] }) {
 **Common Icons:**
 
 ```tsx
-import {
-  Upload,
-  Calendar,
-  Send,
-  Trash,
-  Edit,
-  Settings,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Upload, Calendar, Send, Trash, Edit, Settings, CheckCircle, XCircle } from 'lucide-react';
 
 <Button>
   <Upload className="mr-2 h-4 w-4" />
   Upload Files
-</Button>
+</Button>;
 ```
 
 ---
@@ -439,25 +441,25 @@ import {
 **Pattern:**
 
 ```tsx
-import { toast } from "@/hooks/use-toast";
+import { toast } from '@/hooks/use-toast';
 
 // Success
 toast({
-  title: "Success",
-  description: "Deviation uploaded successfully.",
+  title: 'Success',
+  description: 'Deviation uploaded successfully.',
 });
 
 // Error
 toast({
-  title: "Error",
-  description: "Failed to upload deviation.",
-  variant: "destructive",
+  title: 'Error',
+  description: 'Failed to upload deviation.',
+  variant: 'destructive',
 });
 
 // With action
 toast({
-  title: "Scheduled",
-  description: "Deviation scheduled for tomorrow.",
+  title: 'Scheduled',
+  description: 'Deviation scheduled for tomorrow.',
   action: <Button size="sm">View</Button>,
 });
 ```
@@ -469,6 +471,7 @@ toast({
 **Purpose:** Customizable branding for multi-tenant deployments.
 
 **Features:**
+
 - Custom product name
 - Custom logo URL
 - Custom favicon URL

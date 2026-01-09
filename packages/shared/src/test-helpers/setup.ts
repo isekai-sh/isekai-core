@@ -24,12 +24,9 @@ beforeAll(() => {
 
   // Filter process warnings
   const originalEmit = process.emit;
-  // @ts-ignore - process.emit type doesn't match perfectly
+  // @ts-expect-error - process.emit type doesn't match perfectly
   process.emit = function (event: any, ...args: any[]) {
-    if (
-      event === 'warning' &&
-      args[0]?.name === 'MaxListenersExceededWarning'
-    ) {
+    if (event === 'warning' && args[0]?.name === 'MaxListenersExceededWarning') {
       return false;
     }
     return originalEmit.apply(process, [event, ...args]);

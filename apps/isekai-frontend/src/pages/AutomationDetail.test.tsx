@@ -134,12 +134,8 @@ describe('AutomationDetail', () => {
 
   it('should render loading state', () => {
     vi.mocked(automations.get).mockImplementation(() => new Promise(() => {}));
-    vi.mocked(automationScheduleRules.list).mockImplementation(
-      () => new Promise(() => {})
-    );
-    vi.mocked(automationDefaultValues.list).mockImplementation(
-      () => new Promise(() => {})
-    );
+    vi.mocked(automationScheduleRules.list).mockImplementation(() => new Promise(() => {}));
+    vi.mocked(automationDefaultValues.list).mockImplementation(() => new Promise(() => {}));
     vi.mocked(pricePresets.list).mockImplementation(() => new Promise(() => {}));
 
     const { container } = render(<AutomationDetail />);
@@ -157,14 +153,15 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Workflow Not Found')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Workflow Not Found')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(
-      screen.getByText(
-        /The automation workflow you're looking for doesn't exist/
-      )
+      screen.getByText(/The automation workflow you're looking for doesn't exist/)
     ).toBeInTheDocument();
 
     unmount();
@@ -181,9 +178,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('Post daily at 9 AM')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
@@ -201,9 +201,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('09:00')).toBeInTheDocument();
     expect(screen.getByText('Mon, Wed, Fri')).toBeInTheDocument();
@@ -221,9 +224,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('tags')).toBeInTheDocument();
     unmount();
@@ -240,9 +246,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('2 posts')).toBeInTheDocument();
     unmount();
@@ -256,13 +265,16 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Error',
-        description: 'Failed to load',
-        variant: 'destructive',
-      });
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockToast).toHaveBeenCalledWith({
+          title: 'Error',
+          description: 'Failed to load',
+          variant: 'destructive',
+        });
+      },
+      { timeout: 3000 }
+    );
     unmount();
   });
 
@@ -277,9 +289,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     const backLink = screen.getByText('Back to Workflows');
     expect(backLink).toBeInTheDocument();
@@ -305,9 +320,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getAllByText('Standard Price').length).toBeGreaterThan(0);
     unmount();
@@ -324,9 +342,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('No rules yet')).toBeInTheDocument();
     unmount();
@@ -343,9 +364,12 @@ describe('AutomationDetail', () => {
 
     const { unmount } = render(<AutomationDetail />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Daily Posts')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Daily Posts')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByText('No activity yet')).toBeInTheDocument();
     unmount();

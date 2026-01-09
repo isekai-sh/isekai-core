@@ -15,17 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
-import { deleteFromStorage } from "../lib/upload-service.js";
+import { Router } from 'express';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
+import { deleteFromStorage } from '../lib/upload-service.js';
 
 const router = Router();
 
 // Get all deviations in review status
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const user = req.user!;
-  const { page = "1", limit = "20" } = req.query;
+  const { page = '1', limit = '20' } = req.query;
 
   const pageNum = parseInt(page as string, 10);
   const limitNum = parseInt(limit as string, 10);
@@ -34,9 +34,9 @@ router.get("/", async (req, res) => {
   const reviewDeviations = await prisma.deviation.findMany({
     where: {
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     take: limitNum,
     skip: offset,
     include: {
@@ -48,7 +48,7 @@ router.get("/", async (req, res) => {
   const total = await prisma.deviation.count({
     where: {
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
   });
 
@@ -67,7 +67,7 @@ router.get("/", async (req, res) => {
 });
 
 // Approve single deviation (move to draft)
-router.post("/:id/approve", async (req, res) => {
+router.post('/:id/approve', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -75,18 +75,18 @@ router.post("/:id/approve", async (req, res) => {
     where: {
       id,
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
   });
 
   if (!deviation) {
-    throw new AppError(404, "Review deviation not found");
+    throw new AppError(404, 'Review deviation not found');
   }
 
   const updated = await prisma.deviation.update({
     where: { id },
     data: {
-      status: "draft",
+      status: 'draft',
       updatedAt: new Date(),
     },
   });
@@ -103,7 +103,7 @@ router.post("/:id/approve", async (req, res) => {
 });
 
 // Reject single deviation (delete)
-router.post("/:id/reject", async (req, res) => {
+router.post('/:id/reject', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -111,20 +111,18 @@ router.post("/:id/reject", async (req, res) => {
     where: {
       id,
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
     include: { files: true },
   });
 
   if (!deviation) {
-    throw new AppError(404, "Review deviation not found");
+    throw new AppError(404, 'Review deviation not found');
   }
 
   // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
-    await Promise.allSettled(
-      deviation.files.map((file) => deleteFromStorage(file.storageKey))
-    );
+    await Promise.allSettled(deviation.files.map((file) => deleteFromStorage(file.storageKey)));
   }
 
   // Delete deviation (cascade deletes files)
@@ -134,12 +132,12 @@ router.post("/:id/reject", async (req, res) => {
 });
 
 // Batch approve deviations
-router.post("/batch-approve", async (req, res) => {
+router.post('/batch-approve', async (req, res) => {
   const { deviationIds } = req.body;
   const user = req.user!;
 
   if (!Array.isArray(deviationIds) || deviationIds.length === 0) {
-    throw new AppError(400, "deviationIds array is required");
+    throw new AppError(400, 'deviationIds array is required');
   }
 
   // Fetch review deviations only
@@ -147,19 +145,19 @@ router.post("/batch-approve", async (req, res) => {
     where: {
       id: { in: deviationIds },
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
   });
 
   if (reviewDeviations.length !== deviationIds.length) {
-    throw new AppError(400, "Can only approve review deviations you own");
+    throw new AppError(400, 'Can only approve review deviations you own');
   }
 
   // Update all to draft
   await prisma.deviation.updateMany({
     where: { id: { in: deviationIds } },
     data: {
-      status: "draft",
+      status: 'draft',
       updatedAt: new Date(),
     },
   });
@@ -168,12 +166,12 @@ router.post("/batch-approve", async (req, res) => {
 });
 
 // Batch reject deviations
-router.post("/batch-reject", async (req, res) => {
+router.post('/batch-reject', async (req, res) => {
   const { deviationIds } = req.body;
   const user = req.user!;
 
   if (!Array.isArray(deviationIds) || deviationIds.length === 0) {
-    throw new AppError(400, "deviationIds array is required");
+    throw new AppError(400, 'deviationIds array is required');
   }
 
   // Fetch review deviations only
@@ -181,13 +179,13 @@ router.post("/batch-reject", async (req, res) => {
     where: {
       id: { in: deviationIds },
       userId: user.id,
-      status: "review",
+      status: 'review',
     },
     include: { files: true },
   });
 
   if (reviewDeviations.length !== deviationIds.length) {
-    throw new AppError(400, "Can only reject review deviations you own");
+    throw new AppError(400, 'Can only reject review deviations you own');
   }
 
   // Delete files from storage

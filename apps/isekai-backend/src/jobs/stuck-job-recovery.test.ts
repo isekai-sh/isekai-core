@@ -191,9 +191,7 @@ describe('stuck-job-recovery', () => {
         expect.any(Date),
         'REPLACE'
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reset and queued retry')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Reset and queued retry'));
     });
 
     it('should skip retry if retryCount >= 7', async () => {
@@ -222,9 +220,7 @@ describe('stuck-job-recovery', () => {
       await cronCallback();
 
       expect(mockScheduleDeviation).not.toHaveBeenCalled();
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reset to draft')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Reset to draft'));
     });
 
     it('should reset to draft (no external IDs)', async () => {
@@ -260,9 +256,7 @@ describe('stuck-job-recovery', () => {
           }),
         })
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reset to draft')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Reset to draft'));
     });
 
     it('should alert on high recovery rate', async () => {
@@ -330,9 +324,7 @@ describe('stuck-job-recovery', () => {
         expect.stringContaining('Failed to recover deviation'),
         expect.any(Error)
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('0 recovered, 1 failed')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('0 recovered, 1 failed'));
     });
 
     it('should handle critical errors in recovery process', async () => {

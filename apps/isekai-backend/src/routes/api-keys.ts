@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { z } from "zod";
-import { prisma } from "../db/index.js";
-import { AppError } from "../middleware/error.js";
-import { generateApiKey } from "../lib/api-key-utils.js";
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../db/index.js';
+import { AppError } from '../middleware/error.js';
+import { generateApiKey } from '../lib/api-key-utils.js';
 
 const router = Router();
 
@@ -28,12 +28,12 @@ const createApiKeySchema = z.object({
 });
 
 // List all API keys for the user
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   const user = req.user!;
 
   const userApiKeys = await prisma.apiKey.findMany({
     where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 
   // Transform to omit sensitive data
@@ -51,7 +51,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create new API key
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   const user = req.user!;
 
   const data = createApiKeySchema.parse(req.body);
@@ -80,7 +80,7 @@ router.post("/", async (req, res) => {
 });
 
 // Revoke API key (soft delete)
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -92,11 +92,11 @@ router.delete("/:id", async (req, res) => {
   });
 
   if (!apiKey) {
-    throw new AppError(404, "API key not found");
+    throw new AppError(404, 'API key not found');
   }
 
   if (apiKey.revokedAt !== null) {
-    throw new AppError(400, "API key already revoked");
+    throw new AppError(400, 'API key already revoked');
   }
 
   // Soft delete by setting revokedAt
@@ -109,7 +109,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Permanently delete API key (hard delete)
-router.delete("/:id/permanent", async (req, res) => {
+router.delete('/:id/permanent', async (req, res) => {
   const { id } = req.params;
   const user = req.user!;
 
@@ -121,7 +121,7 @@ router.delete("/:id/permanent", async (req, res) => {
   });
 
   if (!apiKey) {
-    throw new AppError(404, "API key not found");
+    throw new AppError(404, 'API key not found');
   }
 
   // Hard delete - permanently remove from database

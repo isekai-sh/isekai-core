@@ -14,6 +14,7 @@
 **Impact:** High risk of regressions, bugs in untested code paths.
 
 **Plan:**
+
 - Increase coverage to 60% for v1.0
 - Focus on critical paths: auth, publishing, execution locks
 - Add integration tests for API routes
@@ -30,6 +31,7 @@
 **Impact:** Code quality inconsistency, potential bugs.
 
 **Plan:**
+
 - Fix all `@typescript-eslint/no-explicit-any` warnings
 - Fix unused variable warnings
 - Enable `strict` mode in all packages
@@ -46,6 +48,7 @@
 **Impact:** No migration history, difficult to deploy to production safely.
 
 **Plan:**
+
 - Switch to `prisma migrate dev` for local development
 - Generate migrations for all existing schema changes
 - Document migration workflow in `.context/database/migrations.md` (already done)
@@ -66,6 +69,7 @@
 **Impact:** Users must manually set prices on DeviantArt (defeats purpose of sales queue).
 
 **Plan:**
+
 - Implement Puppeteer worker
 - Handle DeviantArt login/2FA
 - Automate price setting workflow
@@ -85,6 +89,7 @@
 **Impact:** Posts fail to publish, users must manually re-login.
 
 **Plan:**
+
 - Add retry logic with exponential backoff
 - Send email notifications on repeated failures
 - Provide clear UI for re-authentication
@@ -101,6 +106,7 @@
 **Impact:** Poor UX, difficult for users to debug issues.
 
 **Plan:**
+
 - Create error message catalog (`.context/errors.md` - done)
 - Standardize error response format
 - Add user-facing error messages
@@ -119,6 +125,7 @@
 **Impact:** Potential state synchronization bugs, cache invalidation issues.
 
 **Plan:**
+
 - Standardize on TanStack Query for server state
 - Use Zustand only for UI state
 - Document state management patterns
@@ -135,6 +142,7 @@
 **Impact:** Harder for third-party integrations, no auto-generated clients.
 
 **Plan:**
+
 - Generate OpenAPI spec from routes
 - Add Swagger UI endpoint
 - Auto-generate TypeScript client
@@ -151,6 +159,7 @@
 **Impact:** Slow page loads, increased database load.
 
 **Plan:**
+
 - Profile slow endpoints
 - Add missing indexes
 - Optimize Prisma queries with `include` and `select`
@@ -167,6 +176,7 @@
 **Impact:** Slower deployments, higher storage costs.
 
 **Plan:**
+
 - Use Alpine base images
 - Multi-stage builds (already done, can improve)
 - Remove dev dependencies from production image
@@ -185,6 +195,7 @@
 **Impact:** Incomplete feature, confusing for users who see partial UI.
 
 **Plan:**
+
 - Complete notes API routes
 - Build notes UI
 - Add note templates
@@ -203,6 +214,7 @@
 **Impact:** Limited workflow automation for AI artists.
 
 **Plan:**
+
 - Add workflow template support
 - Improve error handling
 - Add batch processing
@@ -219,6 +231,7 @@
 **Impact:** Poor UX on mobile devices (but desktop is primary use case).
 
 **Plan:**
+
 - Audit mobile breakpoints
 - Improve navigation on small screens
 - Test on real devices
@@ -273,6 +286,7 @@
 All features currently active.
 
 **Future Deprecations:**
+
 - Direct SQL usage (if any found) → Prisma ORM
 - `prisma push` → `prisma migrate` (planned)
 

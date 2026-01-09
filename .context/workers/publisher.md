@@ -11,6 +11,7 @@
 **What:** Independent Node.js microservice that processes DeviantArt publishing jobs, token maintenance, and cleanup tasks.
 
 **Why Separate from API:**
+
 1. **Fault Isolation:** Publisher crashes don't affect API
 2. **Independent Scaling:** Scale based on queue depth, not HTTP traffic
 3. **Resource Isolation:** CPU-intensive jobs don't block API requests
@@ -18,6 +19,7 @@
 5. **Simplified Monitoring:** Dedicated health checks and metrics
 
 **Communication:**
+
 - **NO HTTP calls to API** - uses shared PostgreSQL database
 - **Shared Redis** - BullMQ job queue
 - **Shared Storage** - S3-compatible (R2/S3/MinIO)
@@ -58,6 +60,7 @@ Main Process (apps/isekai-publisher/src/index.ts)
 **Endpoints:**
 
 #### GET /health (Liveness)
+
 Checks if process is running and responsive.
 
 ```typescript
@@ -72,6 +75,7 @@ Checks if process is running and responsive.
 **When to use:** Container orchestration (Docker, K8s) restarts container if this fails.
 
 #### GET /ready (Readiness)
+
 Checks if worker can process jobs (Redis connected, worker running).
 
 ```typescript
@@ -94,6 +98,7 @@ Checks if worker can process jobs (Redis connected, worker running).
 **When to use:** Load balancer waits for "ready" before routing traffic (not applicable for publisher, but useful pattern).
 
 #### GET /metrics (Prometheus)
+
 Prometheus-compatible metrics export.
 
 ```text
@@ -107,6 +112,7 @@ publisher_uptime_seconds 3600
 ```
 
 **Future Metrics:**
+
 - `publisher_jobs_completed_total{status="success|failed"}`
 - `publisher_job_duration_seconds{queue="deviation|token"}`
 
@@ -123,6 +129,7 @@ publisher_uptime_seconds 3600
 **Purpose:** Publishes scheduled deviations to DeviantArt
 
 **Job Flow:**
+
 ```
 1. Dequeue job (deviationId)
 2. Acquire execution lock (UUID-based)
@@ -138,12 +145,14 @@ publisher_uptime_seconds 3600
 ```
 
 **Error Handling:**
+
 - **429 Rate Limit:** Trigger circuit breaker, exponential backoff
 - **Network Error:** Retry with exponential backoff (max 7 attempts)
 - **Auth Error:** Mark as failed, send email to user
 - **Other Error:** Retry up to 7 times, then mark as failed
 
 **Retry Configuration:**
+
 ```typescript
 {
   attempts: 7,
@@ -155,6 +164,7 @@ publisher_uptime_seconds 3600
 ```
 
 **Circuit Breaker Integration:**
+
 ```typescript
 if (circuitBreaker.isOpen()) {
   // Skip publishing, let job requeue
@@ -163,6 +173,7 @@ if (circuitBreaker.isOpen()) {
 ```
 
 **Adaptive Rate Limiter:**
+
 ```typescript
 await rateLimiter.waitForSlot(userId);
 
@@ -188,6 +199,7 @@ try {
 **Purpose:** Proactively refresh OAuth tokens before 90-day expiry
 
 **Job Flow:**
+
 ```
 1. Find users with tokens expiring < 7 days
 2. For each user:
@@ -202,16 +214,17 @@ try {
 **Schedule:** Every 6 hours (via cron job)
 
 **Email Warnings:**
+
 ```typescript
 if (daysUntilExpiry <= 7 && !user.refreshTokenWarningEmailSent) {
   await sendEmail({
     to: user.email,
     subject: 'DeviantArt Token Expiring Soon',
-    body: 'Your refresh token expires in 7 days. Please re-authenticate.'
+    body: 'Your refresh token expires in 7 days. Please re-authenticate.',
   });
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshTokenWarningEmailSent: true }
+    data: { refreshTokenWarningEmailSent: true },
   });
 }
 ```
@@ -227,6 +240,7 @@ if (daysUntilExpiry <= 7 && !user.refreshTokenWarningEmailSent) {
 **Purpose:** Delete orphaned files from S3-compatible storage
 
 **Planned Logic:**
+
 1. Find DeviationFiles deleted > 7 days ago
 2. Delete corresponding S3 objects
 3. Purge DeviationFile records
@@ -245,6 +259,7 @@ if (daysUntilExpiry <= 7 && !user.refreshTokenWarningEmailSent) {
 **See:** `.context/features/automation.md` for detailed workflow
 
 **Brief Flow:**
+
 ```
 1. Find enabled automations
 2. For each automation:
@@ -260,6 +275,7 @@ if (daysUntilExpiry <= 7 && !user.refreshTokenWarningEmailSent) {
 ```
 
 **Execution Lock:**
+
 ```typescript
 // Prevent concurrent automation runs
 if (automation.isExecuting) {
@@ -269,7 +285,7 @@ if (automation.isExecuting) {
 
 await prisma.automation.update({
   where: { id: automation.id },
-  data: { isExecuting: true, lastExecutionLock: new Date() }
+  data: { isExecuting: true, lastExecutionLock: new Date() },
 });
 
 try {
@@ -278,7 +294,7 @@ try {
 } finally {
   await prisma.automation.update({
     where: { id: automation.id },
-    data: { isExecuting: false }
+    data: { isExecuting: false },
   });
 }
 ```
@@ -291,6 +307,7 @@ try {
 **Purpose:** Detect and recover jobs stuck in "active" state due to worker crashes
 
 **Logic:**
+
 ```typescript
 const JOB_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
@@ -307,9 +324,9 @@ async function recoverStuckJobs() {
       await prisma.deviation.updateMany({
         where: {
           id: job.data.deviationId,
-          executionLockId: { not: null }
+          executionLockId: { not: null },
         },
-        data: { executionLockId: null, executionLockedAt: null }
+        data: { executionLockId: null, executionLockedAt: null },
       });
 
       // Move job to failed (BullMQ will retry)
@@ -333,6 +350,7 @@ BullMQ automatically moves jobs to failed after 2 stall recoveries.
 **Purpose:** Queue deviations whose `actualPublishAt` has passed
 
 **Logic:**
+
 ```typescript
 async function recoverPastDue() {
   const now = new Date();
@@ -342,25 +360,30 @@ async function recoverPastDue() {
     where: {
       status: 'scheduled',
       actualPublishAt: { lte: now },
-      executionLockId: null  // Not currently being processed
+      executionLockId: null, // Not currently being processed
     },
-    take: 50  // Batch size
+    take: 50, // Batch size
   });
 
   for (const deviation of pastDue) {
     console.log(`[Recovery] Past due: ${deviation.id} (${deviation.actualPublishAt})`);
 
     // Add to queue for immediate publishing
-    await deviationQueue.add('publish', {
-      deviationId: deviation.id
-    }, {
-      priority: 1  // High priority
-    });
+    await deviationQueue.add(
+      'publish',
+      {
+        deviationId: deviation.id,
+      },
+      {
+        priority: 1, // High priority
+      }
+    );
   }
 }
 ```
 
 **Why Needed:**
+
 - Worker downtime during scheduled time
 - Queue backlog causes delay
 - Clock skew between servers
@@ -376,6 +399,7 @@ async function recoverPastDue() {
 **Purpose:** Clear stale execution locks (>1 hour old)
 
 **Logic:**
+
 ```typescript
 async function cleanupStaleLocks() {
   const oneHourAgo = new Date(Date.now() - 3600000);
@@ -384,12 +408,12 @@ async function cleanupStaleLocks() {
   const result = await prisma.deviation.updateMany({
     where: {
       executionLockId: { not: null },
-      executionLockedAt: { lte: oneHourAgo }
+      executionLockedAt: { lte: oneHourAgo },
     },
     data: {
       executionLockId: null,
-      executionLockedAt: null
-    }
+      executionLockedAt: null,
+    },
   });
 
   console.log(`[Cleanup] Released ${result.count} stale locks`);
@@ -409,6 +433,7 @@ Safety net for locks that weren't properly released (unexpected crashes, bugs).
 **Trigger:** Docker sends `SIGTERM` signal during deployment
 
 **Flow:**
+
 ```typescript
 async function gracefulShutdown(signal: string) {
   console.log(`Received ${signal}, starting graceful shutdown...`);
@@ -419,7 +444,7 @@ async function gracefulShutdown(signal: string) {
     await tokenMaintenanceWorker.pause();
 
     // 2. Wait for active jobs to complete (max 30 seconds)
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    await new Promise((resolve) => setTimeout(resolve, 30000));
 
     // 3. Close workers gracefully
     await deviationPublisherWorker.close();
@@ -430,7 +455,7 @@ async function gracefulShutdown(signal: string) {
 
     // 5. Close health check server
     if (healthCheckServer) {
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         healthCheckServer.close(() => resolve());
       });
     }
@@ -445,6 +470,7 @@ async function gracefulShutdown(signal: string) {
 ```
 
 **Signal Handlers:**
+
 ```typescript
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
@@ -454,10 +480,11 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 Balance between completing jobs and minimizing deployment time. Publishing typically takes 5-15 seconds.
 
 **Container Orchestration:**
+
 ```yaml
 # docker-compose.yml
 healthcheck:
-  test: ["CMD", "wget", "--spider", "http://localhost:8000/health"]
+  test: ['CMD', 'wget', '--spider', 'http://localhost:8000/health']
   interval: 30s
   timeout: 10s
   retries: 3
@@ -475,7 +502,7 @@ Container restarted if health check fails 3 times.
 ```typescript
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception:', error);
-  setTimeout(() => process.exit(1), 5000);  // 5s delay for log flush
+  setTimeout(() => process.exit(1), 5000); // 5s delay for log flush
 });
 ```
 
@@ -506,14 +533,16 @@ deviationWorker.on('failed', (job, error) => {
 ### Structured Logging
 
 ```typescript
-console.log(JSON.stringify({
-  level: 'info',
-  message: 'Deviation published',
-  deviationId: deviation.id,
-  userId: deviation.userId,
-  duration: Date.now() - startTime,
-  timestamp: new Date().toISOString()
-}));
+console.log(
+  JSON.stringify({
+    level: 'info',
+    message: 'Deviation published',
+    deviationId: deviation.id,
+    userId: deviation.userId,
+    duration: Date.now() - startTime,
+    timestamp: new Date().toISOString(),
+  })
+);
 ```
 
 **Future:** Integrate with logging service (Datadog, CloudWatch, etc.)
@@ -521,12 +550,14 @@ console.log(JSON.stringify({
 ### Metrics Endpoint
 
 **Current (Basic):**
+
 ```text
 publisher_active_jobs 3
 publisher_uptime_seconds 3600
 ```
 
 **Planned:**
+
 ```text
 publisher_jobs_completed_total{queue="deviation",status="success"} 1234
 publisher_jobs_completed_total{queue="deviation",status="failed"} 45
@@ -536,6 +567,7 @@ publisher_job_duration_seconds_bucket{queue="deviation",le="+Inf"} 1234
 ```
 
 **Prometheus Integration:**
+
 ```yaml
 # prometheus.yml
 scrape_configs:
@@ -549,6 +581,7 @@ scrape_configs:
 ## Environment Variables
 
 **Required:**
+
 ```bash
 DATABASE_URL=postgresql://...
 REDIS_URL=redis://...
@@ -558,6 +591,7 @@ DEVIANTART_CLIENT_SECRET=...
 ```
 
 **Storage (S3-Compatible):**
+
 ```bash
 S3_ENDPOINT=https://xxx.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=...
@@ -568,6 +602,7 @@ S3_PATH_PREFIX=tenant-abc123  # Multi-tenant isolation
 ```
 
 **Publisher Configuration:**
+
 ```bash
 PUBLISHER_CONCURRENCY=5
 PUBLISHER_MAX_ATTEMPTS=7
@@ -575,6 +610,7 @@ PUBLISHER_JOB_TIMEOUT_MS=600000  # 10 minutes
 ```
 
 **Rate Limiter:**
+
 ```bash
 RATE_LIMITER_ENABLED=true
 RATE_LIMITER_BASE_DELAY_MS=3000
@@ -585,6 +621,7 @@ RATE_LIMITER_FAILURE_INCREASE_FACTOR=2.0
 ```
 
 **Circuit Breaker:**
+
 ```bash
 CIRCUIT_BREAKER_ENABLED=true
 CIRCUIT_BREAKER_THRESHOLD=3
@@ -593,6 +630,7 @@ CIRCUIT_BREAKER_PERSIST_TO_REDIS=true
 ```
 
 **Health Checks:**
+
 ```bash
 HEALTH_CHECK_PORT=8000
 HEALTH_CHECK_ENABLED=true
@@ -603,6 +641,7 @@ HEALTH_CHECK_ENABLED=true
 ## Deployment
 
 **Docker:**
+
 ```dockerfile
 FROM node:20-alpine
 WORKDIR /app
@@ -613,11 +652,12 @@ CMD ["node", "dist/index.js"]
 ```
 
 **Docker Compose:**
+
 ```yaml
 publisher:
   build: ./apps/isekai-publisher
   ports:
-    - "8000:8000"  # Health checks
+    - '8000:8000' # Health checks
   environment:
     DATABASE_URL: ${DATABASE_URL}
     REDIS_URL: ${REDIS_URL}
@@ -628,7 +668,7 @@ publisher:
       condition: service_healthy
   restart: unless-stopped
   healthcheck:
-    test: ["CMD", "wget", "--spider", "http://localhost:8000/health"]
+    test: ['CMD', 'wget', '--spider', 'http://localhost:8000/health']
     interval: 30s
     timeout: 10s
     retries: 3
@@ -647,15 +687,17 @@ publisher:
 publisher:
   # ... config
   deploy:
-    replicas: 3  # 3 publisher instances
+    replicas: 3 # 3 publisher instances
 ```
 
 **BullMQ Handles Distribution:**
+
 - Each worker picks jobs from shared queue
 - Execution locks prevent duplicate processing
 - No coordination needed between workers
 
 **When to Scale:**
+
 - Queue backlog growing
 - Average job wait time increasing
 - High publish volume (>100/hour)
@@ -663,11 +705,13 @@ publisher:
 ### Vertical Scaling
 
 **Increase Concurrency:**
+
 ```bash
 PUBLISHER_CONCURRENCY=10  # Process 10 jobs simultaneously
 ```
 
 **Trade-offs:**
+
 - **More concurrency:** Faster processing, higher risk of rate limits
 - **Less concurrency:** Safer, slower processing
 

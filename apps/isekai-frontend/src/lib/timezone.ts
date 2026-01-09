@@ -23,15 +23,15 @@ export function getTimezoneAbbreviation(): string {
   const date = new Date();
 
   // Get the short timezone name
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
-    timeZoneName: "short",
+    timeZoneName: 'short',
   });
 
   const parts = formatter.formatToParts(date);
-  const timeZonePart = parts.find((part) => part.type === "timeZoneName");
+  const timeZonePart = parts.find((part) => part.type === 'timeZoneName');
 
-  return timeZonePart?.value || "Local";
+  return timeZonePart?.value || 'Local';
 }
 
 /**
@@ -48,7 +48,7 @@ export function formatWithTimezone(
   date: Date | string,
   options?: Intl.DateTimeFormatOptions
 ): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
   const formatted = dateObj.toLocaleString(undefined, options);
   const tz = getTimezoneAbbreviation();
   return `${formatted} ${tz}`;
@@ -59,7 +59,7 @@ export function formatWithTimezone(
  */
 export function getUTCOffset(): string {
   const offset = -new Date().getTimezoneOffset() / 60;
-  const sign = offset >= 0 ? "+" : "";
+  const sign = offset >= 0 ? '+' : '';
   return `UTC${sign}${offset}`;
 }
 
@@ -68,7 +68,7 @@ export function getUTCOffset(): string {
  * Examples: 30s, 1m 30s, 2m, 5m
  */
 export function formatJitterSeconds(seconds: number): string {
-  if (seconds === 0) return "0s";
+  if (seconds === 0) return '0s';
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -90,19 +90,19 @@ export function formatJitterSeconds(seconds: number): string {
  * Example: 2025-12-31, 11:00:00 PM WIB
  */
 export function formatScheduleDateTime(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
 
   // Format date as YYYY-MM-DD
   const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const day = String(dateObj.getDate()).padStart(2, "0");
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
   const datePart = `${year}-${month}-${day}`;
 
   // Format time as HH:MM:SS AM/PM
   const timePart = dateObj.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hour12: true,
   });
 
@@ -118,18 +118,18 @@ export function formatScheduleDateTime(date: Date | string): string {
  * Example: 2025-12-31, 11:00 PM WIB
  */
 export function formatScheduleDateTimeShort(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
 
   // Format date as YYYY-MM-DD
   const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const day = String(dateObj.getDate()).padStart(2, "0");
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
   const datePart = `${year}-${month}-${day}`;
 
   // Format time as HH:MM AM/PM
   const timePart = dateObj.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: '2-digit',
+    minute: '2-digit',
     hour12: true,
   });
 

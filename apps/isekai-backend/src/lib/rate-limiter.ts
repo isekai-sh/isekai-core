@@ -26,8 +26,8 @@
  * - Per-user rate limit tracking
  */
 
-import type { Redis } from "ioredis";
-import { safeJsonParse } from "./safe-json-parse.js";
+import type { Redis } from 'ioredis';
+import { safeJsonParse } from './safe-json-parse.js';
 
 export interface RateLimitState {
   retryAfter: number | null; // Unix timestamp when rate limit expires
@@ -60,20 +60,14 @@ export class AdaptiveRateLimiter {
     this.redis = redis;
 
     // Configuration from environment
-    this.baseDelayMs = parseInt(
-      process.env.RATE_LIMITER_BASE_DELAY_MS || "3000"
-    );
-    this.maxDelayMs = parseInt(
-      process.env.RATE_LIMITER_MAX_DELAY_MS || "300000"
-    );
-    this.jitterPercent = parseInt(
-      process.env.RATE_LIMITER_JITTER_PERCENT || "20"
-    );
+    this.baseDelayMs = parseInt(process.env.RATE_LIMITER_BASE_DELAY_MS || '3000');
+    this.maxDelayMs = parseInt(process.env.RATE_LIMITER_MAX_DELAY_MS || '300000');
+    this.jitterPercent = parseInt(process.env.RATE_LIMITER_JITTER_PERCENT || '20');
     this.successDecreaseFactor = parseFloat(
-      process.env.RATE_LIMITER_SUCCESS_DECREASE_FACTOR || "0.9"
+      process.env.RATE_LIMITER_SUCCESS_DECREASE_FACTOR || '0.9'
     );
     this.failureIncreaseFactor = parseFloat(
-      process.env.RATE_LIMITER_FAILURE_INCREASE_FACTOR || "2.0"
+      process.env.RATE_LIMITER_FAILURE_INCREASE_FACTOR || '2.0'
     );
   }
 
@@ -96,7 +90,7 @@ export class AdaptiveRateLimiter {
       return {
         allowed: false,
         waitMs,
-        reason: "RETRY_AFTER",
+        reason: 'RETRY_AFTER',
       };
     }
 
@@ -115,7 +109,7 @@ export class AdaptiveRateLimiter {
       return {
         allowed: false,
         waitMs: Math.max(0, waitMs),
-        reason: "ADAPTIVE_DELAY",
+        reason: 'ADAPTIVE_DELAY',
       };
     }
 
@@ -136,10 +130,7 @@ export class AdaptiveRateLimiter {
 
     // Decrease base delay on consecutive successes
     if (state.consecutiveSuccesses >= 3) {
-      state.baseDelay = Math.max(
-        this.baseDelayMs,
-        state.baseDelay * this.successDecreaseFactor
-      );
+      state.baseDelay = Math.max(this.baseDelayMs, state.baseDelay * this.successDecreaseFactor);
       state.consecutiveSuccesses = 0; // Reset counter after adjustment
     }
 
@@ -152,10 +143,7 @@ export class AdaptiveRateLimiter {
   /**
    * Record a failed request (increase delays, parse Retry-After)
    */
-  async recordFailure(
-    userId: string,
-    retryAfterHeader?: string
-  ): Promise<void> {
+  async recordFailure(userId: string, retryAfterHeader?: string): Promise<void> {
     if (!this.isEnabled()) return;
 
     const state = await this.getState(userId);
@@ -173,10 +161,7 @@ export class AdaptiveRateLimiter {
     }
 
     // Increase base delay on consecutive failures
-    state.baseDelay = Math.min(
-      this.maxDelayMs,
-      state.baseDelay * this.failureIncreaseFactor
-    );
+    state.baseDelay = Math.min(this.maxDelayMs, state.baseDelay * this.failureIncreaseFactor);
 
     await this.setState(userId, state);
   }
@@ -201,10 +186,7 @@ export class AdaptiveRateLimiter {
     try {
       const date = new Date(header);
       if (!isNaN(date.getTime())) {
-        const secondsUntil = Math.max(
-          0,
-          Math.floor((date.getTime() - Date.now()) / 1000)
-        );
+        const secondsUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 1000));
         return secondsUntil;
       }
     } catch (error) {
@@ -241,7 +223,7 @@ export class AdaptiveRateLimiter {
 
     try {
       // Get all rate limit keys
-      const keys = await this.redis.keys("rate_limit:*:state");
+      const keys = await this.redis.keys('rate_limit:*:state');
 
       const metrics = {
         totalUsers: keys.length,
@@ -268,10 +250,7 @@ export class AdaptiveRateLimiter {
           }
 
           totalBaseDelay += state.baseDelay;
-          metrics.maxBaseDelay = Math.max(
-            metrics.maxBaseDelay,
-            state.baseDelay
-          );
+          metrics.maxBaseDelay = Math.max(metrics.maxBaseDelay, state.baseDelay);
         }
       }
 
@@ -281,7 +260,7 @@ export class AdaptiveRateLimiter {
 
       return metrics;
     } catch (error) {
-      console.error("[RateLimiter] Error getting global metrics:", error);
+      console.error('[RateLimiter] Error getting global metrics:', error);
       return {};
     }
   }
@@ -294,10 +273,7 @@ export class AdaptiveRateLimiter {
    *
    * @returns true if request is allowed, false if rate limited
    */
-  private async atomicCheckAndUpdate(
-    userId: string,
-    requiredDelayMs: number
-  ): Promise<boolean> {
+  private async atomicCheckAndUpdate(userId: string, requiredDelayMs: number): Promise<boolean> {
     if (!this.redis) {
       // Fallback for no Redis (local dev)
       const state = await this.getState(userId);
@@ -363,7 +339,7 @@ export class AdaptiveRateLimiter {
 
       return result === 1;
     } catch (error) {
-      console.error("[RateLimiter] Error in atomic check-and-update:", error);
+      console.error('[RateLimiter] Error in atomic check-and-update:', error);
       // On error, be conservative and deny request
       return false;
     }
@@ -380,8 +356,7 @@ export class AdaptiveRateLimiter {
    * Add jitter to a delay
    */
   private addJitter(delayMs: number): number {
-    const jitter =
-      delayMs * (this.jitterPercent / 100) * (Math.random() * 2 - 1);
+    const jitter = delayMs * (this.jitterPercent / 100) * (Math.random() * 2 - 1);
     return Math.max(1000, Math.round(delayMs + jitter));
   }
 
@@ -411,7 +386,7 @@ export class AdaptiveRateLimiter {
 
       return safeJsonParse<RateLimitState>(data, defaultState);
     } catch (error) {
-      console.error("[RateLimiter] Error getting state:", error);
+      console.error('[RateLimiter] Error getting state:', error);
       return defaultState;
     }
   }
@@ -428,7 +403,7 @@ export class AdaptiveRateLimiter {
 
       await this.redis.setex(key, ttl, JSON.stringify(state));
     } catch (error) {
-      console.error("[RateLimiter] Error setting state:", error);
+      console.error('[RateLimiter] Error setting state:', error);
     }
   }
 
@@ -453,6 +428,6 @@ export class AdaptiveRateLimiter {
    */
   private isEnabled(): boolean {
     const enabled = process.env.RATE_LIMITER_ENABLED?.toLowerCase();
-    return enabled !== "false" && enabled !== "0";
+    return enabled !== 'false' && enabled !== '0';
   }
 }

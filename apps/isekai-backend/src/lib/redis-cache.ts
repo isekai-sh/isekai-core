@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { RedisClientManager } from "./redis-client.js";
-import { CacheStats } from "./cache-stats.js";
-import { generateStaleCacheKey, parseCacheKey } from "./cache-keys.js";
-import { safeJsonParse } from "./safe-json-parse.js";
+import { RedisClientManager } from './redis-client.js';
+import { CacheStats } from './cache-stats.js';
+import { generateStaleCacheKey, parseCacheKey } from './cache-keys.js';
+import { safeJsonParse } from './safe-json-parse.js';
 
 /**
  * Cache TTL Configuration (in seconds)
@@ -90,7 +90,7 @@ export class RedisCache {
 
       return safeJsonParse<T>(data, null as any);
     } catch (error) {
-      console.error("[Cache] Error getting key:", key, error);
+      console.error('[Cache] Error getting key:', key, error);
       return null;
     }
   }
@@ -114,7 +114,7 @@ export class RedisCache {
 
       return true;
     } catch (error) {
-      console.error("[Cache] Error setting key:", key, error);
+      console.error('[Cache] Error setting key:', key, error);
       return false;
     }
   }
@@ -134,7 +134,7 @@ export class RedisCache {
       await client.del(key);
       return true;
     } catch (error) {
-      console.error("[Cache] Error deleting key:", key, error);
+      console.error('[Cache] Error deleting key:', key, error);
       return false;
     }
   }
@@ -153,19 +153,13 @@ export class RedisCache {
 
       // Use SCAN to find matching keys (safer than KEYS command)
       const keys: string[] = [];
-      let cursor = "0";
+      let cursor = '0';
 
       do {
-        const result = await client.scan(
-          cursor,
-          "MATCH",
-          pattern,
-          "COUNT",
-          100
-        );
+        const result = await client.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
         cursor = result[0];
         keys.push(...result[1]);
-      } while (cursor !== "0");
+      } while (cursor !== '0');
 
       if (keys.length === 0) {
         return 0;
@@ -175,7 +169,7 @@ export class RedisCache {
       await client.del(...keys);
       return keys.length;
     } catch (error) {
-      console.error("[Cache] Error deleting pattern:", pattern, error);
+      console.error('[Cache] Error deleting pattern:', pattern, error);
       return 0;
     }
   }
@@ -187,11 +181,8 @@ export class RedisCache {
    * @param allowStale - Whether to return stale cache on miss
    * @returns Cache result with metadata
    */
-  static async getWithStale<T>(
-    key: string,
-    allowStale = false
-  ): Promise<CacheResult<T>> {
-    const namespace = parseCacheKey(key)?.namespace || "unknown";
+  static async getWithStale<T>(key: string, allowStale = false): Promise<CacheResult<T>> {
+    const namespace = parseCacheKey(key)?.namespace || 'unknown';
 
     // Try fresh cache first
     const freshData = await this.get<T>(key);
@@ -211,8 +202,8 @@ export class RedisCache {
     if (allowStale) {
       const staleKey = generateStaleCacheKey(
         namespace as any,
-        "global",
-        key.split(":")[4] || "unknown"
+        'global',
+        key.split(':')[4] || 'unknown'
       );
       const staleData = await this.get<T>(staleKey);
       if (staleData !== null) {
@@ -251,7 +242,7 @@ export class RedisCache {
     ttl: number,
     allowStale = false
   ): Promise<{ data: T; fromCache: boolean; isStale: boolean }> {
-    const namespace = parseCacheKey(key)?.namespace || "unknown";
+    const namespace = parseCacheKey(key)?.namespace || 'unknown';
 
     // Check cache first
     const cached = await this.getWithStale<T>(key, allowStale);
@@ -286,7 +277,7 @@ export class RedisCache {
         await this.set(key, data, ttl);
 
         // Also set stale cache with longer TTL
-        const staleKey = key + ":stale";
+        const staleKey = key + ':stale';
         await this.set(staleKey, data, CacheTTL.STALE_MAX);
 
         return data;
@@ -294,7 +285,7 @@ export class RedisCache {
         // If 429 error and stale cache available, return stale
         if (this.is429Error(error) && allowStale) {
           CacheStats.recordRateLimitError(namespace);
-          const staleData = await this.get<T>(key + ":stale");
+          const staleData = await this.get<T>(key + ':stale');
           if (staleData !== null) {
             CacheStats.recordStaleServe(namespace);
             console.log(`[Cache] 429: Serving stale cache for ${namespace}`);
@@ -331,12 +322,12 @@ export class RedisCache {
     }
 
     // Check error message
-    const message = error.message?.toLowerCase() || "";
+    const message = error.message?.toLowerCase() || '';
     return (
-      message.includes("rate limit") ||
-      message.includes("429") ||
-      message.includes("too many requests") ||
-      message.includes("api_threshold")
+      message.includes('rate limit') ||
+      message.includes('429') ||
+      message.includes('too many requests') ||
+      message.includes('api_threshold')
     );
   }
 
@@ -347,9 +338,7 @@ export class RedisCache {
    */
   static async invalidate(pattern: string): Promise<number> {
     const deletedCount = await this.delPattern(pattern);
-    console.log(
-      `[Cache] Invalidated ${deletedCount} keys matching: ${pattern}`
-    );
+    console.log(`[Cache] Invalidated ${deletedCount} keys matching: ${pattern}`);
     return deletedCount;
   }
 
@@ -359,7 +348,7 @@ export class RedisCache {
   static isEnabled(): boolean {
     // Check environment variable
     const cacheEnabled = process.env.CACHE_ENABLED?.toLowerCase();
-    if (cacheEnabled === "false" || cacheEnabled === "0") {
+    if (cacheEnabled === 'false' || cacheEnabled === '0') {
       return false;
     }
 

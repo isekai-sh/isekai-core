@@ -15,29 +15,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 // Bento grid card sizes
-export type CardSize = "regular" | "medium" | "large";
+export type CardSize = 'regular' | 'medium' | 'large';
 
 // Browse view modes
-export type ViewMode = "masonry" | "bento" | "grid";
+export type ViewMode = 'masonry' | 'bento' | 'grid';
 
 /**
  * Calculate card size based on engagement score
  * Used for bento grid layout to determine which items should be featured
  */
-export function calculateCardSize(
-  favourites: number,
-  comments: number
-): CardSize {
+export function calculateCardSize(favourites: number, comments: number): CardSize {
   const score = favourites + comments * 2;
-  if (score >= 1000) return "large";
-  if (score >= 300) return "medium";
-  return "regular";
+  if (score >= 1000) return 'large';
+  if (score >= 300) return 'medium';
+  return 'regular';
 }

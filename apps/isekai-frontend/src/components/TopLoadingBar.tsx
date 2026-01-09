@@ -15,15 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useRef, useEffect } from "react";
-import LoadingBar, { LoadingBarRef } from "react-top-loading-bar";
-import { useIsFetching, useIsMutating } from "@tanstack/react-query";
+import { useRef, useEffect } from 'react';
+import LoadingBar, { LoadingBarRef } from 'react-top-loading-bar';
+import { useIsFetching, useIsMutating } from '@tanstack/react-query';
 
 export function TopLoadingBar() {
   const ref = useRef<LoadingBarRef>(null);
   // Only count initial fetches, not background refetches
   const isFetching = useIsFetching({
-    predicate: (query) => query.state.status === "pending",
+    predicate: (query) => query.state.status === 'pending',
   });
   const isMutating = useIsMutating();
 

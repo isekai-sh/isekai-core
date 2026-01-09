@@ -60,7 +60,6 @@ import { formatDistanceToNow } from 'date-fns';
 
 type StatusFilter = 'all' | 'pending' | 'processing' | 'completed' | 'failed';
 
-
 const statusConfig = {
   pending: {
     label: 'Pending',
@@ -99,13 +98,7 @@ export function ExclusivesQueue() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [removeItemId, setRemoveItemId] = useState<string | null>(null);
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['saleQueue', statusFilter],
     queryFn: async ({ pageParam = 0 }) => {
       const params: any = { offset: pageParam, limit: PAGE_SIZE };

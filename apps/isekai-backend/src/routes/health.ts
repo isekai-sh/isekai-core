@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Router } from "express";
-import { RedisClientManager } from "../lib/redis-client.js";
-import { CacheStats } from "../lib/cache-stats.js";
-import { CircuitBreaker } from "../lib/circuit-breaker.js";
+import { Router } from 'express';
+import { RedisClientManager } from '../lib/redis-client.js';
+import { CacheStats } from '../lib/cache-stats.js';
+import { CircuitBreaker } from '../lib/circuit-breaker.js';
 
 const router = Router();
 
@@ -26,7 +26,7 @@ const router = Router();
  * GET /health - Health check endpoint
  * Returns system health information including Redis status and cache statistics
  */
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     // Check Redis availability and latency
     const redisAvailable = RedisClientManager.isAvailable();
@@ -43,25 +43,25 @@ router.get("/", async (req, res) => {
     // Get circuit breaker statuses
     const circuitStatuses = CircuitBreaker.getAllStatuses();
     const openCircuits = Object.values(circuitStatuses).filter(
-      (status) => status.state === "OPEN"
+      (status) => status.state === 'OPEN'
     ).length;
 
     // Determine overall health status
-    let status = "healthy";
+    let status = 'healthy';
     const issues: string[] = [];
 
     if (!redisAvailable) {
-      status = "degraded";
-      issues.push("Redis unavailable - caching disabled");
+      status = 'degraded';
+      issues.push('Redis unavailable - caching disabled');
     }
 
     if (redisLatency && redisLatency > 100) {
-      status = "degraded";
+      status = 'degraded';
       issues.push(`Redis latency high (${redisLatency}ms)`);
     }
 
     if (openCircuits > 0) {
-      status = "degraded";
+      status = 'degraded';
       issues.push(`${openCircuits} circuit breaker(s) open`);
     }
 
@@ -91,11 +91,11 @@ router.get("/", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Health check error:", error);
+    console.error('Health check error:', error);
     res.status(500).json({
-      status: "unhealthy",
+      status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: "Health check failed",
+      error: 'Health check failed',
     });
   }
 });
