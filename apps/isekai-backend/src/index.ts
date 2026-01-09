@@ -88,6 +88,11 @@ async function startServer() {
         // Allow requests with no origin (mobile apps, Postman, etc.)
         if (!origin) return callback(null, true);
 
+        // Allow Chrome extension origins
+        if (origin.startsWith("chrome-extension://")) {
+          return callback(null, true);
+        }
+
         if (uniqueOrigins.includes(origin)) {
           callback(null, true);
         } else {
