@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.8] - 2026-01-09
+
+### Fixed
+
+- Return actual total count in deviations list endpoint
+- Allow Chrome extension CORS requests
+
+### Changed
+
+- Format entire codebase with Prettier for consistent code style
+
+## [0.1.0-alpha.7] - 2026-01-07
+
+### Added
+
+- Shared configuration module with single source of truth across all apps
+- Comprehensive tests for shared configuration module
+- YouTube-style top loading bar for better loading feedback
+- Infinite scroll support for Published page
+- Pre-commit quality checks documentation in development workflow
+
+### Changed
+
+- Complete UI redesign across frontend with improved navigation and layouts
+- Redesigned Settings page with better organization
+- Redesigned Published page with infinite scroll pagination
+- Redesigned Scheduled page following Draft page patterns
+- Enhanced Draft page UX and polished UI components
+
+### Known Issues
+
+- Tests temporarily disabled (emergency measure)
+
+## [0.1.0-alpha.6] - 2026-01-05
+
+### Added
+
+- Configurable resource limits for Docker containers to support low-RAM VPS deployments
+- Substrate methodology documentation in `.context/` directory
+
+## [0.1.0-alpha.5] - 2025-12-31
+
+### Added
+
+- S3_PATH_PREFIX environment variable for multi-tenant storage support
+
+## [0.1.0-alpha.4] - 2025-12-30
+
+### Fixed
+
+- Migration execution order - init migration now runs before rename migration
+
 ## [0.1.0-alpha.3] - 2025-12-28
 
 ### Added
