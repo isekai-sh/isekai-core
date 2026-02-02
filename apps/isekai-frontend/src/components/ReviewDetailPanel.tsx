@@ -17,6 +17,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, FileImage } from 'lucide-react';
+import { thumb, ImageSize } from '@/lib/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -147,7 +148,7 @@ export function ReviewDetailPanel({
           >
             {deviation.files?.[0]?.storageUrl ? (
               <img
-                src={deviation.files[0].storageUrl}
+                src={thumb(deviation.files[0].storageUrl, ImageSize.LG)}
                 alt={deviation.title}
                 className="max-w-full max-h-full object-contain"
               />

@@ -18,6 +18,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { thumb, ImageSize } from '@/lib/image';
 import {
   DollarSign,
   ExternalLink,
@@ -484,7 +485,7 @@ function PublishedTableRow({
         >
           {deviation.files && deviation.files.length > 0 && deviation.files[0].storageUrl ? (
             <img
-              src={deviation.files[0].storageUrl}
+              src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
               alt={deviation.title}
               className="w-full h-full object-cover object-center"
             />

@@ -18,6 +18,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { thumb, ImageSize } from '@/lib/image';
 import { Calendar, Clock, Send, Save, Trash2, X } from 'lucide-react';
 import { deviations } from '@/lib/api';
 import { formatScheduleDateTime } from '@/lib/timezone';
@@ -316,7 +317,7 @@ export function EditDeviation() {
                         className="relative aspect-square rounded-lg overflow-hidden border"
                       >
                         <img
-                          src={file.storageUrl}
+                          src={thumb(file.storageUrl, ImageSize.MD)}
                           alt={file.originalFilename}
                           className="w-full h-full object-cover"
                         />
