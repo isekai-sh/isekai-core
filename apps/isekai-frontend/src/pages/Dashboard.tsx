@@ -17,6 +17,7 @@
 
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { thumb, ImageSize } from '@/lib/image';
 import {
   ClipboardCheck,
   FileImage,
@@ -271,7 +272,7 @@ export function Dashboard() {
                             {item.files?.[0]?.storageUrl ? (
                               <>
                                 <img
-                                  src={item.files[0].storageUrl}
+                                  src={thumb(item.files[0].storageUrl, ImageSize.SM)}
                                   alt={item.title}
                                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -330,7 +331,7 @@ export function Dashboard() {
                             {item.files?.[0]?.storageUrl ? (
                               <>
                                 <img
-                                  src={item.files[0].storageUrl}
+                                  src={thumb(item.files[0].storageUrl, ImageSize.SM)}
                                   alt={item.title}
                                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -420,7 +421,7 @@ export function Dashboard() {
                             </div>
                             {item.files?.[0]?.storageUrl ? (
                               <img
-                                src={item.files[0].storageUrl}
+                                src={thumb(item.files[0].storageUrl, ImageSize.XS)}
                                 alt={item.title}
                                 className="h-8 w-8 rounded-sm object-cover"
                               />
