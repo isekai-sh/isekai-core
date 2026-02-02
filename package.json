@@ -1,6 +1,6 @@
 {
   "name": "isekai-core",
-  "version": "0.1.0-alpha.7",
+  "version": "0.1.0-alpha.8",
   "private": true,
   "type": "module",
   "description": "Open source DeviantArt automation suite",
