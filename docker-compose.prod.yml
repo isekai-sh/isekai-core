@@ -81,7 +81,7 @@ services:
       - isekai-network
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/isekai-sh/isekai-backend:0.1.0-alpha.12}
+    image: ${BACKEND_IMAGE:-ghcr.io/isekai-sh/isekai-backend@sha256:da1ed33f92727b6bdf0c7dad0391fe5e034c592361d02856e7fd8ae06fdd6af4}
     # Run the bundled Prisma CLI directly so migrations remain deterministic.
     command:
       - /bin/sh
@@ -150,7 +150,7 @@ services:
       start_period: 40s
 
   publisher:
-    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher:0.1.0-alpha.12}
+    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher@sha256:c7ebbae88c1910f4da5f691dc932aff5e4f2cfaaea11108596169bc4d7afad0b}
     ports:
       - '${PUBLISHER_HEALTH_PORT:-8000}:8000'
     environment:
@@ -227,7 +227,7 @@ services:
       start_period: 40s
 
   media-worker:
-    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher:0.1.0-alpha.12}
+    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher@sha256:c7ebbae88c1910f4da5f691dc932aff5e4f2cfaaea11108596169bc4d7afad0b}
     command: ['node', 'dist/media-worker.js']
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-isekai}:${POSTGRES_PASSWORD:-isekai}@postgres:5432/${POSTGRES_DB:-isekai}
@@ -268,7 +268,7 @@ services:
       start_period: 40s
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/isekai-sh/isekai-frontend:0.1.0-alpha.12}
+    image: ${FRONTEND_IMAGE:-ghcr.io/isekai-sh/isekai-frontend@sha256:98013e7af374938baa087fcebc37b137756d737eea0a43954d5ad9f8f0227c6b}
     ports:
       - '${FRONTEND_PORT:-3000}:80'
     environment:
