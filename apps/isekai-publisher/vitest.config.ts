@@ -21,6 +21,8 @@ export default defineConfig({
         'src/test-helpers/**',
         'src/db/index.ts',
         'src/index.ts',
+        'src/media-worker.ts',
+        'src/scripts/**',
         'dist/**',
       ],
       thresholds: {

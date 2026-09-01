@@ -19,7 +19,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileImage, Send, X } from 'lucide-react';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -220,9 +220,14 @@ export function DraftTableRow({ draft, isSelected, onSelect }: DraftTableRowProp
         >
           {draft.files && draft.files.length > 0 && draft.files[0].storageUrl ? (
             <img
-              src={thumb(draft.files[0].storageUrl, ImageSize.XS)}
+              src={selectImageVariant(draft.files[0], ImageSize.XS)}
               alt={draft.title}
               className="w-full h-full object-cover object-center"
+              loading="lazy"
+              decoding="async"
+              onError={(event) =>
+                fallbackImageToOriginal(event.currentTarget, draft.files?.[0]?.storageUrl ?? '')
+              }
             />
           ) : (
             <FileImage className="h-5 w-5 text-muted-foreground" />

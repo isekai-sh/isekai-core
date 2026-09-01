@@ -6,7 +6,7 @@ echo "Starting Isekai Backend..."
 # Run database migrations from shared package
 echo "Running database migrations from shared package..."
 cd /app/packages/shared
-pnpm prisma migrate deploy
+corepack pnpm@9 prisma migrate deploy
 
 # Check if migrations succeeded
 if [ $? -eq 0 ]; then

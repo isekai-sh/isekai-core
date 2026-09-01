@@ -16,7 +16,7 @@
  */
 
 // Types
-export type { S3Config, StorageService } from './types.js';
+export type { S3Config, StorageObjectMetadata, StorageService, UploadOptions } from './types.js';
 
 // Service
 export {
@@ -38,4 +38,12 @@ export {
 } from './config.js';
 
 // Key generation
-export { generateStorageKey } from './keys.js';
+export {
+  generateStorageKey,
+  generateThumbnailStorageKey,
+  isThumbnailMimeType,
+  THUMBNAIL_QUEUE_NAME,
+  THUMBNAIL_VERSION,
+  THUMBNAIL_WIDTHS,
+} from './keys.js';
+export type { ThumbnailJobData } from './keys.js';

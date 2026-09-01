@@ -22,6 +22,7 @@ import { createMockRequest, createMockResponse } from '../test-helpers/express-m
 // Mock dependencies
 vi.mock('../db/index.js', () => ({
   prisma: {
+    $transaction: vi.fn(),
     deviation: {
       create: vi.fn(),
     },
@@ -36,8 +37,19 @@ vi.mock('../lib/upload-service.js', () => ({
   validateFileSize: vi.fn(),
   generateStorageKey: vi.fn(),
   uploadToStorage: vi.fn(),
+  deleteFromStorage: vi.fn(),
   getPublicUrl: vi.fn(),
   checkStorageLimit: vi.fn(),
+}));
+
+vi.mock('../queues/thumbnails.js', () => ({
+  queueThumbnailGenerationNonFatal: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../lib/env.js', () => ({
+  env: {
+    COMFYUI_ALLOW_DIRECT_TO_DRAFT: false,
+  },
 }));
 
 vi.mock('sharp', () => ({
@@ -58,9 +70,12 @@ import {
   validateFileSize,
   generateStorageKey,
   uploadToStorage,
+  deleteFromStorage,
   getPublicUrl,
 } from '../lib/upload-service.js';
+import { env } from '../lib/env.js';
 import sharp from 'sharp';
+import { queueThumbnailGenerationNonFatal } from '../queues/thumbnails.js';
 
 describe('comfyui routes', () => {
   const mockUser = {
@@ -102,6 +117,9 @@ describe('comfyui routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (env as any).COMFYUI_ALLOW_DIRECT_TO_DRAFT = false;
+    (prisma.$transaction as any).mockImplementation(async (callback: any) => callback(prisma));
+    (deleteFromStorage as any).mockResolvedValue(undefined);
   });
 
   async function callUploadRoute(req: any, res: any) {
@@ -110,6 +128,21 @@ describe('comfyui routes', () => {
     if (!route) throw new Error('Route not found');
     const handler = route.route.stack[route.route.stack.length - 1].handle;
     await handler(req, res);
+  }
+
+  function mockSuccessfulUpload(deviation = mockDeviation) {
+    (validateFileType as any).mockReturnValue(true);
+    (validateFileSize as any).mockReturnValue(true);
+    (generateStorageKey as any).mockReturnValue('deviations/user-123/test---abc123.jpg');
+    (uploadToStorage as any).mockResolvedValue(undefined);
+    (getPublicUrl as any).mockReturnValue(
+      'https://cdn.example.com/deviations/user-123/test---abc123.jpg'
+    );
+    (sharp as any).mockReturnValue({
+      metadata: vi.fn().mockResolvedValue({ width: 1920, height: 1080 }),
+    });
+    (prisma.deviation.create as any).mockResolvedValue(deviation);
+    (prisma.deviationFile.create as any).mockResolvedValue(mockDeviationFile);
   }
 
   describe('POST /upload', () => {
@@ -185,8 +218,12 @@ describe('comfyui routes', () => {
           height: 1080,
           duration: null,
           sortOrder: 0,
+          thumbnailStatus: 'pending',
+          thumbnailVersion: 0,
+          thumbnailUpdatedAt: null,
         },
       });
+      expect(queueThumbnailGenerationNonFatal).toHaveBeenCalledWith('file-123');
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
@@ -564,7 +601,7 @@ describe('comfyui routes', () => {
       });
     });
 
-    it('should create deviation with review status', async () => {
+    it('should default reviewPolicy to manual review for backward compatibility', async () => {
       const req = createMockRequest({
         user: mockUser,
         file: {
@@ -595,6 +632,7 @@ describe('comfyui routes', () => {
 
       await callUploadRoute(req, res);
 
+      expect(prisma.$transaction).toHaveBeenCalledOnce();
       expect(prisma.deviation.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           status: 'review',
@@ -607,6 +645,194 @@ describe('comfyui routes', () => {
         status: 'review',
         message: 'Upload successful. Deviation pending review.',
       });
+    });
+
+    it('should create a review deviation for explicit manual_review policy', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {
+          reviewPolicy: 'manual_review',
+        },
+      });
+      const res = createMockResponse();
+      mockSuccessfulUpload();
+
+      await callUploadRoute(req, res);
+
+      expect(prisma.deviation.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ status: 'review' }),
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        deviationId: 'deviation-123',
+        status: 'review',
+        message: 'Upload successful. Deviation pending review.',
+      });
+    });
+
+    it('should create a draft deviation for direct_to_draft policy', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {
+          reviewPolicy: 'direct_to_draft',
+        },
+      });
+      const res = createMockResponse();
+      (env as any).COMFYUI_ALLOW_DIRECT_TO_DRAFT = true;
+      mockSuccessfulUpload({ ...mockDeviation, status: 'draft' });
+
+      await callUploadRoute(req, res);
+
+      expect(prisma.deviation.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ status: 'draft' }),
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        deviationId: 'deviation-123',
+        status: 'draft',
+        message: 'Upload successful. Deviation saved as draft.',
+      });
+    });
+
+    it('should reject direct_to_draft before storage upload when the policy is disabled', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {
+          reviewPolicy: 'direct_to_draft',
+        },
+      });
+      const res = createMockResponse();
+      (validateFileType as any).mockReturnValue(true);
+      (validateFileSize as any).mockReturnValue(true);
+
+      await expect(callUploadRoute(req, res)).rejects.toMatchObject({
+        statusCode: 403,
+        message: 'Direct-to-draft uploads are disabled',
+      });
+
+      expect(generateStorageKey).not.toHaveBeenCalled();
+      expect(uploadToStorage).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should reject an invalid reviewPolicy before uploading or creating records', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {
+          reviewPolicy: 'publish_immediately',
+        },
+      });
+      const res = createMockResponse();
+      (validateFileType as any).mockReturnValue(true);
+      (validateFileSize as any).mockReturnValue(true);
+
+      await expect(callUploadRoute(req, res)).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Invalid upload metadata',
+      });
+
+      expect(uploadToStorage).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should reject raw status metadata', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {
+          status: 'draft',
+        },
+      });
+      const res = createMockResponse();
+      (validateFileType as any).mockReturnValue(true);
+      (validateFileSize as any).mockReturnValue(true);
+
+      await expect(callUploadRoute(req, res)).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Invalid upload metadata',
+      });
+
+      expect(uploadToStorage).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should delete the uploaded object and rethrow when the database transaction fails', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {},
+      });
+      const res = createMockResponse();
+      const databaseError = new Error('Database unavailable');
+      mockSuccessfulUpload();
+      (prisma.$transaction as any).mockRejectedValue(databaseError);
+
+      await expect(callUploadRoute(req, res)).rejects.toBe(databaseError);
+
+      expect(deleteFromStorage).toHaveBeenCalledWith('deviations/user-123/test---abc123.jpg');
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('should log cleanup failure and still rethrow the original database error', async () => {
+      const req = createMockRequest({
+        user: mockUser,
+        file: {
+          originalname: 'test.jpg',
+          mimetype: 'image/jpeg',
+          size: 1024,
+          buffer: Buffer.from('image'),
+        },
+        body: {},
+      });
+      const res = createMockResponse();
+      const databaseError = new Error('Database unavailable');
+      const cleanupError = new Error('Storage unavailable');
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockSuccessfulUpload();
+      (prisma.$transaction as any).mockRejectedValue(databaseError);
+      (deleteFromStorage as any).mockRejectedValue(cleanupError);
+
+      await expect(callUploadRoute(req, res)).rejects.toBe(databaseError);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to clean up ComfyUI upload after database error:',
+        cleanupError
+      );
+      consoleErrorSpy.mockRestore();
     });
 
     it('should accept empty tags array', async () => {
@@ -670,7 +896,13 @@ describe('comfyui routes', () => {
       (validateFileType as any).mockReturnValue(true);
       (validateFileSize as any).mockReturnValue(true);
 
-      await expect(callUploadRoute(req, res)).rejects.toThrow();
+      await expect(callUploadRoute(req, res)).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Invalid upload metadata',
+      });
+
+      expect(uploadToStorage).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('should accept strict matureLevel', async () => {

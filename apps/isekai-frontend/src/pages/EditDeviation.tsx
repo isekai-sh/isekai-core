@@ -18,7 +18,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import { Calendar, Clock, Send, Save, Trash2, X } from 'lucide-react';
 import { deviations } from '@/lib/api';
 import { formatScheduleDateTime } from '@/lib/timezone';
@@ -317,9 +317,14 @@ export function EditDeviation() {
                         className="relative aspect-square rounded-lg overflow-hidden border"
                       >
                         <img
-                          src={thumb(file.storageUrl, ImageSize.MD)}
+                          src={selectImageVariant(file, ImageSize.MD)}
                           alt={file.originalFilename}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(event) =>
+                            fallbackImageToOriginal(event.currentTarget, file.storageUrl)
+                          }
                         />
                       </div>
                     ))}

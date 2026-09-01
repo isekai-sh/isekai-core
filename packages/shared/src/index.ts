@@ -107,6 +107,23 @@ export interface DeviationFile {
   duration: number | null; // For videos
   sortOrder: number;
   createdAt: string;
+  thumbnailStatus?: 'not_requested' | 'pending' | 'processing' | 'ready' | 'failed' | 'skipped';
+  thumbnailVersion?: number;
+  variants?: DeviationFileVariant[];
+}
+
+export interface DeviationFileVariant {
+  id: string;
+  deviationFileId: string;
+  kind: 'thumbnail' | string;
+  version: number;
+  width: number;
+  height: number;
+  format: string;
+  storageKey: string;
+  storageUrl: string;
+  fileSize: number;
+  createdAt: string;
 }
 
 export interface Gallery {
@@ -328,6 +345,8 @@ export interface CreateApiKeyResponse {
 // ComfyUI Upload Types
 // ============================================
 
+export type ComfyUIReviewPolicy = 'manual_review' | 'direct_to_draft';
+
 export interface ComfyUIUploadRequest {
   file: File | Blob;
   title?: string;
@@ -336,12 +355,13 @@ export interface ComfyUIUploadRequest {
   isMature?: boolean;
   matureLevel?: MatureLevel;
   isAiGenerated?: boolean;
+  reviewPolicy?: ComfyUIReviewPolicy;
 }
 
 export interface ComfyUIUploadResponse {
   success: boolean;
   deviationId: string;
-  status: 'review';
+  status: 'review' | 'draft';
   message: string;
 }
 

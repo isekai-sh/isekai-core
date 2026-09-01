@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@/test-helpers/test-utils';
+import { fireEvent, render, screen } from '@/test-helpers/test-utils';
 import { ReviewGridItem } from './ReviewGridItem';
 import type { Deviation } from '@isekai/shared';
 
@@ -66,7 +66,86 @@ describe('ReviewGridItem', () => {
       />
     );
 
-    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://storage.isekai.sh/test.jpg');
+    const image = screen.getByRole('img');
+    expect(image).toHaveAttribute('src', 'https://storage.isekai.sh/test.jpg');
+    expect(image).toHaveAttribute('loading', 'lazy');
+    expect(image).toHaveAttribute('decoding', 'async');
+  });
+
+  it('should render the closest generated variant when available', () => {
+    const deviationWithVariants = {
+      ...mockDeviation,
+      files: [
+        {
+          ...mockDeviation.files[0],
+          variants: [
+            {
+              width: 128,
+              format: 'webp',
+              storageUrl: 'https://storage.isekai.sh/test-128.webp',
+            },
+            {
+              width: 400,
+              format: 'webp',
+              storageUrl: 'https://storage.isekai.sh/test-400.webp',
+            },
+          ],
+        },
+      ],
+    } as Deviation;
+
+    render(
+      <ReviewGridItem
+        deviation={deviationWithVariants}
+        isSelected={false}
+        isFocused={false}
+        viewMode="grid"
+        onToggleSelect={mockOnToggleSelect}
+        onFocus={mockOnFocus}
+      />
+    );
+
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'src',
+      'https://storage.isekai.sh/test-400.webp'
+    );
+  });
+
+  it('should fall back to the original once when a generated variant fails', () => {
+    const deviationWithVariants = {
+      ...mockDeviation,
+      files: [
+        {
+          ...mockDeviation.files[0],
+          variants: [
+            {
+              width: 400,
+              format: 'webp',
+              storageUrl: 'https://storage.isekai.sh/test-400.webp',
+            },
+          ],
+        },
+      ],
+    } as Deviation;
+
+    render(
+      <ReviewGridItem
+        deviation={deviationWithVariants}
+        isSelected={false}
+        isFocused={false}
+        viewMode="grid"
+        onToggleSelect={mockOnToggleSelect}
+        onFocus={mockOnFocus}
+      />
+    );
+
+    const image = screen.getByRole('img');
+    fireEvent.error(image);
+    expect(image).toHaveAttribute('src', 'https://storage.isekai.sh/test.jpg');
+
+    fireEvent.error(image);
+    expect(image).toHaveAttribute('src', 'https://storage.isekai.sh/test.jpg');
+    expect(image.dataset.originalFallbackUrl).toBe('https://storage.isekai.sh/test.jpg');
   });
 
   it('should render in list view mode', () => {

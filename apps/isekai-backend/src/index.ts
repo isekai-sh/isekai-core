@@ -123,7 +123,7 @@ async function startServer() {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: env.NODE_ENV === 'production' && !env.FRONTEND_URL.startsWith('http://localhost'),
+        secure: env.COOKIE_SECURE ?? env.FRONTEND_URL.startsWith('https://'),
         httpOnly: true,
         sameSite: 'lax',
         domain: env.COOKIE_DOMAIN, // Set to ".yourdomain.com" to share cookies across subdomains

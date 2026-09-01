@@ -20,6 +20,11 @@ import { Redis } from 'ioredis';
 import { prisma } from '../db/index.js';
 import { deleteFromStorage } from '../lib/upload-service.js';
 import { StructuredLogger } from '../lib/structured-logger.js';
+import {
+  generateThumbnailStorageKey,
+  THUMBNAIL_VERSION,
+  THUMBNAIL_WIDTHS,
+} from '@isekai/shared/storage';
 
 const redisUrl = process.env.REDIS_URL!;
 
@@ -80,6 +85,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
     // Query all files for this deviation
     const files = await prisma.deviationFile.findMany({
       where: { deviationId },
+      include: { variants: true },
     });
 
     if (!files || files.length === 0) {
@@ -89,7 +95,38 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
       return { filesDeleted: 0, bytesFreed: 0 };
     }
 
-    const totalSize = files.reduce((sum, f) => sum + f.fileSize, 0);
+    await prisma.deviationFile.updateMany({
+      where: { id: { in: files.map((file) => file.id) } },
+      data: {
+        thumbnailStatus: 'skipped',
+        thumbnailLeaseId: null,
+        thumbnailLeaseExpiresAt: null,
+        thumbnailUpdatedAt: new Date(),
+      },
+    });
+
+    const totalSize = files.reduce(
+      (sum, file) =>
+        sum + file.fileSize + (file.variants ?? []).reduce((n, variant) => n + variant.fileSize, 0),
+      0
+    );
+    const storageObjects = [
+      ...new Map(
+        files
+          .flatMap((file) => [
+            ...(file.variants ?? []).map((variant) => ({
+              storageKey: variant.storageKey,
+              fileName: `${file.originalFilename} thumbnail`,
+            })),
+            ...THUMBNAIL_WIDTHS.map((width) => ({
+              storageKey: generateThumbnailStorageKey(file.storageKey, width, THUMBNAIL_VERSION),
+              fileName: `${file.originalFilename} thumbnail`,
+            })),
+            { storageKey: file.storageKey, fileName: file.originalFilename },
+          ])
+          .map((object) => [object.storageKey, object] as const)
+      ).values(),
+    ];
 
     logger.info('Starting storage file deletion', {
       fileCount: files.length,
@@ -98,18 +135,18 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
 
     // Delete files from storage (parallel deletion with individual error handling)
     const deletionResults = await Promise.allSettled(
-      files.map(async (file) => {
+      storageObjects.map(async (file) => {
         try {
           await deleteFromStorage(file.storageKey);
           logger.debug('Deleted file from storage', {
             storageKey: file.storageKey,
-            fileName: file.originalFilename,
+            fileName: file.fileName,
           });
           return { success: true, key: file.storageKey };
         } catch (error) {
           logger.error('Failed to delete file from storage', error, {
             storageKey: file.storageKey,
-            fileName: file.originalFilename,
+            fileName: file.fileName,
           });
           throw error; // Trigger job retry
         }
@@ -120,7 +157,7 @@ export const storageCleanupWorker = new Worker<StorageCleanupJobData>(
     const failedDeletions = deletionResults.filter((r) => r.status === 'rejected');
     if (failedDeletions.length > 0) {
       throw new Error(
-        `Failed to delete ${failedDeletions.length} of ${files.length} files from storage`
+        `Failed to delete ${failedDeletions.length} of ${storageObjects.length} objects from storage`
       );
     }
 

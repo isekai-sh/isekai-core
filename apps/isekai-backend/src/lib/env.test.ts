@@ -169,6 +169,26 @@ describe('validateEnv', () => {
     });
   });
 
+  describe('cookie security', () => {
+    it('should parse COOKIE_SECURE=false without coercing it to true', async () => {
+      process.env.COOKIE_SECURE = 'false';
+
+      const { validateEnv } = await import('./env.js');
+      const result = validateEnv();
+
+      expect(result.COOKIE_SECURE).toBe(false);
+    });
+
+    it('should parse COOKIE_SECURE=true', async () => {
+      process.env.COOKIE_SECURE = 'true';
+
+      const { validateEnv } = await import('./env.js');
+      const result = validateEnv();
+
+      expect(result.COOKIE_SECURE).toBe(true);
+    });
+  });
+
   describe('number coercion', () => {
     it('should coerce PORT from string to number', async () => {
       process.env.PORT = '3000';
@@ -262,6 +282,42 @@ describe('validateEnv', () => {
       const result = validateEnv();
 
       expect(result.CIRCUIT_BREAKER_ENABLED).toBe(false);
+    });
+
+    it('should default COMFYUI_ALLOW_DIRECT_TO_DRAFT to false', async () => {
+      delete process.env.COMFYUI_ALLOW_DIRECT_TO_DRAFT;
+
+      const { validateEnv } = await import('./env.js');
+      const result = validateEnv();
+
+      expect(result.COMFYUI_ALLOW_DIRECT_TO_DRAFT).toBe(false);
+    });
+
+    it('should strictly parse COMFYUI_ALLOW_DIRECT_TO_DRAFT=false', async () => {
+      process.env.COMFYUI_ALLOW_DIRECT_TO_DRAFT = 'false';
+
+      const { validateEnv } = await import('./env.js');
+      const result = validateEnv();
+
+      expect(result.COMFYUI_ALLOW_DIRECT_TO_DRAFT).toBe(false);
+    });
+
+    it('should strictly parse COMFYUI_ALLOW_DIRECT_TO_DRAFT=true', async () => {
+      process.env.COMFYUI_ALLOW_DIRECT_TO_DRAFT = 'true';
+
+      const { validateEnv } = await import('./env.js');
+      const result = validateEnv();
+
+      expect(result.COMFYUI_ALLOW_DIRECT_TO_DRAFT).toBe(true);
+    });
+
+    it('should reject non-boolean COMFYUI_ALLOW_DIRECT_TO_DRAFT values', async () => {
+      process.env.COMFYUI_ALLOW_DIRECT_TO_DRAFT = '1';
+
+      const { validateEnv } = await import('./env.js');
+      validateEnv();
+
+      expect(processExitSpy).toHaveBeenCalledWith(1);
     });
   });
 

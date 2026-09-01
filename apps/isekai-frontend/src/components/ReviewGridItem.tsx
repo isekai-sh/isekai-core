@@ -19,7 +19,7 @@ import { FileImage } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import type { Deviation } from '@isekai/shared';
 
 interface ReviewGridItemProps {
@@ -70,10 +70,14 @@ export function ReviewGridItem({
         <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-muted">
           {deviation.files?.[0]?.storageUrl ? (
             <img
-              src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
+              src={selectImageVariant(deviation.files[0], ImageSize.XS)}
               alt={deviation.title}
               className="w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
+              onError={(event) =>
+                fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+              }
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -117,10 +121,14 @@ export function ReviewGridItem({
       {/* Thumbnail image */}
       {deviation.files?.[0]?.storageUrl ? (
         <img
-          src={thumb(deviation.files[0].storageUrl, ImageSize.MD)}
+          src={selectImageVariant(deviation.files[0], ImageSize.MD)}
           alt={deviation.title}
           className="w-full h-full object-cover absolute inset-0"
           loading="lazy"
+          decoding="async"
+          onError={(event) =>
+            fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+          }
         />
       ) : (
         <div className="w-full h-full bg-muted flex items-center justify-center absolute inset-0">

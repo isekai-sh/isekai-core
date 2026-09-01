@@ -99,6 +99,11 @@ vi.mock('../queues/deviation-publisher.js', () => ({
   },
 }));
 
+vi.mock('../lib/deviation-files.js', () => ({
+  deleteStoredDeviationFiles: vi.fn().mockResolvedValue(undefined),
+  serializeDeviationFiles: vi.fn((files) => files ?? []),
+}));
+
 // Mock S3
 vi.mock('@aws-sdk/client-s3', () => ({
   S3Client: vi.fn(function (this: any) {
@@ -118,6 +123,7 @@ import {
   cancelScheduledDeviation,
   deviationPublisherQueue,
 } from '../queues/deviation-publisher.js';
+import { deleteStoredDeviationFiles } from '../lib/deviation-files.js';
 
 const mockPrisma = vi.mocked(prisma);
 const mockRefreshTokenIfNeeded = vi.mocked(refreshTokenIfNeeded);
@@ -278,7 +284,7 @@ describe('Deviations Routes', () => {
 
       expect(mockPrisma.deviation.findFirst).toHaveBeenCalledWith({
         where: { id: mockDeviation.id, userId: mockUser.id },
-        include: { files: true },
+        include: { files: { include: { variants: true } } },
       });
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -424,6 +430,7 @@ describe('Deviations Routes', () => {
 
       await callRoute('delete', `/${mockDeviation.id}`, req, res);
 
+      expect(deleteStoredDeviationFiles).toHaveBeenCalledWith(deviationWithFiles.files);
       expect(mockPrisma.deviation.delete).toHaveBeenCalledWith({
         where: { id: mockDeviation.id },
       });
@@ -630,6 +637,7 @@ describe('Deviations Routes', () => {
 
       await callRoute('post', '/batch-delete', req, res);
 
+      expect(deleteStoredDeviationFiles).toHaveBeenCalledWith(draftDeviation.files);
       expect(mockPrisma.deviation.deleteMany).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -97,7 +97,13 @@ export interface StorageService {
    * @param buffer - File content as Buffer
    * @param contentType - MIME type of the file
    */
-  upload(key: string, buffer: Buffer, contentType: string): Promise<void>;
+  upload(key: string, buffer: Buffer, contentType: string, options?: UploadOptions): Promise<void>;
+
+  /** Download an object into memory. Intended for bounded media-worker inputs. */
+  download(key: string): Promise<Buffer>;
+
+  /** Return object metadata, or null when the key does not exist. */
+  head(key: string): Promise<StorageObjectMetadata | null>;
 
   /**
    * Delete a file from storage.
@@ -133,4 +139,15 @@ export interface StorageService {
 
   /** Get the configured path prefix */
   getPathPrefix(): string;
+}
+
+export interface UploadOptions {
+  cacheControl?: string;
+}
+
+export interface StorageObjectMetadata {
+  contentLength?: number;
+  contentType?: string;
+  etag?: string;
+  lastModified?: Date;
 }

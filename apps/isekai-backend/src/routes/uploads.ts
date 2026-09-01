@@ -24,9 +24,11 @@ import {
   validateFileSize,
   generateStorageKey,
   getPublicUrl,
-  deleteFromStorage,
   getPresignedUploadUrl,
 } from '../lib/upload-service.js';
+import { isThumbnailMimeType, THUMBNAIL_VERSION } from '@isekai/shared/storage';
+import { queueThumbnailGenerationNonFatal } from '../queues/thumbnails.js';
+import { deleteStoredDeviationFiles } from '../lib/deviation-files.js';
 
 const router = Router();
 
@@ -92,7 +94,8 @@ router.post('/complete', async (req, res) => {
     throw new AppError(400, 'Maximum 100 files per deviation');
   }
 
-  await prisma.deviationFile.create({
+  const thumbnailable = isThumbnailMimeType(mimeType);
+  const createdFile = await prisma.deviationFile.create({
     data: {
       id: fileId,
       deviationId,
@@ -105,8 +108,15 @@ router.post('/complete', async (req, res) => {
       height,
       duration,
       sortOrder: existingFiles.length,
+      thumbnailStatus: thumbnailable ? 'pending' : 'skipped',
+      thumbnailVersion: thumbnailable ? 0 : THUMBNAIL_VERSION,
+      thumbnailUpdatedAt: thumbnailable ? null : new Date(),
     },
   });
+
+  if (thumbnailable) {
+    await queueThumbnailGenerationNonFatal(createdFile.id);
+  }
 
   res.json({ success: true });
 });
@@ -120,6 +130,7 @@ router.delete('/:fileId', async (req, res) => {
     where: { id: fileId },
     include: {
       deviation: true,
+      variants: true,
     },
   });
 
@@ -127,13 +138,7 @@ router.delete('/:fileId', async (req, res) => {
     throw new AppError(404, 'File not found');
   }
 
-  // Delete from storage
-  try {
-    await deleteFromStorage(file.storageKey);
-  } catch (error) {
-    console.error('Failed to delete from storage:', error);
-    // Continue with DB deletion even if storage fails
-  }
+  await deleteStoredDeviationFiles([file]);
 
   await prisma.deviationFile.delete({ where: { id: fileId } });
 
@@ -161,7 +166,7 @@ router.post('/batch-delete', async (req, res) => {
   // Fetch files with deviation info
   const files = await prisma.deviationFile.findMany({
     where: { id: { in: fileIds } },
-    include: { deviation: true },
+    include: { deviation: true, variants: true },
   });
 
   // Verify ownership
@@ -169,8 +174,7 @@ router.post('/batch-delete', async (req, res) => {
     throw new AppError(403, 'Unauthorized');
   }
 
-  // Delete from storage (parallel, ignore failures)
-  await Promise.allSettled(files.map((file) => deleteFromStorage(file.storageKey)));
+  await deleteStoredDeviationFiles(files);
 
   // Delete from DB
   await prisma.deviationFile.deleteMany({

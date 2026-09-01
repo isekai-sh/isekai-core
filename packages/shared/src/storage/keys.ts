@@ -46,3 +46,25 @@ export function generateStorageKey(
 
   return `${pathPrefix}deviations/${userId}/${sanitized}---${shortUuid}.${ext}`;
 }
+
+export const THUMBNAIL_VERSION = 1;
+export const THUMBNAIL_WIDTHS = [128, 256, 400, 800, 1200] as const;
+export const THUMBNAIL_QUEUE_NAME = 'image-thumbnails';
+
+export interface ThumbnailJobData {
+  deviationFileId: string;
+  targetVersion: number;
+}
+
+export function isThumbnailMimeType(mimeType: string): boolean {
+  return mimeType.startsWith('image/');
+}
+
+/** Deterministic and prefix-safe derivative key for idempotent thumbnail writes. */
+export function generateThumbnailStorageKey(
+  originalStorageKey: string,
+  width: number,
+  version: number = THUMBNAIL_VERSION
+): string {
+  return `${originalStorageKey}.derivatives/thumb/v${version}/${width}.webp`;
+}

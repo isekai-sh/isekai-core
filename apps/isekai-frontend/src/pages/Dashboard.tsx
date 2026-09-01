@@ -17,7 +17,7 @@
 
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import {
   ClipboardCheck,
   FileImage,
@@ -272,9 +272,16 @@ export function Dashboard() {
                             {item.files?.[0]?.storageUrl ? (
                               <>
                                 <img
-                                  src={thumb(item.files[0].storageUrl, ImageSize.SM)}
+                                  src={selectImageVariant(item.files[0], ImageSize.SM)}
                                   alt={item.title}
                                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  decoding="async"
+                                  onError={(event) =>
+                                    fallbackImageToOriginal(
+                                      event.currentTarget,
+                                      item.files?.[0]?.storageUrl ?? ''
+                                    )
+                                  }
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                               </>
@@ -331,9 +338,16 @@ export function Dashboard() {
                             {item.files?.[0]?.storageUrl ? (
                               <>
                                 <img
-                                  src={thumb(item.files[0].storageUrl, ImageSize.SM)}
+                                  src={selectImageVariant(item.files[0], ImageSize.SM)}
                                   alt={item.title}
                                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  decoding="async"
+                                  onError={(event) =>
+                                    fallbackImageToOriginal(
+                                      event.currentTarget,
+                                      item.files?.[0]?.storageUrl ?? ''
+                                    )
+                                  }
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                               </>
@@ -387,55 +401,60 @@ export function Dashboard() {
                   </div>
                 ) : (
                   <Link to="/scheduled" className="block space-y-1">
-                    {scheduledData.deviations
-                      .slice(0, 2)
-                      .map(
-                        (
-                          item: {
-                            id: string;
-                            title: string;
-                            scheduledAt?: string;
-                            files?: { storageUrl: string }[];
-                          },
-                          idx: number
-                        ) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                          >
-                            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground w-20 shrink-0">
-                              <div
-                                className={cn(
-                                  'w-1.5 h-1.5 rounded-full shrink-0',
-                                  idx === 0 ? 'bg-primary' : 'bg-muted-foreground/50'
-                                )}
-                              />
-                              <span>
-                                {item.scheduledAt
-                                  ? new Date(item.scheduledAt).toLocaleTimeString(undefined, {
-                                      hour: 'numeric',
-                                      minute: '2-digit',
-                                    })
-                                  : '--:--'}
-                              </span>
-                            </div>
-                            {item.files?.[0]?.storageUrl ? (
-                              <img
-                                src={thumb(item.files[0].storageUrl, ImageSize.XS)}
-                                alt={item.title}
-                                className="h-8 w-8 rounded-sm object-cover"
-                              />
-                            ) : (
-                              <div className="h-8 w-8 rounded-sm bg-muted flex items-center justify-center">
-                                <FileImage className="h-3 w-3 text-muted-foreground" />
-                              </div>
-                            )}
-                            <p className="text-sm truncate group-hover:text-primary transition-colors flex-1">
-                              {item.title || 'Untitled'}
-                            </p>
+                    {scheduledData.deviations.slice(0, 2).map(
+                      (
+                        item: {
+                          id: string;
+                          title: string;
+                          scheduledAt?: string;
+                          files?: { storageUrl: string }[];
+                        },
+                        idx: number
+                      ) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground w-20 shrink-0">
+                            <div
+                              className={cn(
+                                'w-1.5 h-1.5 rounded-full shrink-0',
+                                idx === 0 ? 'bg-primary' : 'bg-muted-foreground/50'
+                              )}
+                            />
+                            <span>
+                              {item.scheduledAt
+                                ? new Date(item.scheduledAt).toLocaleTimeString(undefined, {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                  })
+                                : '--:--'}
+                            </span>
                           </div>
-                        )
-                      )}
+                          {item.files?.[0]?.storageUrl ? (
+                            <img
+                              src={selectImageVariant(item.files[0], ImageSize.XS)}
+                              alt={item.title}
+                              className="h-8 w-8 rounded-sm object-cover"
+                              decoding="async"
+                              onError={(event) =>
+                                fallbackImageToOriginal(
+                                  event.currentTarget,
+                                  item.files?.[0]?.storageUrl ?? ''
+                                )
+                              }
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-sm bg-muted flex items-center justify-center">
+                              <FileImage className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          )}
+                          <p className="text-sm truncate group-hover:text-primary transition-colors flex-1">
+                            {item.title || 'Untitled'}
+                          </p>
+                        </div>
+                      )
+                    )}
                   </Link>
                 )}
               </CardContent>

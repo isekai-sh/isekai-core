@@ -1,6 +1,6 @@
 {
   "name": "isekai-core",
-  "version": "0.1.0-alpha.11",
+  "version": "0.1.0-alpha.12",
   "private": true,
   "type": "module",
   "description": "Open source DeviantArt automation suite",
@@ -17,6 +17,7 @@
     "build:services": "pnpm --parallel --filter isekai-backend --filter isekai-publisher build",
     "start:backend": "pnpm --filter isekai-backend start",
     "start:publisher": "pnpm --filter isekai-publisher start",
+    "start:media": "pnpm --filter isekai-publisher start:media",
     "test": "pnpm -r run test",
     "test:ui": "pnpm -r --parallel run test:ui",
     "test:coverage": "pnpm -r run test:coverage",

@@ -32,6 +32,14 @@ vi.mock('@aws-sdk/client-s3', () => {
       ...params,
       _type: 'DeleteObjectCommand',
     })),
+    GetObjectCommand: vi.fn().mockImplementation((params) => ({
+      ...params,
+      _type: 'GetObjectCommand',
+    })),
+    HeadObjectCommand: vi.fn().mockImplementation((params) => ({
+      ...params,
+      _type: 'HeadObjectCommand',
+    })),
     __mockSend: mockSend,
   };
 });
@@ -42,7 +50,13 @@ vi.mock('@aws-sdk/s3-request-presigner', () => ({
 
 import { S3StorageService, createStorageService } from './service.js';
 import type { S3Config } from './types.js';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 describe('S3StorageService', () => {
@@ -133,6 +147,39 @@ describe('S3StorageService', () => {
           ContentType: 'video/mp4',
         })
       );
+    });
+
+    it('sets immutable cache control for generated assets', async () => {
+      await service.upload('thumb.webp', Buffer.from('thumb'), 'image/webp', {
+        cacheControl: 'public, max-age=31536000, immutable',
+      });
+      expect(PutObjectCommand).toHaveBeenCalledWith(
+        expect.objectContaining({ CacheControl: 'public, max-age=31536000, immutable' })
+      );
+    });
+  });
+
+  describe('download and head', () => {
+    it('downloads object bodies', async () => {
+      mockSend.mockResolvedValueOnce({
+        Body: { transformToByteArray: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])) },
+      });
+      await expect(service.download('source.png')).resolves.toEqual(Buffer.from([1, 2, 3]));
+      expect(GetObjectCommand).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: 'source.png' });
+    });
+
+    it('returns metadata and treats a 404 as missing', async () => {
+      mockSend.mockResolvedValueOnce({ ContentLength: 12, ContentType: 'image/webp' });
+      await expect(service.head('thumb.webp')).resolves.toEqual({
+        contentLength: 12,
+        contentType: 'image/webp',
+        etag: undefined,
+        lastModified: undefined,
+      });
+      expect(HeadObjectCommand).toHaveBeenCalled();
+
+      mockSend.mockRejectedValueOnce({ name: 'NotFound', $metadata: { httpStatusCode: 404 } });
+      await expect(service.head('missing.webp')).resolves.toBeNull();
     });
   });
 

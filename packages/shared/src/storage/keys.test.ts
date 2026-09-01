@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generateStorageKey } from './keys.js';
+import { generateStorageKey, generateThumbnailStorageKey } from './keys.js';
 
 describe('generateStorageKey', () => {
   it('should generate key without prefix (backward compat)', () => {
@@ -86,5 +86,17 @@ describe('generateStorageKey', () => {
     // Both should start with "deviations/" (no prefix)
     expect(keyNoPrefix).toMatch(/^deviations\//);
     expect(keyEmptyPrefix).toMatch(/^deviations\//);
+  });
+});
+
+describe('generateThumbnailStorageKey', () => {
+  it('preserves the complete original key and is deterministic', () => {
+    const original = 'owner/deviations/user/image---1234.png';
+    expect(generateThumbnailStorageKey(original, 400)).toBe(
+      'owner/deviations/user/image---1234.png.derivatives/thumb/v1/400.webp'
+    );
+    expect(generateThumbnailStorageKey(original, 400)).toBe(
+      generateThumbnailStorageKey(original, 400)
+    );
   });
 });

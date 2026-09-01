@@ -22,6 +22,7 @@ import type { Job } from 'bullmq';
 const mockDeleteFromStorage = vi.fn();
 const mockPrismaDeviationFileFindMany = vi.fn();
 const mockPrismaDeviationFileDeleteMany = vi.fn();
+const mockPrismaDeviationFileUpdateMany = vi.fn();
 
 vi.mock('../lib/upload-service.js', () => ({
   deleteFromStorage: mockDeleteFromStorage,
@@ -32,6 +33,7 @@ vi.mock('../db/index.js', () => ({
     deviationFile: {
       findMany: mockPrismaDeviationFileFindMany,
       deleteMany: mockPrismaDeviationFileDeleteMany,
+      updateMany: mockPrismaDeviationFileUpdateMany,
     },
   },
 }));
@@ -46,7 +48,7 @@ vi.mock('ioredis', () => ({
 
 let capturedWorkerProcessor: ((job: Job) => Promise<any>) | null = null;
 const mockQueueAdd = vi.fn();
-const workerEventListeners: Record<string, Function[]> = {};
+const workerEventListeners: Record<string, Array<(...args: unknown[]) => unknown>> = {};
 
 vi.mock('bullmq', () => ({
   Queue: class MockQueue {
@@ -56,7 +58,7 @@ vi.mock('bullmq', () => ({
     constructor(queueName: string, processor: (job: Job) => Promise<any>) {
       capturedWorkerProcessor = processor;
     }
-    on(event: string, handler: Function) {
+    on(event: string, handler: (...args: unknown[]) => unknown) {
       if (!workerEventListeners[event]) {
         workerEventListeners[event] = [];
       }
@@ -84,6 +86,7 @@ vi.mock('../lib/structured-logger.js', () => ({
 describe('storage-cleanup', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockDeleteFromStorage.mockReset();
     capturedWorkerProcessor = null;
     Object.keys(workerEventListeners).forEach((key) => delete workerEventListeners[key]);
     process.env.REDIS_URL = 'redis://localhost:6379';
@@ -114,6 +117,7 @@ describe('storage-cleanup', () => {
       });
       expect(mockPrismaDeviationFileFindMany).toHaveBeenCalledWith({
         where: { deviationId: 'dev-123' },
+        include: { variants: true },
       });
       expect(mockDeleteFromStorage).not.toHaveBeenCalled();
       expect(mockPrismaDeviationFileDeleteMany).not.toHaveBeenCalled();
@@ -130,6 +134,7 @@ describe('storage-cleanup', () => {
           storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
+          variants: [],
         },
         {
           id: 'file-2',
@@ -137,6 +142,7 @@ describe('storage-cleanup', () => {
           storageKey: 'uploads/file2.png',
           originalFilename: 'file2.png',
           fileSize: 2048,
+          variants: [],
         },
       ];
 
@@ -159,7 +165,7 @@ describe('storage-cleanup', () => {
         filesDeleted: 2,
         bytesFreed: 3072,
       });
-      expect(mockDeleteFromStorage).toHaveBeenCalledTimes(2);
+      expect(mockDeleteFromStorage).toHaveBeenCalledTimes(12);
       expect(mockDeleteFromStorage).toHaveBeenCalledWith('uploads/file1.png');
       expect(mockDeleteFromStorage).toHaveBeenCalledWith('uploads/file2.png');
       expect(mockPrismaDeviationFileDeleteMany).toHaveBeenCalledWith({
@@ -180,11 +186,12 @@ describe('storage-cleanup', () => {
           storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
+          variants: [],
         },
       ];
 
       mockPrismaDeviationFileFindMany.mockResolvedValue(mockFiles);
-      mockDeleteFromStorage.mockRejectedValue(new Error('S3 error'));
+      mockDeleteFromStorage.mockRejectedValueOnce(new Error('S3 error'));
 
       const mockJob: Partial<Job> = {
         id: 'job-123',
@@ -196,7 +203,7 @@ describe('storage-cleanup', () => {
       };
 
       await expect(capturedWorkerProcessor!(mockJob as Job)).rejects.toThrow(
-        'Failed to delete 1 of 1 files from storage'
+        'Failed to delete 1 of 6 objects from storage'
       );
       expect(mockPrismaDeviationFileDeleteMany).not.toHaveBeenCalled();
       expect(mockLoggerError).toHaveBeenCalled();
@@ -210,6 +217,7 @@ describe('storage-cleanup', () => {
           storageKey: 'uploads/file1.png',
           originalFilename: 'file1.png',
           fileSize: 1024,
+          variants: [],
         },
         {
           id: 'file-2',
@@ -217,6 +225,7 @@ describe('storage-cleanup', () => {
           storageKey: 'uploads/file2.png',
           originalFilename: 'file2.png',
           fileSize: 2048,
+          variants: [],
         },
       ];
 
@@ -235,7 +244,7 @@ describe('storage-cleanup', () => {
       };
 
       await expect(capturedWorkerProcessor!(mockJob as Job)).rejects.toThrow(
-        'Failed to delete 1 of 2 files from storage'
+        'Failed to delete 1 of 12 objects from storage'
       );
     });
 

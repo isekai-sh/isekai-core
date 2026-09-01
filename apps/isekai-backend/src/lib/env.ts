@@ -40,6 +40,10 @@ const envSchema = z.object({
   // Security
   SESSION_SECRET: z.string().min(1, 'SESSION_SECRET is required'),
   COOKIE_DOMAIN: z.string().optional(),
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
   SESSION_MAX_AGE_DAYS: z.coerce.number().int().positive().default(7),
   REFRESH_TOKEN_EXPIRY_DAYS: z.coerce.number().int().positive().default(90),
 
@@ -91,6 +95,10 @@ const envSchema = z.object({
   DISABLE_RATE_LIMIT: z.coerce.boolean().optional(),
   ALERT_WEBHOOK_URL: z.string().url().optional(),
   ENABLE_ALERTS: z.coerce.boolean().optional(),
+  COMFYUI_ALLOW_DIRECT_TO_DRAFT: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 
   // SaaS: Account Limits (0 = unlimited, for self-hosted)
   MAX_DA_ACCOUNTS: z.coerce.number().int().min(0).default(0),

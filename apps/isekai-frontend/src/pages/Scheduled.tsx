@@ -19,7 +19,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import {
   Clock,
   X,
@@ -818,9 +818,14 @@ function ScheduledTableRow({
         >
           {deviation.files && deviation.files.length > 0 && deviation.files[0].storageUrl ? (
             <img
-              src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
+              src={selectImageVariant(deviation.files[0], ImageSize.XS)}
               alt={deviation.title}
               className="w-full h-full object-cover object-center"
+              loading="lazy"
+              decoding="async"
+              onError={(event) =>
+                fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+              }
             />
           ) : (
             <FileImage className="h-5 w-5 text-muted-foreground" />

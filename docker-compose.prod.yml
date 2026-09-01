@@ -6,8 +6,7 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
-    container_name: isekai-postgres
+    image: postgres@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
     environment:
       POSTGRES_USER: isekai
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-isekai}
@@ -26,8 +25,7 @@ services:
       - isekai-network
 
   redis:
-    image: redis:7-alpine
-    container_name: isekai-redis
+    image: redis@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
     command: redis-server --appendonly yes --appendfsync everysec
     ports:
       - '${REDIS_PORT:-6379}:6379'
@@ -43,12 +41,11 @@ services:
       - isekai-network
 
   minio:
-    image: minio/minio:latest
-    container_name: isekai-minio
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     command: server /data --console-address ":9001"
     ports:
-      - '${MINIO_API_PORT:-9000}:9000'   # S3 API
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'   # Web Console
+      - '${MINIO_API_PORT:-9000}:9000' # S3 API
+      - '${MINIO_CONSOLE_PORT:-9001}:9001' # Web Console
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -65,11 +62,14 @@ services:
 
   # Creates the default bucket on startup
   minio-init:
-    image: minio/mc:latest
-    container_name: isekai-minio-init
+    image: minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-isekai-uploads}
     entrypoint: >
       /bin/sh -c "
       mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
@@ -81,8 +81,15 @@ services:
       - isekai-network
 
   backend:
-    image: ghcr.io/isekai-sh/isekai-backend:${IMAGE_TAG:-latest}
-    container_name: isekai-backend
+    image: ${BACKEND_IMAGE:-ghcr.io/isekai-sh/isekai-backend:0.1.0-alpha.12}
+    # Run the bundled Prisma CLI directly so migrations remain deterministic.
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        cd /app/packages/shared &&
+        ./node_modules/.bin/prisma migrate deploy &&
+        exec node /app/apps/isekai-backend/dist/index.js
     ports:
       - '${BACKEND_PORT:-4000}:4000'
     environment:
@@ -99,8 +106,12 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       SESSION_MAX_AGE_DAYS: ${SESSION_MAX_AGE_DAYS:-7}
       REFRESH_TOKEN_EXPIRY_DAYS: ${REFRESH_TOKEN_EXPIRY_DAYS:-90}
+
+      # ComfyUI upload policy (fail closed by default)
+      COMFYUI_ALLOW_DIRECT_TO_DRAFT: ${COMFYUI_ALLOW_DIRECT_TO_DRAFT:-false}
 
       # DeviantArt OAuth (REQUIRED)
       DEVIANTART_CLIENT_ID: ${DEVIANTART_CLIENT_ID}
@@ -131,15 +142,15 @@ services:
     networks:
       - isekai-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:4000/api/health']
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:4000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   publisher:
-    image: ghcr.io/isekai-sh/isekai-publisher:${IMAGE_TAG:-latest}
-    container_name: isekai-publisher
+    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher:0.1.0-alpha.12}
     ports:
       - '${PUBLISHER_HEALTH_PORT:-8000}:8000'
     environment:
@@ -208,15 +219,56 @@ services:
     networks:
       - isekai-network
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1']
+      test:
+        ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  media-worker:
+    image: ${PUBLISHER_IMAGE:-ghcr.io/isekai-sh/isekai-publisher:0.1.0-alpha.12}
+    command: ['node', 'dist/media-worker.js']
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-isekai}:${POSTGRES_PASSWORD:-isekai}@postgres:5432/${POSTGRES_DB:-isekai}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-minioadmin}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minioadmin}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-isekai-uploads}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:9000/isekai-uploads}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+      THUMBNAIL_CONCURRENCY: ${THUMBNAIL_CONCURRENCY:-1}
+      THUMBNAIL_SHARP_CONCURRENCY: ${THUMBNAIL_SHARP_CONCURRENCY:-1}
+      THUMBNAIL_SHARP_CACHE_MB: ${THUMBNAIL_SHARP_CACHE_MB:-64}
+      THUMBNAIL_RECONCILE_INTERVAL_MS: ${THUMBNAIL_RECONCILE_INTERVAL_MS:-60000}
+      THUMBNAIL_RECONCILE_BATCH_SIZE: ${THUMBNAIL_RECONCILE_BATCH_SIZE:-100}
+      MEDIA_HEALTH_PORT: 8001
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: ${MEDIA_WORKER_MEMORY_LIMIT:-2g}
+    networks:
+      - isekai-network
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:8001/ready || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   frontend:
-    image: ghcr.io/isekai-sh/isekai-frontend:${IMAGE_TAG:-latest}
-    container_name: isekai-frontend
+    image: ${FRONTEND_IMAGE:-ghcr.io/isekai-sh/isekai-frontend:0.1.0-alpha.12}
     ports:
       - '${FRONTEND_PORT:-3000}:80'
     environment:
@@ -233,7 +285,8 @@ services:
     networks:
       - isekai-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:80/']
+      # nginx listens on IPv4; BusyBox resolves localhost to ::1 first.
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://127.0.0.1:80/']
       interval: 30s
       timeout: 10s
       retries: 3

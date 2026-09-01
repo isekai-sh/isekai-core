@@ -15,9 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { S3Config, StorageService } from './types.js';
+import type { S3Config, StorageObjectMetadata, StorageService, UploadOptions } from './types.js';
 
 /**
  * S3-compatible storage service.
@@ -62,15 +68,69 @@ export class S3StorageService implements StorageService {
     this.pathPrefix = config.pathPrefix || '';
   }
 
-  async upload(key: string, buffer: Buffer, contentType: string): Promise<void> {
+  async upload(
+    key: string,
+    buffer: Buffer,
+    contentType: string,
+    options: UploadOptions = {}
+  ): Promise<void> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
       Body: buffer,
       ContentType: contentType,
       ContentLength: buffer.length,
+      ...(options.cacheControl ? { CacheControl: options.cacheControl } : {}),
     });
     await this.client.send(command);
+  }
+
+  async download(key: string): Promise<Buffer> {
+    const response = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      })
+    );
+
+    if (!response.Body) {
+      throw new Error(`Storage object has no body: ${key}`);
+    }
+
+    if (typeof response.Body.transformToByteArray === 'function') {
+      return Buffer.from(await response.Body.transformToByteArray());
+    }
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array | string>) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+
+  async head(key: string): Promise<StorageObjectMetadata | null> {
+    try {
+      const response = await this.client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        })
+      );
+      return {
+        contentLength: response.ContentLength,
+        contentType: response.ContentType,
+        etag: response.ETag,
+        lastModified: response.LastModified,
+      };
+    } catch (error) {
+      const statusCode = (error as { $metadata?: { httpStatusCode?: number } }).$metadata
+        ?.httpStatusCode;
+      const name = (error as { name?: string }).name;
+      if (statusCode === 404 || name === 'NotFound' || name === 'NoSuchKey') {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async delete(key: string): Promise<void> {

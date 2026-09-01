@@ -27,7 +27,7 @@ import {
 } from '../queues/deviation-publisher.js';
 import { scheduleRateLimit, batchRateLimit } from '../middleware/rate-limit.js';
 import type { DeviationStatus, MatureLevel, UploadMode } from '../db/index.js';
-import { deleteFromStorage } from '../lib/upload-service.js';
+import { deleteStoredDeviationFiles, serializeDeviationFiles } from '../lib/deviation-files.js';
 
 const router = Router();
 
@@ -68,7 +68,7 @@ router.get('/', async (req, res) => {
       take: limitNum,
       skip: offset,
       include: {
-        files: true,
+        files: { include: { variants: true } },
       },
     }),
     prisma.deviation.count({
@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
   // Transform to match frontend types
   const transformedDeviations = userDeviations.map((deviation) => ({
     ...deviation,
-    files: deviation.files || [],
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: deviation.scheduledAt?.toISOString() ?? null,
     actualPublishAt: deviation.actualPublishAt?.toISOString() ?? null,
     publishedAt: deviation.publishedAt?.toISOString() ?? null,
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
 
   const deviation = await prisma.deviation.findFirst({
     where: { id, userId },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -107,7 +107,7 @@ router.get('/:id', async (req, res) => {
 
   res.json({
     ...deviation,
-    files: deviation.files || [],
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: deviation.scheduledAt?.toISOString() ?? null,
     actualPublishAt: deviation.actualPublishAt?.toISOString() ?? null,
     publishedAt: deviation.publishedAt?.toISOString() ?? null,
@@ -207,7 +207,7 @@ router.delete('/:id', async (req, res) => {
 
   const deviation = await prisma.deviation.findFirst({
     where: { id, userId },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -216,7 +216,7 @@ router.delete('/:id', async (req, res) => {
 
   // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
-    await Promise.allSettled(deviation.files.map((file) => deleteFromStorage(file.storageKey)));
+    await deleteStoredDeviationFiles(deviation.files);
   }
 
   // Cancel scheduled job if deviation is scheduled
@@ -242,7 +242,7 @@ router.post('/:id/schedule', scheduleRateLimit, async (req, res) => {
   // Pre-transaction validation: Check deviation exists and belongs to user
   const deviation = await prisma.deviation.findFirst({
     where: { id, userId: user.id },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -324,7 +324,7 @@ router.post('/:id/schedule', scheduleRateLimit, async (req, res) => {
 
   res.json({
     ...updated,
-    files: deviation.files,
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: updated.scheduledAt?.toISOString() ?? null,
     actualPublishAt: updated.actualPublishAt?.toISOString() ?? null,
     publishedAt: updated.publishedAt?.toISOString() ?? null,
@@ -341,7 +341,7 @@ router.post('/:id/publish-now', scheduleRateLimit, async (req, res) => {
 
   const deviation = await prisma.deviation.findFirst({
     where: { id, userId: user.id },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -388,7 +388,7 @@ router.post('/:id/publish-now', scheduleRateLimit, async (req, res) => {
 
   res.json({
     ...updated,
-    files: deviation.files,
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: updated.scheduledAt?.toISOString() ?? null,
     actualPublishAt: updated.actualPublishAt?.toISOString() ?? null,
     publishedAt: updated.publishedAt?.toISOString() ?? null,
@@ -405,7 +405,7 @@ router.post('/:id/cancel', async (req, res) => {
 
   const deviation = await prisma.deviation.findFirst({
     where: { id, userId },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -432,7 +432,7 @@ router.post('/:id/cancel', async (req, res) => {
 
   res.json({
     ...updated,
-    files: deviation.files,
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: null,
     actualPublishAt: null,
     publishedAt: null,
@@ -487,7 +487,7 @@ router.post('/batch-delete', batchRateLimit, async (req, res) => {
       userId: user.id,
       status: 'draft',
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (drafts.length !== deviationIds.length) {
@@ -496,7 +496,7 @@ router.post('/batch-delete', batchRateLimit, async (req, res) => {
 
   // Delete files from storage
   const allFiles = drafts.flatMap((d) => d.files);
-  await Promise.allSettled(allFiles.map((file) => deleteFromStorage(file.storageKey)));
+  await deleteStoredDeviationFiles(allFiles);
 
   // Delete from DB (cascade removes files)
   await prisma.deviation.deleteMany({
@@ -532,7 +532,7 @@ router.post('/batch-reschedule', batchRateLimit, async (req, res) => {
       userId: user.id,
       status: 'scheduled',
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (scheduledDeviations.length !== deviationIds.length) {
@@ -582,7 +582,7 @@ router.post('/batch-reschedule', batchRateLimit, async (req, res) => {
 
       updatedDeviations.push({
         ...updated,
-        files: deviation.files,
+        files: serializeDeviationFiles(deviation.files),
         scheduledAt: updated.scheduledAt?.toISOString() ?? null,
         actualPublishAt: updated.actualPublishAt?.toISOString() ?? null,
         publishedAt: updated.publishedAt?.toISOString() ?? null,
@@ -626,7 +626,7 @@ router.post('/batch-cancel', batchRateLimit, async (req, res) => {
       userId: user.id,
       status: 'scheduled',
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (scheduledDeviations.length !== deviationIds.length) {
@@ -653,7 +653,7 @@ router.post('/batch-cancel', batchRateLimit, async (req, res) => {
 
     updatedDeviations.push({
       ...updated,
-      files: deviation.files,
+      files: serializeDeviationFiles(deviation.files),
       scheduledAt: null,
       actualPublishAt: null,
       publishedAt: null,
@@ -698,7 +698,7 @@ router.post('/batch-schedule', batchRateLimit, async (req, res) => {
       userId: user.id,
       status: { in: ['draft', 'failed'] },
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (schedulableDeviations.length !== deviationIds.length) {
@@ -755,7 +755,7 @@ router.post('/batch-schedule', batchRateLimit, async (req, res) => {
 
       updatedDeviations.push({
         ...updated,
-        files: deviation.files,
+        files: serializeDeviationFiles(deviation.files),
         scheduledAt: updated.scheduledAt?.toISOString() ?? null,
         actualPublishAt: updated.actualPublishAt?.toISOString() ?? null,
         publishedAt: updated.publishedAt?.toISOString() ?? null,
@@ -798,7 +798,7 @@ router.post('/batch-publish-now', batchRateLimit, async (req, res) => {
       id: { in: deviationIds },
       userId: user.id,
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (publishableDeviations.length !== deviationIds.length) {
@@ -858,7 +858,7 @@ router.post('/batch-publish-now', batchRateLimit, async (req, res) => {
 
       updatedDeviations.push({
         ...updated,
-        files: deviation.files,
+        files: serializeDeviationFiles(deviation.files),
         scheduledAt: updated.scheduledAt?.toISOString() ?? null,
         actualPublishAt: updated.actualPublishAt?.toISOString() ?? null,
         publishedAt: updated.publishedAt?.toISOString() ?? null,

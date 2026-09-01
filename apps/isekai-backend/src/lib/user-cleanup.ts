@@ -18,7 +18,7 @@
 import { prisma } from '../db/index.js';
 import { logger } from './logger.js';
 import { deviationPublisherQueue } from '../queues/deviation-publisher.js';
-import { queueStorageCleanup } from '../queues/storage-cleanup.js';
+import { deleteStoredDeviationFiles } from './deviation-files.js';
 import { RedisClientManager } from './redis-client.js';
 import { CACHE_PREFIX, CACHE_VERSION, CacheNamespace } from './cache-keys.js';
 
@@ -142,19 +142,16 @@ export async function cleanupUserData(userId: string): Promise<CleanupResult> {
     result.jobsCancelled = cancelledJobs;
     logger.info('Cancelled pending jobs', { userId, count: cancelledJobs });
 
-    // 2. Get all deviations with files and queue storage cleanup
+    // 2. Delete storage objects before the user cascade removes their durable keys.
     const deviations = await prisma.deviation.findMany({
       where: { userId },
-      include: { files: true },
+      include: { files: { include: { variants: true } } },
     });
 
-    for (const deviation of deviations) {
-      if (deviation.files.length > 0) {
-        await queueStorageCleanup(deviation.id, userId);
-        result.filesQueued += deviation.files.length;
-      }
-    }
-    logger.info('Queued storage cleanup', { userId, files: result.filesQueued });
+    const files = deviations.flatMap((deviation) => deviation.files);
+    await deleteStoredDeviationFiles(files);
+    result.filesQueued = files.length;
+    logger.info('Deleted user storage before database cascade', { userId, files: files.length });
 
     // 3. Clear Redis cache for this user
     const cacheDeleted = await clearUserRedisCache(userId);

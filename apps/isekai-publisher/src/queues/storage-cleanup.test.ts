@@ -27,14 +27,14 @@ process.env.S3_PUBLIC_URL = 'https://cdn.example.com';
 // Mock BullMQ
 const mockQueueAdd = vi.fn();
 const mockWorkerOn = vi.fn();
-let workerProcessor: Function;
+let workerProcessor: (job: unknown) => Promise<unknown>;
 
 vi.mock('bullmq', () => ({
   Queue: class MockQueue {
     add = mockQueueAdd;
   },
   Worker: class MockWorker {
-    constructor(name: string, processor: Function, options: any) {
+    constructor(name: string, processor: (job: unknown) => Promise<unknown>, _options: unknown) {
       workerProcessor = processor;
     }
     on = mockWorkerOn;
@@ -50,6 +50,10 @@ vi.mock('ioredis', async () => {
 // Mock shared storage module
 const mockDelete = vi.fn();
 vi.mock('@isekai/shared/storage', () => ({
+  THUMBNAIL_WIDTHS: [128, 256, 400, 800, 1200],
+  THUMBNAIL_VERSION: 1,
+  generateThumbnailStorageKey: (key: string, width: number, version: number) =>
+    `${key}.derivatives/thumb/v${version}/${width}.webp`,
   createStorageService: vi.fn(() => ({
     delete: mockDelete,
     upload: vi.fn(),
@@ -92,6 +96,7 @@ vi.mock('../db/index.js', async () => {
       deviationFile: {
         findMany: vi.fn(),
         deleteMany: vi.fn(),
+        updateMany: vi.fn(),
       },
     },
   };
@@ -103,6 +108,7 @@ describe('storage-cleanup', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockDelete.mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // Set up environment
@@ -143,6 +149,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-1',
           originalFilename: 'file1.jpg',
           fileSize: 1000,
+          variants: [],
         },
         {
           id: 'file-2',
@@ -150,6 +157,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-2',
           originalFilename: 'file2.jpg',
           fileSize: 2000,
+          variants: [],
         },
       ];
 
@@ -161,10 +169,11 @@ describe('storage-cleanup', () => {
 
       expect(result).toEqual({
         filesDeleted: 2,
+        objectsDeleted: 12,
         bytesFreed: 3000,
       });
 
-      expect(mockDelete).toHaveBeenCalledTimes(2);
+      expect(mockDelete).toHaveBeenCalledTimes(12);
       expect(mockDelete).toHaveBeenCalledWith('key-1');
       expect(mockDelete).toHaveBeenCalledWith('key-2');
 
@@ -218,6 +227,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-1',
           originalFilename: 'file1.jpg',
           fileSize: 1000,
+          variants: [],
         },
       ];
 
@@ -225,7 +235,7 @@ describe('storage-cleanup', () => {
       mockDelete.mockRejectedValueOnce(new Error('S3 error'));
 
       await expect(workerProcessor(mockJob)).rejects.toThrow(
-        'Failed to delete 1 of 1 files from storage'
+        'Failed to delete 1 of 6 objects from storage'
       );
 
       expect(mockLoggerError).toHaveBeenCalledWith(
@@ -251,6 +261,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-1',
           originalFilename: 'file1.jpg',
           fileSize: 1000,
+          variants: [],
         },
         {
           id: 'file-2',
@@ -258,6 +269,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-2',
           originalFilename: 'file2.jpg',
           fileSize: 2000,
+          variants: [],
         },
         {
           id: 'file-3',
@@ -265,6 +277,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-3',
           originalFilename: 'file3.jpg',
           fileSize: 3000,
+          variants: [],
         },
       ];
 
@@ -277,10 +290,10 @@ describe('storage-cleanup', () => {
         .mockResolvedValueOnce(undefined);
 
       await expect(workerProcessor(mockJob)).rejects.toThrow(
-        'Failed to delete 1 of 3 files from storage'
+        'Failed to delete 1 of 18 objects from storage'
       );
 
-      expect(mockDelete).toHaveBeenCalledTimes(3);
+      expect(mockDelete).toHaveBeenCalledTimes(18);
       expect(prisma.deviationFile.deleteMany).not.toHaveBeenCalled();
     });
 
@@ -314,6 +327,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-1',
           originalFilename: 'file1.jpg',
           fileSize: 5000,
+          variants: [],
         },
         {
           id: 'file-2',
@@ -321,6 +335,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-2',
           originalFilename: 'file2.jpg',
           fileSize: 3000,
+          variants: [],
         },
       ];
 
@@ -349,6 +364,7 @@ describe('storage-cleanup', () => {
           storageKey: 'key-1',
           originalFilename: 'test.jpg',
           fileSize: 1000,
+          variants: [],
         },
       ];
 

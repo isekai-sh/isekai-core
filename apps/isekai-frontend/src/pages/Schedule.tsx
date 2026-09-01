@@ -18,7 +18,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { thumb, ImageSize } from '@/lib/image';
+import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
 import { Calendar, Clock, AlertCircle, CheckCircle2, XCircle, Upload, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -335,9 +335,14 @@ function ScheduledDeviationCard({
       {/* Thumbnail */}
       {deviation.files && deviation.files.length > 0 && deviation.files[0].storageUrl ? (
         <img
-          src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
+          src={selectImageVariant(deviation.files[0], ImageSize.XS)}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
+          loading="lazy"
+          decoding="async"
+          onError={(event) =>
+            fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+          }
         />
       ) : (
         <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
@@ -390,9 +395,14 @@ function PublishingDeviationCard({ deviation }: { deviation: Deviation }) {
       {/* Thumbnail */}
       {deviation.files && deviation.files.length > 0 && deviation.files[0].storageUrl ? (
         <img
-          src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
+          src={selectImageVariant(deviation.files[0], ImageSize.XS)}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
+          loading="lazy"
+          decoding="async"
+          onError={(event) =>
+            fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+          }
         />
       ) : (
         <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
@@ -432,9 +442,14 @@ function FailedDeviationCard({
       {/* Thumbnail */}
       {deviation.files && deviation.files.length > 0 && deviation.files[0].storageUrl ? (
         <img
-          src={thumb(deviation.files[0].storageUrl, ImageSize.XS)}
+          src={selectImageVariant(deviation.files[0], ImageSize.XS)}
           alt={deviation.title}
           className="w-16 h-16 object-cover rounded"
+          loading="lazy"
+          decoding="async"
+          onError={(event) =>
+            fallbackImageToOriginal(event.currentTarget, deviation.files?.[0]?.storageUrl ?? '')
+          }
         />
       ) : (
         <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">

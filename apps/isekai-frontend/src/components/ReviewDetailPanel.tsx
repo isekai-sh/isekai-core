@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
+import { fallbackImageToOriginal, ImageSize, selectImageVariant } from '@/lib/image';
 import type { Deviation } from '@isekai/shared';
 
 interface ReviewDetailPanelProps {
@@ -147,9 +148,16 @@ export function ReviewDetailPanel({
           >
             {deviation.files?.[0]?.storageUrl ? (
               <img
-                src={deviation.files[0].storageUrl}
+                src={selectImageVariant(deviation.files[0], ImageSize.XL)}
                 alt={deviation.title}
                 className="max-w-full max-h-full object-contain"
+                decoding="async"
+                onError={(event) =>
+                  fallbackImageToOriginal(
+                    event.currentTarget,
+                    deviation.files?.[0]?.storageUrl ?? ''
+                  )
+                }
               />
             ) : (
               <FileImage className="h-12 w-12 text-muted-foreground" />

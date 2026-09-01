@@ -18,7 +18,7 @@
 import { Router } from 'express';
 import { prisma } from '../db/index.js';
 import { AppError } from '../middleware/error.js';
-import { deleteFromStorage } from '../lib/upload-service.js';
+import { deleteStoredDeviationFiles, serializeDeviationFiles } from '../lib/deviation-files.js';
 
 const router = Router();
 
@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
     take: limitNum,
     skip: offset,
     include: {
-      files: true,
+      files: { include: { variants: true } },
     },
   });
 
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 
   const transformed = reviewDeviations.map((deviation) => ({
     ...deviation,
-    files: deviation.files || [],
+    files: serializeDeviationFiles(deviation.files),
     scheduledAt: deviation.scheduledAt?.toISOString() ?? null,
     actualPublishAt: deviation.actualPublishAt?.toISOString() ?? null,
     publishedAt: deviation.publishedAt?.toISOString() ?? null,
@@ -113,7 +113,7 @@ router.post('/:id/reject', async (req, res) => {
       userId: user.id,
       status: 'review',
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (!deviation) {
@@ -122,7 +122,7 @@ router.post('/:id/reject', async (req, res) => {
 
   // Delete files from storage
   if (deviation.files && deviation.files.length > 0) {
-    await Promise.allSettled(deviation.files.map((file) => deleteFromStorage(file.storageKey)));
+    await deleteStoredDeviationFiles(deviation.files);
   }
 
   // Delete deviation (cascade deletes files)
@@ -181,7 +181,7 @@ router.post('/batch-reject', async (req, res) => {
       userId: user.id,
       status: 'review',
     },
-    include: { files: true },
+    include: { files: { include: { variants: true } } },
   });
 
   if (reviewDeviations.length !== deviationIds.length) {
@@ -190,7 +190,7 @@ router.post('/batch-reject', async (req, res) => {
 
   // Delete files from storage
   const allFiles = reviewDeviations.flatMap((d) => d.files);
-  await Promise.allSettled(allFiles.map((file) => deleteFromStorage(file.storageKey)));
+  await deleteStoredDeviationFiles(allFiles);
 
   // Delete deviations
   await prisma.deviation.deleteMany({

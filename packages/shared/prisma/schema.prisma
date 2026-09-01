@@ -23,6 +23,21 @@ enum DeviationStatus {
   failed
 }
 
+enum ThumbnailStatus {
+  not_requested
+  pending
+  processing
+  ready
+  failed
+  skipped
+}
+
+enum ThumbnailBackfillStatus {
+  running
+  completed
+  failed
+}
+
 enum UploadMode {
   single
   multiple
@@ -172,23 +187,75 @@ model Deviation {
 }
 
 model DeviationFile {
-  id               String   @id @default(uuid())
-  deviationId      String   @map("deviation_id")
-  originalFilename String   @map("original_filename")
-  storageKey       String   @map("storage_key")
-  storageUrl       String   @map("storage_url")
-  mimeType         String   @map("mime_type")
-  fileSize         Int      @map("file_size")
-  width            Int?
-  height           Int?
-  duration         Int?
-  sortOrder        Int      @default(0) @map("sort_order")
-  createdAt        DateTime @default(now()) @map("created_at")
+  id                      String          @id @default(uuid())
+  deviationId             String          @map("deviation_id")
+  originalFilename        String          @map("original_filename")
+  storageKey              String          @map("storage_key")
+  storageUrl              String          @map("storage_url")
+  mimeType                String          @map("mime_type")
+  fileSize                Int             @map("file_size")
+  width                   Int?
+  height                  Int?
+  duration                Int?
+  sortOrder               Int             @default(0) @map("sort_order")
+  thumbnailStatus         ThumbnailStatus @default(not_requested) @map("thumbnail_status")
+  thumbnailVersion        Int             @default(0) @map("thumbnail_version")
+  thumbnailAttempts       Int             @default(0) @map("thumbnail_attempts")
+  thumbnailError          String?         @map("thumbnail_error")
+  thumbnailUpdatedAt      DateTime?        @map("thumbnail_updated_at")
+  thumbnailNextAttemptAt  DateTime?        @map("thumbnail_next_attempt_at")
+  thumbnailLeaseId        String?          @map("thumbnail_lease_id")
+  thumbnailLeaseExpiresAt DateTime?        @map("thumbnail_lease_expires_at")
+  createdAt               DateTime         @default(now()) @map("created_at")
 
   // Relations
   deviation Deviation @relation(fields: [deviationId], references: [id], onDelete: Cascade)
+  variants  DeviationFileVariant[]
 
+  @@index([thumbnailStatus, thumbnailVersion, thumbnailNextAttemptAt, createdAt, id])
   @@map("deviation_files")
+}
+
+model DeviationFileVariant {
+  id              String   @id @default(uuid())
+  deviationFileId String   @map("deviation_file_id")
+  kind            String
+  version         Int
+  width           Int
+  height          Int
+  format          String
+  storageKey      String   @unique @map("storage_key")
+  fileSize        Int      @map("file_size")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  deviationFile DeviationFile @relation(fields: [deviationFileId], references: [id], onDelete: Cascade)
+
+  @@unique([deviationFileId, kind, version, width, format])
+  @@index([deviationFileId, version])
+  @@map("deviation_file_variants")
+}
+
+model ThumbnailBackfillRun {
+  id                   String                  @id @default(uuid())
+  targetVersion        Int                     @map("target_version")
+  status               ThumbnailBackfillStatus @default(running)
+  upperBoundCreatedAt  DateTime                 @map("upper_bound_created_at")
+  upperBoundId         String                   @map("upper_bound_id")
+  cursorCreatedAt      DateTime?                @map("cursor_created_at")
+  cursorId             String?                  @map("cursor_id")
+  filterFileId         String?                  @map("filter_file_id")
+  filterUserId         String?                  @map("filter_user_id")
+  maxFiles             Int?                     @map("max_files")
+  scannedCount         Int                     @default(0) @map("scanned_count")
+  queuedCount          Int                     @default(0) @map("queued_count")
+  skippedCount         Int                     @default(0) @map("skipped_count")
+  lastError            String?                 @map("last_error")
+  startedAt            DateTime                @default(now()) @map("started_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+  completedAt          DateTime?               @map("completed_at")
+
+  @@index([targetVersion, status, startedAt])
+  @@map("thumbnail_backfill_runs")
 }
 
 model ApiKey {

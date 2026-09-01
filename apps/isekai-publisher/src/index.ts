@@ -19,6 +19,7 @@ import './lib/env.js'; // Validate environment variables before anything else
 import express from 'express';
 import { deviationPublisherWorker } from './queues/deviation-publisher.js';
 import { tokenMaintenanceWorker, scheduleTokenMaintenance } from './queues/token-maintenance.js';
+import { storageCleanupWorker } from './queues/storage-cleanup.js';
 import { RedisClientManager } from './lib/redis-client.js';
 import { startStuckJobRecovery } from './jobs/stuck-job-recovery.js';
 import { startPastDueRecovery } from './jobs/past-due-recovery.js';
@@ -63,7 +64,8 @@ async function startHealthCheckServer() {
 
       // Check if worker is running
       const isRunning = deviationPublisherWorker.isRunning();
-      if (!isRunning) {
+      const cleanupRunning = storageCleanupWorker.isRunning();
+      if (!isRunning || !cleanupRunning) {
         throw new Error('Worker not running');
       }
 
@@ -75,6 +77,7 @@ async function startHealthCheckServer() {
         service: 'isekai-publisher',
         worker: {
           running: isRunning,
+          cleanupRunning,
           activeJobs: activeJobsCount,
         },
         redis: {
@@ -130,6 +133,7 @@ async function gracefulShutdown(signal: string) {
     console.log('[Publisher] Pausing workers...');
     await deviationPublisherWorker.pause();
     await tokenMaintenanceWorker.pause();
+    await storageCleanupWorker.pause();
 
     // Wait for active jobs to complete (with timeout)
     console.log('[Publisher] Waiting for active jobs to complete (max 30s)...');
@@ -139,6 +143,7 @@ async function gracefulShutdown(signal: string) {
     console.log('[Publisher] Closing workers...');
     await deviationPublisherWorker.close();
     await tokenMaintenanceWorker.close();
+    await storageCleanupWorker.close();
 
     // Close Redis connection
     console.log('[Publisher] Closing Redis connection...');
