@@ -1013,6 +1013,88 @@ describe('auto-scheduler', () => {
         })
       );
     });
+
+    it('prefers curated drafts and falls back to uncurated drafts', async () => {
+      vi.setSystemTime(new Date('2025-01-01T10:05:00Z'));
+      mockToZonedTime.mockReturnValue(createZonedDate(10, 5));
+
+      const curatedDraft = {
+        id: 'curated-draft',
+        userId: 'user-1',
+        status: 'draft',
+        curationStatus: 'curated',
+        scheduledAt: null,
+        executionVersion: 1,
+        files: [{ id: 'file-1' }],
+      };
+      const uncuratedDraft = {
+        id: 'uncurated-draft',
+        userId: 'user-1',
+        status: 'draft',
+        curationStatus: 'uncurated',
+        scheduledAt: null,
+        executionVersion: 1,
+        files: [{ id: 'file-2' }],
+      };
+      const mockAutomation = {
+        id: 'auto-1',
+        userId: 'user-1',
+        enabled: true,
+        draftSelectionMethod: 'fifo',
+        jitterMinSeconds: 0,
+        jitterMaxSeconds: 60,
+        stashOnlyByDefault: false,
+        autoAddToSaleQueue: false,
+        saleQueuePresetId: null,
+        user: { id: 'user-1', timezone: 'UTC' },
+        scheduleRules: [
+          {
+            id: 'rule-1',
+            type: 'fixed_interval',
+            intervalMinutes: 60,
+            deviationsPerInterval: 2,
+            enabled: true,
+            priority: 1,
+            daysOfWeek: null,
+          },
+        ],
+        defaultValues: [],
+        saleQueuePreset: null,
+      };
+
+      mockPrismaAutomationFindMany.mockResolvedValue([mockAutomation]);
+      mockPrismaAutomationUpdateMany.mockResolvedValue({ count: 1 });
+      mockPrismaAutomationUpdate.mockResolvedValue({});
+      mockPrismaAutomationExecutionLogFindFirst.mockResolvedValue(null);
+      mockPrismaDeviationFindMany
+        .mockResolvedValueOnce([curatedDraft])
+        .mockResolvedValueOnce([uncuratedDraft]);
+      mockPrismaTransaction.mockImplementation(async (callback) =>
+        callback({
+          deviation: {
+            updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+            update: vi.fn().mockResolvedValue({}),
+          },
+        })
+      );
+      mockScheduleDeviation.mockResolvedValue({});
+      mockPrismaAutomationExecutionLogCreate.mockResolvedValue({});
+
+      const { runAutoSchedulerManually } = await import('./auto-scheduler.js');
+      await runAutoSchedulerManually();
+
+      expect(mockPrismaDeviationFindMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaDeviationFindMany.mock.calls[0][0].where.OR).toEqual(
+        expect.arrayContaining([expect.objectContaining({ curationStatus: 'curated' })])
+      );
+      expect(mockPrismaDeviationFindMany.mock.calls[1][0].where.OR).toEqual(
+        expect.arrayContaining([expect.objectContaining({ curationStatus: 'uncurated' })])
+      );
+      expect(mockScheduleDeviation.mock.calls.map(([id]) => id)).toEqual([
+        'curated-draft',
+        'uncurated-draft',
+      ]);
+    });
   });
 
   describe('selectDrafts - LIFO', () => {

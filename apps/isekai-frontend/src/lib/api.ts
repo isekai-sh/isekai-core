@@ -192,9 +192,10 @@ export const auth = {
 
 // Deviations
 export const deviations = {
-  list: (params?: { status?: string; page?: number; limit?: number }) => {
+  list: (params?: { status?: string; curation?: CurationScope; page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
     if (params?.status) searchParams.set('status', params.status);
+    if (params?.curation) searchParams.set('curation', params.curation);
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.limit) searchParams.set('limit', String(params.limit));
     const query = searchParams.toString();
@@ -574,6 +575,50 @@ export const review = {
     request<{ success: boolean; rejectedCount: number }>('/review/batch-reject', {
       method: 'POST',
       body: JSON.stringify({ deviationIds }),
+    }),
+};
+
+// Draft curation API. Curation records decisions without changing a kept
+// deviation's draft lifecycle; discarded drafts remain restorable in Trash.
+export type CurationScope = 'uncurated' | 'curated' | 'all';
+
+export const curation = {
+  list: (params?: { scope?: CurationScope; page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.scope) searchParams.set('scope', params.scope);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    const query = searchParams.toString();
+    return request<{ deviations: Deviation[]; total: number }>(
+      `/curation${query ? `?${query}` : ''}`
+    );
+  },
+  trash: (params?: { page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    const query = searchParams.toString();
+    return request<{ deviations: Deviation[]; total: number }>(
+      `/curation/trash${query ? `?${query}` : ''}`
+    );
+  },
+  keep: (id: string) =>
+    request<{ deviation: Deviation }>(`/curation/${id}/keep`, { method: 'POST' }),
+  discard: (id: string) =>
+    request<{ deviation: Deviation }>(`/curation/${id}/discard`, { method: 'POST' }),
+  restore: (id: string) =>
+    request<{ deviation: Deviation }>(`/curation/${id}/restore`, { method: 'POST' }),
+  uncurate: (id: string) =>
+    request<{ deviation: Deviation }>(`/curation/${id}/uncurate`, { method: 'POST' }),
+  markSelected: (deviationIds: string[], state: 'uncurated' | 'curated') =>
+    request<{ updatedCount: number; state: 'uncurated' | 'curated' }>('/curation/batch-state', {
+      method: 'POST',
+      body: JSON.stringify({ selection: 'ids', deviationIds, state }),
+    }),
+  markAllMatching: (scope: CurationScope, state: 'uncurated' | 'curated') =>
+    request<{ updatedCount: number; state: 'uncurated' | 'curated' }>('/curation/batch-state', {
+      method: 'POST',
+      body: JSON.stringify({ selection: 'filter', scope, state }),
     }),
 };
 

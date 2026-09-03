@@ -133,6 +133,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           data: {
             userId: user.id,
             status: requestedStatus,
+            ingestSource: metadata.reviewPolicy,
+            curationStatus: metadata.reviewPolicy === 'direct_to_draft' ? 'uncurated' : 'curated',
+            // Direct-to-draft is the only new-ingest path that enters Curation.
+            // Manual review becomes curated when a person approves it.
+            curatedAt: null,
             title: metadata.title || file.originalname.replace(/\.[^/.]+$/, ''),
             description: metadata.description,
             tags: tags,

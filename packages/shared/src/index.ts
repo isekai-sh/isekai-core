@@ -22,6 +22,7 @@
 export const DeviationStatus = {
   REVIEW: 'review',
   DRAFT: 'draft',
+  TRASHED: 'trashed',
   SCHEDULED: 'scheduled',
   UPLOADING: 'uploading',
   PUBLISHING: 'publishing',
@@ -29,6 +30,20 @@ export const DeviationStatus = {
   FAILED: 'failed',
 } as const;
 export type DeviationStatus = (typeof DeviationStatus)[keyof typeof DeviationStatus];
+
+export const DeviationIngestSource = {
+  MANUAL: 'manual',
+  MANUAL_REVIEW: 'manual_review',
+  DIRECT_TO_DRAFT: 'direct_to_draft',
+} as const;
+export type DeviationIngestSource =
+  (typeof DeviationIngestSource)[keyof typeof DeviationIngestSource];
+
+export const DraftCurationStatus = {
+  UNCURATED: 'uncurated',
+  CURATED: 'curated',
+} as const;
+export type DraftCurationStatus = (typeof DraftCurationStatus)[keyof typeof DraftCurationStatus];
 
 export const UploadMode = {
   SINGLE: 'single',
@@ -66,6 +81,12 @@ export interface Deviation {
   id: string;
   userId: string;
   status: DeviationStatus;
+  ingestSource: DeviationIngestSource | null;
+  curationStatus: DraftCurationStatus | null;
+  curatedAt: string | null;
+  discardedAt: string | null;
+  purgeAfter: string | null;
+  purgeStartedAt: string | null;
   title: string;
   description: string | null;
   tags: string[];

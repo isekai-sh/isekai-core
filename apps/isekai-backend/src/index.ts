@@ -42,6 +42,7 @@ import { automationScheduleRulesRouter } from './routes/automation-schedule-rule
 import { automationDefaultValuesRouter } from './routes/automation-default-values.js';
 import { adminRouter } from './routes/admin.js';
 import { configRouter } from './routes/config.js';
+import { curationRouter } from './routes/curation.js';
 import { errorHandler } from './middleware/error.js';
 import { authMiddleware } from './middleware/auth.js';
 import { hybridAuthMiddleware } from './middleware/hybrid-auth.js';
@@ -147,6 +148,7 @@ async function startServer() {
   app.use('/api/cache', authMiddleware, cacheRouter); // Cache management
   app.use('/api/api-keys', authMiddleware, apiKeysRouter); // API key management
   app.use('/api/review', authMiddleware, reviewRouter); // Review management
+  app.use('/api/curation', authMiddleware, curationRouter); // Draft curation and trash
   app.use('/api/price-presets', authMiddleware, pricePresetsRouter); // Price preset management
   app.use('/api/sale-queue', hybridAuthMiddleware, saleQueueRouter); // Sale queue management (supports session + API key)
   app.use('/api/automations', authMiddleware, automationsRouter); // Automation management

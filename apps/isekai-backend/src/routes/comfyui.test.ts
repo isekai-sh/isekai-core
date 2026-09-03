@@ -197,6 +197,9 @@ describe('comfyui routes', () => {
         data: {
           userId: 'user-123',
           status: 'review',
+          ingestSource: 'manual_review',
+          curationStatus: 'curated',
+          curatedAt: null,
           title: 'Test Image',
           description: 'Test description',
           tags: ['art', 'digital'],

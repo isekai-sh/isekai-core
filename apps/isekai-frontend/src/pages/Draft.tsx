@@ -28,6 +28,7 @@ import {
   AlignLeft,
   Check,
   Loader2,
+  ListChecks,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -49,11 +57,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { deviations } from '@/lib/api';
+import { curation, deviations, type CurationScope } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { UploadModeDialog } from '@/components/UploadModeDialog';
 import { UploadDialog } from '@/components/UploadDialog';
 import { DraftTableRow } from '@/components/DraftTableRow';
+import { CurationWorkspace } from '@/components/CurationWorkspace';
 import { GallerySelector } from '@/components/GallerySelector';
 import { TagTemplateSelector, DescriptionTemplateSelector } from '@/components/TemplateSelector';
 import type { Deviation } from '@isekai/shared';
@@ -75,12 +84,24 @@ export function Draft() {
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [curationMode, setCurationMode] = useState(false);
+  const [curationFilter, setCurationFilter] = useState<CurationScope>('all');
+  const [selectAllFiltered, setSelectAllFiltered] = useState(false);
+  const [pendingCurationState, setPendingCurationState] = useState<'uncurated' | 'curated' | null>(
+    null
+  );
+  const draftQueryKey = ['deviations', 'draft', curationFilter] as const;
 
   // Fetch drafts with infinite scroll
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['deviations', 'draft'],
+    queryKey: draftQueryKey,
     queryFn: async ({ pageParam = 1 }) => {
-      return await deviations.list({ status: 'draft', page: pageParam, limit: PAGE_SIZE });
+      return await deviations.list({
+        status: 'draft',
+        curation: curationFilter,
+        page: pageParam,
+        limit: PAGE_SIZE,
+      });
     },
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.length * PAGE_SIZE;
@@ -169,13 +190,13 @@ export function Draft() {
     },
     onMutate: async ({ deviationIds, scheduledAt }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
+      await queryClient.cancelQueries({ queryKey: draftQueryKey });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['deviations', 'draft']);
+      const previousData = queryClient.getQueryData(draftQueryKey);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
+      queryClient.setQueryData(draftQueryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -190,7 +211,7 @@ export function Draft() {
     },
     onSuccess: (data) => {
       // Update cache with actual server responses
-      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
+      queryClient.setQueryData(draftQueryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -204,7 +225,7 @@ export function Draft() {
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
+        queryClient.setQueryData(draftQueryKey, context.previousData);
       }
       toast({
         title: 'Error',
@@ -255,13 +276,13 @@ export function Draft() {
     },
     onMutate: async ({ deviationIds, galleryIds }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
+      await queryClient.cancelQueries({ queryKey: draftQueryKey });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['deviations', 'draft']);
+      const previousData = queryClient.getQueryData(draftQueryKey);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
+      queryClient.setQueryData(draftQueryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -285,7 +306,7 @@ export function Draft() {
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
+        queryClient.setQueryData(draftQueryKey, context.previousData);
       }
       toast({
         title: 'Error',
@@ -311,13 +332,13 @@ export function Draft() {
     },
     onMutate: async ({ deviationIds, description }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
+      await queryClient.cancelQueries({ queryKey: draftQueryKey });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['deviations', 'draft']);
+      const previousData = queryClient.getQueryData(draftQueryKey);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
+      queryClient.setQueryData(draftQueryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -342,7 +363,7 @@ export function Draft() {
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
+        queryClient.setQueryData(draftQueryKey, context.previousData);
       }
       toast({
         title: 'Error',
@@ -362,13 +383,13 @@ export function Draft() {
     },
     onMutate: async ({ deviationIds, tags }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['deviations', 'draft'] });
+      await queryClient.cancelQueries({ queryKey: draftQueryKey });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData(['deviations', 'draft']);
+      const previousData = queryClient.getQueryData(draftQueryKey);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['deviations', 'draft'], (old: any) => {
+      queryClient.setQueryData(draftQueryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -390,7 +411,7 @@ export function Draft() {
     onError: (error: any, _variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(['deviations', 'draft'], context.previousData);
+        queryClient.setQueryData(draftQueryKey, context.previousData);
       }
       toast({
         title: 'Error',
@@ -401,6 +422,42 @@ export function Draft() {
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+    },
+  });
+
+  const batchCurationMutation = useMutation({
+    mutationFn: ({
+      state,
+      allMatching,
+      deviationIds,
+      scope,
+    }: {
+      state: 'uncurated' | 'curated';
+      allMatching: boolean;
+      deviationIds: string[];
+      scope: CurationScope;
+    }) =>
+      allMatching
+        ? curation.markAllMatching(scope, state)
+        : curation.markSelected(deviationIds, state),
+    onSuccess: ({ updatedCount, state }) => {
+      queryClient.invalidateQueries({ queryKey: ['deviations', 'draft'] });
+      queryClient.invalidateQueries({ queryKey: ['curation'] });
+      setSelectedIds(new Set());
+      setSelectAllFiltered(false);
+      setPendingCurationState(null);
+      toast({
+        title: state === 'uncurated' ? 'Marked uncurated' : 'Marked curated',
+        description: `${updatedCount} draft${updatedCount === 1 ? '' : 's'} updated`,
+      });
+    },
+    onError: (error: Error) => {
+      setPendingCurationState(null);
+      toast({
+        title: 'Curation status not changed',
+        description: error.message || 'Please try again',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -417,21 +474,54 @@ export function Draft() {
     : allDrafts;
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === drafts.length) {
+    if (selectAllFiltered || selectedIds.size === drafts.length) {
       setSelectedIds(new Set());
+      setSelectAllFiltered(false);
     } else {
       setSelectedIds(new Set(drafts.map((d) => d.id)));
     }
   };
 
   const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
+    const newSelected = selectAllFiltered
+      ? new Set(drafts.filter((draft) => draft.id !== id).map((draft) => draft.id))
+      : new Set(selectedIds);
+    setSelectAllFiltered(false);
     if (newSelected.has(id)) {
       newSelected.delete(id);
-    } else {
+    } else if (!selectAllFiltered) {
       newSelected.add(id);
     }
     setSelectedIds(newSelected);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectAllFiltered(false);
+  };
+
+  const markCurationState = (state: 'uncurated' | 'curated') => {
+    if (selectAllFiltered) {
+      setPendingCurationState(state);
+      return;
+    }
+    if (selectedIds.size === 0) return;
+    batchCurationMutation.mutate({
+      state,
+      allMatching: false,
+      deviationIds: Array.from(selectedIds),
+      scope: curationFilter,
+    });
+  };
+
+  const confirmAllFilteredCuration = () => {
+    if (!pendingCurationState) return;
+    batchCurationMutation.mutate({
+      state: pendingCurationState,
+      allMatching: true,
+      deviationIds: [],
+      scope: curationFilter,
+    });
   };
 
   const handleBulkDelete = () => {
@@ -503,176 +593,268 @@ export function Draft() {
     setShowUploadDialog(true);
   };
 
+  const hasSelection = selectAllFiltered || selectedIds.size > 0;
+  const selectedCount = selectAllFiltered ? totalCount : selectedIds.size;
+
+  if (curationMode) {
+    return <CurationWorkspace onExit={() => setCurationMode(false)} />;
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
       <Card className="mb-3 flex-shrink-0">
         <CardContent className="p-3">
-          <div className="flex items-center justify-between gap-2">
-            {selectedIds.size === 0 ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {!hasSelection ? (
               /* Default state - Search and Upload */
               <>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search drafts..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-8 w-64 pl-8 text-sm"
-                  />
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <div className="relative w-full sm:w-auto">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search drafts..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        clearSelection();
+                      }}
+                      className="h-8 w-full pl-8 text-sm sm:w-64"
+                    />
+                  </div>
+                  <Select
+                    value={curationFilter}
+                    onValueChange={(value) => {
+                      setCurationFilter(value as CurationScope);
+                      clearSelection();
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label="Filter by curation status"
+                      className="h-8 w-full sm:w-40"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All curation</SelectItem>
+                      <SelectItem value="uncurated">Uncurated</SelectItem>
+                      <SelectItem value="curated">Curated</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button onClick={() => setShowModeDialog(true)} size="sm" className="h-8">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setCurationMode(true)}
+                  >
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    Curation mode
+                  </Button>
+                  <Button onClick={() => setShowModeDialog(true)} size="sm" className="h-8">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
               </>
             ) : (
               /* Selection state - Bulk actions */
               <>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={clearSelection} variant="outline" size="sm" className="h-8">
+                    Clear selection
+                  </Button>
+                  <span className="text-xs text-muted-foreground">{selectedCount} selected</span>
+                  {!selectAllFiltered &&
+                    !searchQuery &&
+                    selectedIds.size === drafts.length &&
+                    totalCount > selectedIds.size && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-8 px-1"
+                        onClick={() => setSelectAllFiltered(true)}
+                      >
+                        Select all {totalCount} filtered drafts
+                      </Button>
+                    )}
+                  {selectAllFiltered && (
+                    <Badge variant="secondary">All {totalCount} filtered drafts</Badge>
+                  )}
+                  <div className="h-4 w-px bg-border" />
+                  {!selectAllFiltered && (
+                    <>
+                      <DateTimePicker
+                        date={bulkScheduleDate}
+                        setDate={(date) => {
+                          setBulkScheduleDate(date);
+                          if (date) {
+                            batchUpdateScheduleDateMutation.mutate({
+                              deviationIds: Array.from(selectedIds),
+                              scheduledAt: date.toISOString(),
+                            });
+                          }
+                        }}
+                        label=""
+                      />
+                      <GallerySelector
+                        selectedGalleryIds={bulkGalleryIds}
+                        onSelect={(galleryIds) => {
+                          setBulkGalleryIds(galleryIds);
+                          batchAssignGalleryMutation.mutate({
+                            deviationIds: Array.from(selectedIds),
+                            galleryIds,
+                          });
+                        }}
+                        triggerButton={
+                          <Button variant="outline" size="sm" className="h-8">
+                            <Folder className="h-4 w-4 mr-2" />
+                            Folder
+                          </Button>
+                        }
+                      />
+                      <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8">
+                            <Tags className="h-4 w-4 mr-2" />
+                            Tags
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="start">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label>Tags</Label>
+                              <TagTemplateSelector
+                                onSelect={(templateTags) => setBulkTags(templateTags)}
+                              />
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {bulkTags.map((tag, idx) => (
+                                <Badge key={idx} variant="secondary">
+                                  {tag}
+                                  <button
+                                    onClick={() => removeBulkTag(idx)}
+                                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                            <Input
+                              placeholder="Add tag and press Enter..."
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addBulkTag(e.currentTarget.value);
+                                  e.currentTarget.value = '';
+                                }
+                              }}
+                            />
+                            <div className="flex justify-between gap-2">
+                              <Button variant="outline" size="sm" onClick={handleBulkClearTags}>
+                                Clear Tags
+                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setTagsOpen(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button size="sm" onClick={handleBulkAssignTags}>
+                                  Apply
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <Popover open={descriptionOpen} onOpenChange={setDescriptionOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8">
+                            <AlignLeft className="h-4 w-4 mr-2" />
+                            Description
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-96" align="start">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label>Description</Label>
+                              <DescriptionTemplateSelector
+                                onSelect={(text) => setBulkDescription(text)}
+                              />
+                            </div>
+                            <Textarea
+                              value={bulkDescription}
+                              onChange={(e) => setBulkDescription(e.target.value)}
+                              placeholder="Enter description..."
+                              rows={6}
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button size="sm" onClick={handleBulkAssignDescription}>
+                                Apply
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <div className="h-4 w-px bg-border" />
+                      <Button
+                        onClick={handleBulkDelete}
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected
+                      </Button>
+                    </>
+                  )}
+                  <div className="h-4 w-px bg-border" />
                   <Button
-                    onClick={() => setSelectedIds(new Set())}
+                    type="button"
                     variant="outline"
                     size="sm"
                     className="h-8"
+                    disabled={batchCurationMutation.isPending}
+                    onClick={() => markCurationState('uncurated')}
                   >
-                    Clear selection
+                    Mark uncurated
                   </Button>
-                  <div className="h-4 w-px bg-border" />
-                  <DateTimePicker
-                    date={bulkScheduleDate}
-                    setDate={(date) => {
-                      setBulkScheduleDate(date);
-                      if (date) {
-                        batchUpdateScheduleDateMutation.mutate({
-                          deviationIds: Array.from(selectedIds),
-                          scheduledAt: date.toISOString(),
-                        });
-                      }
-                    }}
-                    label=""
-                  />
-                  <GallerySelector
-                    selectedGalleryIds={bulkGalleryIds}
-                    onSelect={(galleryIds) => {
-                      setBulkGalleryIds(galleryIds);
-                      batchAssignGalleryMutation.mutate({
-                        deviationIds: Array.from(selectedIds),
-                        galleryIds,
-                      });
-                    }}
-                    triggerButton={
-                      <Button variant="outline" size="sm" className="h-8">
-                        <Folder className="h-4 w-4 mr-2" />
-                        Folder
-                      </Button>
-                    }
-                  />
-                  <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8">
-                        <Tags className="h-4 w-4 mr-2" />
-                        Tags
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80" align="start">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label>Tags</Label>
-                          <TagTemplateSelector
-                            onSelect={(templateTags) => setBulkTags(templateTags)}
-                          />
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {bulkTags.map((tag, idx) => (
-                            <Badge key={idx} variant="secondary">
-                              {tag}
-                              <button
-                                onClick={() => removeBulkTag(idx)}
-                                className="ml-1 hover:bg-muted rounded-full p-0.5"
-                              >
-                                ×
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <Input
-                          placeholder="Add tag and press Enter..."
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addBulkTag(e.currentTarget.value);
-                              e.currentTarget.value = '';
-                            }
-                          }}
-                        />
-                        <div className="flex justify-between gap-2">
-                          <Button variant="outline" size="sm" onClick={handleBulkClearTags}>
-                            Clear Tags
-                          </Button>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setTagsOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button size="sm" onClick={handleBulkAssignTags}>
-                              Apply
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <Popover open={descriptionOpen} onOpenChange={setDescriptionOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8">
-                        <AlignLeft className="h-4 w-4 mr-2" />
-                        Description
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-96" align="start">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label>Description</Label>
-                          <DescriptionTemplateSelector
-                            onSelect={(text) => setBulkDescription(text)}
-                          />
-                        </div>
-                        <Textarea
-                          value={bulkDescription}
-                          onChange={(e) => setBulkDescription(e.target.value)}
-                          placeholder="Enter description..."
-                          rows={6}
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDescriptionOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button size="sm" onClick={handleBulkAssignDescription}>
-                            Apply
-                          </Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <div className="h-4 w-px bg-border" />
-                  <Button onClick={handleBulkDelete} variant="outline" size="sm" className="h-8">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Selected
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    disabled={batchCurationMutation.isPending}
+                    onClick={() => markCurationState('curated')}
+                  >
+                    Mark curated
                   </Button>
                 </div>
-                <Button
-                  onClick={() => handleBulkSchedule()}
-                  disabled={!bulkScheduleDate}
-                  size="sm"
-                  className="h-8"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Selected
-                </Button>
+                {!selectAllFiltered && (
+                  <Button
+                    onClick={() => handleBulkSchedule()}
+                    disabled={!bulkScheduleDate}
+                    size="sm"
+                    className="h-8"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Selected
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -701,7 +883,10 @@ export function Draft() {
                   <TableRow className="border-b border-border hover:bg-transparent">
                     <TableHead className="w-12 pl-4 bg-card text-center">
                       <Checkbox
-                        checked={selectedIds.size === drafts.length && drafts.length > 0}
+                        checked={
+                          selectAllFiltered ||
+                          (selectedIds.size === drafts.length && drafts.length > 0)
+                        }
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
@@ -710,6 +895,7 @@ export function Draft() {
                     <TableHead className="bg-card">Tags</TableHead>
                     <TableHead className="bg-card">Description</TableHead>
                     <TableHead className="bg-card">Folders</TableHead>
+                    <TableHead className="bg-card">Curation</TableHead>
                     <TableHead className="bg-card">Schedule</TableHead>
                     <TableHead className="w-28 pr-4 bg-card text-center">Action</TableHead>
                   </TableRow>
@@ -719,7 +905,7 @@ export function Draft() {
                     <DraftTableRow
                       key={draft.id}
                       draft={draft}
-                      isSelected={selectedIds.has(draft.id)}
+                      isSelected={selectAllFiltered || selectedIds.has(draft.id)}
                       onSelect={() => toggleSelect(draft.id)}
                     />
                   ))}
@@ -742,10 +928,10 @@ export function Draft() {
                       : `Showing ${allDrafts.length} of ${totalCount} drafts`}
                   </span>
                 </div>
-                {selectedIds.size > 0 && (
+                {hasSelection && (
                   <div className="flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5" />
-                    <span>{selectedIds.size} selected</span>
+                    <span>{selectedCount} selected</span>
                   </div>
                 )}
               </div>
@@ -780,6 +966,37 @@ export function Draft() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingCurationState !== null}
+        onOpenChange={(open) => {
+          if (!open && !batchCurationMutation.isPending) setPendingCurationState(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Mark all {totalCount} filtered drafts as {pendingCurationState}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This changes only their Curation status. It will not schedule, publish, discard, or
+              delete any draft, and their original ingest source will be preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={batchCurationMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={batchCurationMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                confirmAllFilteredCuration();
+              }}
+            >
+              {batchCurationMutation.isPending ? 'Updating…' : 'Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

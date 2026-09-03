@@ -99,6 +99,7 @@ const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  DRAFT_TRASH_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(7),
 
   // SaaS: Account Limits (0 = unlimited, for self-hosted)
   MAX_DA_ACCOUNTS: z.coerce.number().int().min(0).default(0),

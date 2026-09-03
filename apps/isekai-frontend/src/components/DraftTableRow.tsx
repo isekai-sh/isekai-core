@@ -52,6 +52,11 @@ export function DraftTableRow({ draft, isSelected, onSelect }: DraftTableRowProp
   const [tagsOpen, setTagsOpen] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const effectiveCurationStatus =
+    draft.curationStatus ??
+    (draft.ingestSource === 'direct_to_draft' && draft.curatedAt === null
+      ? 'uncurated'
+      : 'curated');
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<Deviation>) => deviations.update(draft.id, data),
@@ -356,6 +361,13 @@ export function DraftTableRow({ draft, isSelected, onSelect }: DraftTableRowProp
             </button>
           }
         />
+      </TableCell>
+
+      {/* Curation status */}
+      <TableCell className="py-1">
+        <Badge variant={effectiveCurationStatus === 'uncurated' ? 'outline' : 'secondary'}>
+          {effectiveCurationStatus === 'uncurated' ? 'Uncurated' : 'Curated'}
+        </Badge>
       </TableCell>
 
       {/* Schedule Date & Time */}

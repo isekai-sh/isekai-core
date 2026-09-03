@@ -7,6 +7,7 @@ import {
   AutomationDefaultValue,
   Deviation,
 } from '../db/index.js';
+import type { Prisma } from '../db/index.js';
 import { scheduleDeviation } from '../queues/deviation-publisher.js';
 
 /**
@@ -346,102 +347,119 @@ async function selectDrafts(
 ): Promise<Deviation[]> {
   const selected: Deviation[] = [];
 
-  let candidates: any[];
+  // Curation status affects preference, not eligibility. Exhaust curated candidates
+  // first, then fall back to uncurated drafts when the curated pool cannot fill the run.
+  for (const curationTier of ['curated', 'uncurated'] as const) {
+    const candidates = await findDraftCandidates(automation, count, curationTier);
 
-  if (automation.draftSelectionMethod === 'random') {
-    // For random selection, fetch a large pool from ALL available drafts
-    // Use a pool of up to 1000 drafts to ensure true randomness across entire draft library
-    const poolSize = 1000;
+    // Atomically lock each draft using optimistic locking.
+    for (const candidate of candidates) {
+      if (selected.length >= count) break;
 
-    // Fetch large pool of candidates
-    const allCandidates = await prisma.deviation.findMany({
-      where: {
-        userId: automation.userId,
-        status: 'draft' as const,
-        scheduledAt: null, // Not already scheduled
-        files: { some: {} }, // Must have at least one file
-      },
-      take: poolSize,
-      include: {
-        files: true,
-      },
-    });
+      try {
+        const locked = await prisma.$transaction(async (tx) => {
+          const updateResult = await tx.deviation.updateMany({
+            where: {
+              id: candidate.id,
+              executionVersion: candidate.executionVersion,
+              status: 'draft',
+              scheduledAt: null,
+            },
+            data: {
+              scheduledAt: new Date(),
+              executionVersion: { increment: 1 },
+            },
+          });
 
-    // Shuffle the entire pool for true random selection
-    candidates = shuffle(allCandidates);
-  } else {
-    // For FIFO/LIFO, use ordered selection
-    const orderBy =
-      automation.draftSelectionMethod === 'lifo'
-        ? { createdAt: 'desc' as const }
-        : { createdAt: 'asc' as const };
+          if (updateResult.count === 0) {
+            return null;
+          }
 
-    candidates = await prisma.deviation.findMany({
-      where: {
-        userId: automation.userId,
-        status: 'draft' as const,
-        scheduledAt: null, // Not already scheduled
-        files: { some: {} }, // Must have at least one file
-      },
-      orderBy,
-      take: count * 3, // Get extra candidates in case of lock failures
-      include: {
-        files: true,
-      },
-    });
-  }
-
-  if (candidates.length === 0) {
-    return [];
-  }
-
-  // Use candidates directly (already shuffled for random, ordered for FIFO/LIFO)
-  const orderedCandidates = candidates;
-
-  // Atomically lock each draft using optimistic locking
-  for (const candidate of orderedCandidates) {
-    if (selected.length >= count) break;
-
-    try {
-      // Atomic update using executionVersion for optimistic locking
-      const locked = await prisma.$transaction(async (tx) => {
-        // Try to lock this draft
-        const updateResult = await tx.deviation.updateMany({
-          where: {
-            id: candidate.id,
-            executionVersion: candidate.executionVersion, // Only update if version matches
-            status: 'draft', // Still draft
-            scheduledAt: null, // Not scheduled
-          },
-          data: {
-            scheduledAt: new Date(), // Mark as locked
-            executionVersion: { increment: 1 },
-          },
+          return {
+            ...candidate,
+            scheduledAt: new Date(),
+            executionVersion: candidate.executionVersion + 1,
+          };
         });
 
-        // If no rows updated, another process got it first
-        if (updateResult.count === 0) {
-          return null;
+        if (locked) {
+          selected.push(locked);
         }
-
-        // Return the candidate with updated version
-        return {
-          ...candidate,
-          scheduledAt: new Date(),
-          executionVersion: candidate.executionVersion + 1,
-        };
-      });
-
-      if (locked) {
-        selected.push(locked);
+      } catch {
+        console.log(`[Auto-Scheduler] Failed to lock draft ${candidate.id}, skipping`);
       }
-    } catch (error) {
-      // Lock failed, skip this draft
-      console.log(`[Auto-Scheduler] Failed to lock draft ${candidate.id}, skipping`);
     }
+
+    if (selected.length >= count) break;
   }
 
   return selected;
+}
+
+function effectiveCurationFilter(
+  curationTier: 'curated' | 'uncurated'
+): Prisma.DeviationWhereInput {
+  if (curationTier === 'uncurated') {
+    return {
+      OR: [
+        { curationStatus: 'uncurated' },
+        { curationStatus: null, ingestSource: 'direct_to_draft', curatedAt: null },
+      ],
+    };
+  }
+
+  return {
+    OR: [
+      { curationStatus: 'curated' },
+      {
+        AND: [
+          { curationStatus: null },
+          {
+            OR: [
+              { curatedAt: { not: null } },
+              { ingestSource: null },
+              { ingestSource: { not: 'direct_to_draft' } },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+async function findDraftCandidates(
+  automation: AutomationWithRelations,
+  count: number,
+  curationTier: 'curated' | 'uncurated'
+) {
+  const where: Prisma.DeviationWhereInput = {
+    userId: automation.userId,
+    status: 'draft',
+    scheduledAt: null,
+    files: { some: {} },
+    ...effectiveCurationFilter(curationTier),
+  };
+
+  if (automation.draftSelectionMethod === 'random') {
+    const candidates = await prisma.deviation.findMany({
+      where,
+      take: 1000,
+      include: { files: true },
+    });
+    return shuffle(candidates);
+  }
+
+  const orderBy =
+    automation.draftSelectionMethod === 'lifo'
+      ? { createdAt: 'desc' as const }
+      : { createdAt: 'asc' as const };
+
+  return prisma.deviation.findMany({
+    where,
+    orderBy,
+    take: count * 3,
+    include: { files: true },
+  });
 }
 
 /**

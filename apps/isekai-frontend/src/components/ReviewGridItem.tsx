@@ -29,6 +29,7 @@ interface ReviewGridItemProps {
   viewMode: 'grid' | 'list';
   onToggleSelect: () => void;
   onFocus: () => void;
+  selectable?: boolean;
 }
 
 export function ReviewGridItem({
@@ -38,6 +39,7 @@ export function ReviewGridItem({
   viewMode,
   onToggleSelect,
   onFocus,
+  selectable = true,
 }: ReviewGridItemProps) {
   if (viewMode === 'list') {
     return (
@@ -51,20 +53,22 @@ export function ReviewGridItem({
         onClick={onFocus}
       >
         {/* Checkbox */}
-        <div
-          className="flex-shrink-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-        >
-          <Checkbox
-            checked={isSelected}
-            className={cn(
-              !isSelected && 'border-muted-foreground/50 data-[state=unchecked]:bg-muted'
-            )}
-          />
-        </div>
+        {selectable && (
+          <div
+            className="flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+          >
+            <Checkbox
+              checked={isSelected}
+              className={cn(
+                !isSelected && 'border-muted-foreground/50 data-[state=unchecked]:bg-muted'
+              )}
+            />
+          </div>
+        )}
 
         {/* Thumbnail */}
         <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-muted">
@@ -137,18 +141,20 @@ export function ReviewGridItem({
       )}
 
       {/* Checkbox overlay */}
-      <div
-        className="absolute top-2 left-2 z-20"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleSelect();
-        }}
-      >
-        <Checkbox
-          checked={isSelected}
-          className={cn('bg-background', !isSelected && 'border-muted-foreground/50')}
-        />
-      </div>
+      {selectable && (
+        <div
+          className="absolute top-2 left-2 z-20"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
+        >
+          <Checkbox
+            checked={isSelected}
+            className={cn('bg-background', !isSelected && 'border-muted-foreground/50')}
+          />
+        </div>
+      )}
 
       {/* Tag indicator */}
       {deviation.tags.length > 0 && (

@@ -16,11 +16,23 @@ datasource db {
 enum DeviationStatus {
   review
   draft
+  trashed
   scheduled
   uploading
   publishing
   published
   failed
+}
+
+enum DeviationIngestSource {
+  manual
+  manual_review
+  direct_to_draft
+}
+
+enum DraftCurationStatus {
+  uncurated
+  curated
 }
 
 enum ThumbnailStatus {
@@ -81,18 +93,18 @@ enum InstanceUserRole {
 // ============================================================================
 
 model User {
-  id                           String             @id @default(uuid())
-  deviantartId                 String             @unique @map("deviantart_id")
+  id                           String    @id @default(uuid())
+  deviantartId                 String    @unique @map("deviantart_id")
   username                     String
-  avatarUrl                    String?            @map("avatar_url")
+  avatarUrl                    String?   @map("avatar_url")
   email                        String?
-  accessToken                  String             @map("access_token")
-  refreshToken                 String             @map("refresh_token")
-  tokenExpiresAt               DateTime           @map("token_expires_at")
-  refreshTokenExpiresAt        DateTime           @map("refresh_token_expires_at")
-  refreshTokenWarningEmailSent Boolean            @default(false) @map("refresh_token_warning_email_sent")
-  refreshTokenExpiredEmailSent Boolean            @default(false) @map("refresh_token_expired_email_sent")
-  lastRefreshTokenRefresh      DateTime?          @map("last_refresh_token_refresh")
+  accessToken                  String    @map("access_token")
+  refreshToken                 String    @map("refresh_token")
+  tokenExpiresAt               DateTime  @map("token_expires_at")
+  refreshTokenExpiresAt        DateTime  @map("refresh_token_expires_at")
+  refreshTokenWarningEmailSent Boolean   @default(false) @map("refresh_token_warning_email_sent")
+  refreshTokenExpiredEmailSent Boolean   @default(false) @map("refresh_token_expired_email_sent")
+  lastRefreshTokenRefresh      DateTime? @map("last_refresh_token_refresh")
 
   // Timezone for scheduling
   timezone String @default("UTC")
@@ -122,10 +134,19 @@ model Deviation {
   userId String          @map("user_id")
   status DeviationStatus @default(draft)
 
+  // Curation metadata. A null source identifies a legacy row, which is treated
+  // as already curated without requiring a data backfill.
+  ingestSource   DeviationIngestSource? @map("ingest_source")
+  curationStatus DraftCurationStatus?   @map("curation_status")
+  curatedAt      DateTime?              @map("curated_at")
+  discardedAt    DateTime?              @map("discarded_at")
+  purgeAfter     DateTime?              @map("purge_after")
+  purgeStartedAt DateTime?              @map("purge_started_at")
+
   // Metadata
-  title       String
-  description String?
-  tags        String[]
+  title        String
+  description  String?
+  tags         String[]
   categoryPath String?  @map("category_path")
   galleryIds   String[] @map("gallery_ids")
   automationId String?  @map("automation_id") // Track which automation scheduled this deviation
@@ -177,12 +198,15 @@ model Deviation {
   files      DeviationFile[]
   saleQueue  SaleQueue?
 
+  @@unique([deviationId], name: "unique_published_deviation") // Prevent duplicate DeviantArt IDs
   // Indexes for performance
   @@index([userId, status])
+  @@index([userId, status, curatedAt, createdAt])
+  @@index([userId, status, curationStatus, createdAt])
+  @@index([status, purgeAfter])
   @@index([status, actualPublishAt]) // For past due recovery queries
   @@index([executionLockId, status]) // For lock cleanup and recovery
   @@index([automationId]) // For automation-related queries
-  @@unique([deviationId], name: "unique_published_deviation") // Prevent duplicate DeviantArt IDs
   @@map("deviations")
 }
 
@@ -202,14 +226,14 @@ model DeviationFile {
   thumbnailVersion        Int             @default(0) @map("thumbnail_version")
   thumbnailAttempts       Int             @default(0) @map("thumbnail_attempts")
   thumbnailError          String?         @map("thumbnail_error")
-  thumbnailUpdatedAt      DateTime?        @map("thumbnail_updated_at")
-  thumbnailNextAttemptAt  DateTime?        @map("thumbnail_next_attempt_at")
-  thumbnailLeaseId        String?          @map("thumbnail_lease_id")
-  thumbnailLeaseExpiresAt DateTime?        @map("thumbnail_lease_expires_at")
-  createdAt               DateTime         @default(now()) @map("created_at")
+  thumbnailUpdatedAt      DateTime?       @map("thumbnail_updated_at")
+  thumbnailNextAttemptAt  DateTime?       @map("thumbnail_next_attempt_at")
+  thumbnailLeaseId        String?         @map("thumbnail_lease_id")
+  thumbnailLeaseExpiresAt DateTime?       @map("thumbnail_lease_expires_at")
+  createdAt               DateTime        @default(now()) @map("created_at")
 
   // Relations
-  deviation Deviation @relation(fields: [deviationId], references: [id], onDelete: Cascade)
+  deviation Deviation              @relation(fields: [deviationId], references: [id], onDelete: Cascade)
   variants  DeviationFileVariant[]
 
   @@index([thumbnailStatus, thumbnailVersion, thumbnailNextAttemptAt, createdAt, id])
@@ -236,23 +260,23 @@ model DeviationFileVariant {
 }
 
 model ThumbnailBackfillRun {
-  id                   String                  @id @default(uuid())
-  targetVersion        Int                     @map("target_version")
-  status               ThumbnailBackfillStatus @default(running)
-  upperBoundCreatedAt  DateTime                 @map("upper_bound_created_at")
-  upperBoundId         String                   @map("upper_bound_id")
-  cursorCreatedAt      DateTime?                @map("cursor_created_at")
-  cursorId             String?                  @map("cursor_id")
-  filterFileId         String?                  @map("filter_file_id")
-  filterUserId         String?                  @map("filter_user_id")
-  maxFiles             Int?                     @map("max_files")
-  scannedCount         Int                     @default(0) @map("scanned_count")
-  queuedCount          Int                     @default(0) @map("queued_count")
-  skippedCount         Int                     @default(0) @map("skipped_count")
-  lastError            String?                 @map("last_error")
-  startedAt            DateTime                @default(now()) @map("started_at")
-  updatedAt            DateTime                @updatedAt @map("updated_at")
-  completedAt          DateTime?               @map("completed_at")
+  id                  String                  @id @default(uuid())
+  targetVersion       Int                     @map("target_version")
+  status              ThumbnailBackfillStatus @default(running)
+  upperBoundCreatedAt DateTime                @map("upper_bound_created_at")
+  upperBoundId        String                  @map("upper_bound_id")
+  cursorCreatedAt     DateTime?               @map("cursor_created_at")
+  cursorId            String?                 @map("cursor_id")
+  filterFileId        String?                 @map("filter_file_id")
+  filterUserId        String?                 @map("filter_user_id")
+  maxFiles            Int?                    @map("max_files")
+  scannedCount        Int                     @default(0) @map("scanned_count")
+  queuedCount         Int                     @default(0) @map("queued_count")
+  skippedCount        Int                     @default(0) @map("skipped_count")
+  lastError           String?                 @map("last_error")
+  startedAt           DateTime                @default(now()) @map("started_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+  completedAt         DateTime?               @map("completed_at")
 
   @@index([targetVersion, status, startedAt])
   @@map("thumbnail_backfill_runs")
@@ -384,7 +408,7 @@ model Template {
 model AdminRole {
   id        String    @id @default(uuid())
   userId    String    @map("user_id")
-  role      String    // 'super_admin', 'admin', 'support'
+  role      String // 'super_admin', 'admin', 'support'
   grantedBy String    @map("granted_by")
   grantedAt DateTime  @default(now()) @map("granted_at")
   revokedAt DateTime? @map("revoked_at")
@@ -403,8 +427,8 @@ model InstanceUser {
   id String @id @default(cuid())
 
   // DeviantArt identity (links to User model by deviantartId)
-  daUserId   String @unique @map("da_user_id")
-  daUsername String @map("da_username")
+  daUserId   String  @unique @map("da_user_id")
+  daUsername String  @map("da_username")
   daAvatar   String? @map("da_avatar")
 
   // Role within this instance
@@ -435,7 +459,7 @@ model PricePreset {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
   name        String
-  price       Int      // Price in cents (5000 = $50.00)
+  price       Int // Price in cents (5000 = $50.00)
   minPrice    Int?     @map("min_price") // Minimum price for random range
   maxPrice    Int?     @map("max_price") // Maximum price for random range
   currency    String   @default("USD")
@@ -459,7 +483,7 @@ model SaleQueue {
   userId        String          @map("user_id")
   deviationId   String          @unique @map("deviation_id")
   pricePresetId String          @map("price_preset_id")
-  price         Int             // Calculated price in cents (INT) - either fixed or random from preset range
+  price         Int // Calculated price in cents (INT) - either fixed or random from preset range
   status        SaleQueueStatus @default(pending)
 
   // Execution tracking
@@ -488,11 +512,11 @@ model SaleQueue {
 }
 
 model Automation {
-  id     String  @id @default(uuid())
-  userId String  @map("user_id")
+  id     String @id @default(uuid())
+  userId String @map("user_id")
 
   // Workflow identification
-  name        String  // "Exclusive Posts", "Free Artwork"
+  name        String // "Exclusive Posts", "Free Artwork"
   description String? // Optional longer description
   color       String  @default("#6366f1") // Visual distinction (hex color)
   icon        String? // Optional emoji/icon
@@ -515,7 +539,7 @@ model Automation {
 
   // Sale queue integration
   autoAddToSaleQueue Boolean @default(false) @map("auto_add_to_sale_queue")
-  saleQueuePresetId  String?  @map("sale_queue_preset_id")
+  saleQueuePresetId  String? @map("sale_queue_preset_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")

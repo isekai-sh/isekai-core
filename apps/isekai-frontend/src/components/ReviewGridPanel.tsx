@@ -49,6 +49,8 @@ interface ReviewGridPanelProps {
   onLoadMore: () => void;
   hasMore: boolean;
   isLoadingMore: boolean;
+  selectable?: boolean;
+  footerLabel?: string;
 }
 
 export function ReviewGridPanel({
@@ -70,6 +72,8 @@ export function ReviewGridPanel({
   onLoadMore,
   hasMore,
   isLoadingMore,
+  selectable = true,
+  footerLabel = 'to review',
 }: ReviewGridPanelProps) {
   const gridClasses = viewMode === 'grid' ? 'grid-cols-3' : 'grid-cols-1';
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -151,6 +155,7 @@ export function ReviewGridPanel({
                   viewMode={viewMode}
                   onToggleSelect={() => onToggleSelect(deviation.id)}
                   onFocus={() => onFocus(deviation.id)}
+                  selectable={selectable}
                 />
               ))}
             </div>
@@ -167,7 +172,7 @@ export function ReviewGridPanel({
         {/* Footer with total count */}
         <div className="pt-3 mt-auto border-t border-border/50 text-center">
           <span className="text-xs text-muted-foreground">
-            {totalCount} {totalCount === 1 ? 'item' : 'items'} to review
+            {totalCount} {totalCount === 1 ? 'item' : 'items'} {footerLabel}
           </span>
         </div>
       </CardContent>

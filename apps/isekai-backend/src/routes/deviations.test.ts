@@ -64,7 +64,8 @@ vi.mock('../db/index.js', () => ({
 
       return await callback({
         deviation: {
-          update: vi.fn().mockResolvedValue(scheduledDev),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          findUniqueOrThrow: vi.fn().mockResolvedValue(scheduledDev),
         },
       });
     }),
@@ -74,6 +75,8 @@ vi.mock('../db/index.js', () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
       count: vi.fn(),
@@ -163,6 +166,8 @@ describe('Deviations Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRefreshTokenIfNeeded.mockResolvedValue('mock-access-token');
+    mockPrisma.deviation.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.deviation.findUniqueOrThrow.mockResolvedValue(mockDeviation);
 
     // Suppress console messages during tests
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -258,6 +263,28 @@ describe('Deviations Routes', () => {
         expect.objectContaining({
           skip: 10,
           take: 10,
+        })
+      );
+    });
+
+    it('filters drafts by explicit curation state without changing ingest provenance', async () => {
+      mockPrisma.deviation.findMany.mockResolvedValue([]);
+      mockPrisma.deviation.count.mockResolvedValue(0);
+
+      await callRoute(
+        'get',
+        '/',
+        { user: mockUser, query: { status: 'draft', curation: 'uncurated' } },
+        { json: vi.fn() }
+      );
+
+      expect(mockPrisma.deviation.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: mockUser.id,
+            status: 'draft',
+            OR: expect.arrayContaining([{ curationStatus: 'uncurated' }]),
+          }),
         })
       );
     });
@@ -520,6 +547,40 @@ describe('Deviations Routes', () => {
         })
       );
     });
+
+    it('does not schedule a draft that Curation changed after validation', async () => {
+      mockPrisma.deviation.findFirst.mockResolvedValue({
+        ...mockDeviation,
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
+      });
+      const conditionalUpdate = vi.fn().mockResolvedValue({ count: 0 });
+      mockPrisma.$transaction.mockImplementationOnce(async (callback: any) =>
+        callback({
+          deviation: {
+            updateMany: conditionalUpdate,
+            findUniqueOrThrow: vi.fn(),
+          },
+        })
+      );
+      const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+
+      await callRoute(
+        'post',
+        `/${mockDeviation.id}/schedule`,
+        {
+          user: mockUser,
+          params: { id: mockDeviation.id },
+          body: { scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() },
+        },
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(mockScheduleDeviation).not.toHaveBeenCalled();
+      expect(conditionalUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ executionLockId: null }) })
+      );
+    });
   });
 
   describe('POST /:id/publish-now', () => {
@@ -533,7 +594,7 @@ describe('Deviations Routes', () => {
         files: [{ id: 'file-1', storageKey: 'test.jpg' }],
       };
       mockPrisma.deviation.findFirst.mockResolvedValue(deviationWithFiles);
-      mockPrisma.deviation.update.mockResolvedValue(publishedDev);
+      mockPrisma.deviation.findUniqueOrThrow.mockResolvedValue(publishedDev);
       mockPublishDeviationNow.mockResolvedValue(undefined);
 
       const req = {
@@ -552,6 +613,28 @@ describe('Deviations Routes', () => {
         expect.objectContaining({
           status: 'publishing',
         })
+      );
+    });
+
+    it('does not queue a draft that Curation changed after validation', async () => {
+      mockPrisma.deviation.findFirst.mockResolvedValue({
+        ...mockDeviation,
+        files: [{ id: 'file-1', storageKey: 'test.jpg' }],
+      });
+      mockPrisma.deviation.updateMany.mockResolvedValueOnce({ count: 0 });
+      const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+
+      await callRoute(
+        'post',
+        `/${mockDeviation.id}/publish-now`,
+        { user: mockUser, params: { id: mockDeviation.id } },
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(mockPublishDeviationNow).not.toHaveBeenCalled();
+      expect(mockPrisma.deviation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ executionLockId: null }) })
       );
     });
   });
@@ -749,7 +832,7 @@ describe('Deviations Routes', () => {
         actualPublishAt: new Date(futureTime + 100),
       };
       mockPrisma.deviation.findMany.mockResolvedValue([draftWithFiles]);
-      mockPrisma.deviation.update.mockResolvedValue(scheduledDev);
+      mockPrisma.deviation.findUniqueOrThrow.mockResolvedValue(scheduledDev);
       mockScheduleDeviation.mockResolvedValue(undefined);
 
       const req = {
@@ -781,6 +864,36 @@ describe('Deviations Routes', () => {
         })
       );
     });
+
+    it('reports a concurrent Curation state change without queueing it', async () => {
+      const futureTime = Date.now() + 2 * 60 * 60 * 1000;
+      mockPrisma.deviation.findMany.mockResolvedValue([
+        { ...mockDeviation, files: [{ id: 'file-1', storageKey: 'test.jpg' }] },
+      ]);
+      mockPrisma.deviation.updateMany.mockResolvedValueOnce({ count: 0 });
+      const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+
+      await callRoute(
+        'post',
+        '/batch-schedule',
+        {
+          user: mockUser,
+          body: {
+            deviationIds: [mockDeviation.id],
+            scheduledAt: new Date(futureTime).toISOString(),
+          },
+        },
+        res
+      );
+
+      expect(mockScheduleDeviation).not.toHaveBeenCalled();
+      expect(mockPrisma.deviation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ executionLockId: null }) })
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ summary: { total: 1, succeeded: 0, failed: 1 } })
+      );
+    });
   });
 
   describe('POST /batch-publish-now', () => {
@@ -794,7 +907,7 @@ describe('Deviations Routes', () => {
         status: 'publishing' as const,
       };
       mockPrisma.deviation.findMany.mockResolvedValue([draftWithFiles]);
-      mockPrisma.deviation.update.mockResolvedValue(publishingDev);
+      mockPrisma.deviation.findUniqueOrThrow.mockResolvedValue(publishingDev);
       mockPublishDeviationNow.mockResolvedValue(undefined);
 
       const req = {
@@ -823,6 +936,29 @@ describe('Deviations Routes', () => {
             failed: 0,
           }),
         })
+      );
+    });
+
+    it('reports a concurrent Curation state change without publishing it', async () => {
+      mockPrisma.deviation.findMany.mockResolvedValue([
+        { ...mockDeviation, files: [{ id: 'file-1', storageKey: 'test.jpg' }] },
+      ]);
+      mockPrisma.deviation.updateMany.mockResolvedValueOnce({ count: 0 });
+      const res = { json: vi.fn(), status: vi.fn().mockReturnThis() };
+
+      await callRoute(
+        'post',
+        '/batch-publish-now',
+        { user: mockUser, body: { deviationIds: [mockDeviation.id] } },
+        res
+      );
+
+      expect(mockPublishDeviationNow).not.toHaveBeenCalled();
+      expect(mockPrisma.deviation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ executionLockId: null }) })
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ summary: { total: 1, succeeded: 0, failed: 1 } })
       );
     });
   });

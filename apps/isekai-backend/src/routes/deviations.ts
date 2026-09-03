@@ -28,6 +28,7 @@ import {
 import { scheduleRateLimit, batchRateLimit } from '../middleware/rate-limit.js';
 import type { DeviationStatus, MatureLevel, UploadMode } from '../db/index.js';
 import { deleteStoredDeviationFiles, serializeDeviationFiles } from '../lib/deviation-files.js';
+import { curationScopeFilter } from '../lib/curation-status.js';
 
 const router = Router();
 
@@ -49,8 +50,9 @@ const createDeviationSchema = z.object({
 
 // List deviations
 router.get('/', async (req, res) => {
-  const { status, page = '1', limit = '20' } = req.query;
+  const { status, page = '1', limit = '20', curation = 'all' } = req.query;
   const userId = req.user!.id;
+  const curationScope = z.enum(['uncurated', 'curated', 'all']).parse(curation);
 
   const pageNum = parseInt(page as string, 10);
   const limitNum = parseInt(limit as string, 10);
@@ -59,6 +61,7 @@ router.get('/', async (req, res) => {
   const whereClause = {
     userId,
     ...(status && typeof status === 'string' ? { status: status as DeviationStatus } : {}),
+    ...curationScopeFilter(curationScope),
   };
 
   const [userDeviations, total] = await Promise.all([
@@ -127,6 +130,9 @@ router.post('/', async (req, res) => {
   const deviation = await prisma.deviation.create({
     data: {
       userId: user.id,
+      ingestSource: 'manual',
+      curationStatus: 'curated',
+      curatedAt: new Date(),
       title: data.title,
       description: data.description,
       tags: data.tags ?? [],
@@ -279,9 +285,16 @@ router.post('/:id/schedule', scheduleRateLimit, async (req, res) => {
   try {
     updated = await prisma.$transaction(
       async (tx) => {
-        // Update deviation to scheduled status
-        const updatedDeviation = await tx.deviation.update({
-          where: { id },
+        // Claim the exact state we validated. A concurrent Curation discard or
+        // auto-scheduler lock makes this a clean conflict instead of reviving it.
+        const claimed = await tx.deviation.updateMany({
+          where: {
+            id,
+            userId: user.id,
+            status: deviation.status,
+            executionLockId: null,
+            ...(deviation.status === 'draft' ? { scheduledAt: null } : {}),
+          },
           data: {
             status: 'scheduled',
             scheduledAt: scheduledDate,
@@ -291,7 +304,11 @@ router.post('/:id/schedule', scheduleRateLimit, async (req, res) => {
           },
         });
 
-        return updatedDeviation;
+        if (claimed.count === 0) {
+          throw new AppError(409, 'Deviation state changed before it could be scheduled');
+        }
+
+        return tx.deviation.findUniqueOrThrow({ where: { id } });
       },
       {
         isolationLevel: 'Serializable', // Prevent concurrent modifications
@@ -375,16 +392,43 @@ router.post('/:id/publish-now', scheduleRateLimit, async (req, res) => {
     }
   }
 
-  // Publish immediately with BullMQ
-  await publishDeviationNow(id, user.id, deviation.uploadMode);
-
-  const updated = await prisma.deviation.update({
-    where: { id },
+  // Claim the validated state before queueing. In particular, a direct draft
+  // cannot be discarded between validation and this transition.
+  const claimed = await prisma.deviation.updateMany({
+    where: {
+      id,
+      userId: user.id,
+      status: deviation.status,
+      executionLockId: null,
+      ...(deviation.status === 'draft' ? { scheduledAt: null } : {}),
+    },
     data: {
       status: 'publishing',
       updatedAt: new Date(),
     },
   });
+
+  if (claimed.count === 0) {
+    throw new AppError(409, 'Deviation state changed before it could be published');
+  }
+
+  let updated = await prisma.deviation.findUniqueOrThrow({ where: { id } });
+
+  try {
+    await publishDeviationNow(id, user.id, deviation.uploadMode);
+  } catch (error) {
+    await prisma.deviation.updateMany({
+      where: { id, userId: user.id, status: 'publishing' },
+      data: {
+        status: deviation.status,
+        errorMessage: `Failed to publish: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        updatedAt: new Date(),
+      },
+    });
+    throw new AppError(500, 'Failed to queue deviation for publishing. Please try again.');
+  }
+
+  updated = await prisma.deviation.findUniqueOrThrow({ where: { id } });
 
   res.json({
     ...updated,
@@ -722,9 +766,16 @@ router.post('/batch-schedule', batchRateLimit, async (req, res) => {
       const jitterSeconds = Math.floor(Math.random() * 301);
       const actualPublishAt = new Date(scheduledDate.getTime() + jitterSeconds * 1000);
 
-      // Update deviation to scheduled status
-      const updated = await prisma.deviation.update({
-        where: { id: deviation.id },
+      // Atomically claim the validated row so Curation and scheduling cannot
+      // both succeed.
+      const claimed = await prisma.deviation.updateMany({
+        where: {
+          id: deviation.id,
+          userId: user.id,
+          status: deviation.status,
+          executionLockId: null,
+          ...(deviation.status === 'draft' ? { scheduledAt: null } : {}),
+        },
         data: {
           status: 'scheduled',
           scheduledAt: scheduledDate,
@@ -733,6 +784,12 @@ router.post('/batch-schedule', batchRateLimit, async (req, res) => {
           updatedAt: new Date(),
         },
       });
+
+      if (claimed.count === 0) {
+        throw new Error('Deviation state changed before it could be scheduled');
+      }
+
+      const updated = await prisma.deviation.findUniqueOrThrow({ where: { id: deviation.id } });
 
       // Schedule the deviation with BullMQ (uses jobId for idempotency)
       // If this fails, we catch and rollback
@@ -828,14 +885,27 @@ router.post('/batch-publish-now', batchRateLimit, async (req, res) => {
         await cancelScheduledDeviation(deviation.id);
       }
 
-      // Update status to publishing first
-      const updated = await prisma.deviation.update({
-        where: { id: deviation.id },
+      // Claim the exact state first. A concurrently trashed draft is never
+      // queued for publishing.
+      const claimed = await prisma.deviation.updateMany({
+        where: {
+          id: deviation.id,
+          userId: user.id,
+          status: deviation.status,
+          executionLockId: null,
+          ...(deviation.status === 'draft' ? { scheduledAt: null } : {}),
+        },
         data: {
           status: 'publishing',
           updatedAt: new Date(),
         },
       });
+
+      if (claimed.count === 0) {
+        throw new Error('Deviation state changed before it could be published');
+      }
+
+      const updated = await prisma.deviation.findUniqueOrThrow({ where: { id: deviation.id } });
 
       // Queue immediate publish
       try {

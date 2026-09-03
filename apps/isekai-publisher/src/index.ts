@@ -20,11 +20,13 @@ import express from 'express';
 import { deviationPublisherWorker } from './queues/deviation-publisher.js';
 import { tokenMaintenanceWorker, scheduleTokenMaintenance } from './queues/token-maintenance.js';
 import { storageCleanupWorker } from './queues/storage-cleanup.js';
+import { trashPurgeWorker } from './queues/trash-purge.js';
 import { RedisClientManager } from './lib/redis-client.js';
 import { startStuckJobRecovery } from './jobs/stuck-job-recovery.js';
 import { startPastDueRecovery } from './jobs/past-due-recovery.js';
 import { startLockCleanup } from './jobs/lock-cleanup.js';
 import { startAutoScheduler } from './jobs/auto-scheduler.js';
+import { startTrashSweeper } from './jobs/trash-sweeper.js';
 import { env } from './lib/env.js';
 
 const HEALTH_CHECK_PORT = env.HEALTH_CHECK_PORT;
@@ -65,7 +67,8 @@ async function startHealthCheckServer() {
       // Check if worker is running
       const isRunning = deviationPublisherWorker.isRunning();
       const cleanupRunning = storageCleanupWorker.isRunning();
-      if (!isRunning || !cleanupRunning) {
+      const trashPurgeRunning = trashPurgeWorker.isRunning();
+      if (!isRunning || !cleanupRunning || !trashPurgeRunning) {
         throw new Error('Worker not running');
       }
 
@@ -78,6 +81,7 @@ async function startHealthCheckServer() {
         worker: {
           running: isRunning,
           cleanupRunning,
+          trashPurgeRunning,
           activeJobs: activeJobsCount,
         },
         redis: {
@@ -134,6 +138,7 @@ async function gracefulShutdown(signal: string) {
     await deviationPublisherWorker.pause();
     await tokenMaintenanceWorker.pause();
     await storageCleanupWorker.pause();
+    await trashPurgeWorker.pause();
 
     // Wait for active jobs to complete (with timeout)
     console.log('[Publisher] Waiting for active jobs to complete (max 30s)...');
@@ -144,6 +149,7 @@ async function gracefulShutdown(signal: string) {
     await deviationPublisherWorker.close();
     await tokenMaintenanceWorker.close();
     await storageCleanupWorker.close();
+    await trashPurgeWorker.close();
 
     // Close Redis connection
     console.log('[Publisher] Closing Redis connection...');
@@ -200,6 +206,7 @@ async function startPublisher() {
     startPastDueRecovery();
     startLockCleanup();
     startAutoScheduler();
+    startTrashSweeper();
 
     console.log(`Publisher ready (${env.NODE_ENV})`);
   } catch (error) {

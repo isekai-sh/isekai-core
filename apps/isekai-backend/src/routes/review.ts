@@ -87,6 +87,8 @@ router.post('/:id/approve', async (req, res) => {
     where: { id },
     data: {
       status: 'draft',
+      curationStatus: 'curated',
+      curatedAt: new Date(),
       updatedAt: new Date(),
     },
   });
@@ -158,6 +160,8 @@ router.post('/batch-approve', async (req, res) => {
     where: { id: { in: deviationIds } },
     data: {
       status: 'draft',
+      curationStatus: 'curated',
+      curatedAt: new Date(),
       updatedAt: new Date(),
     },
   });

@@ -281,6 +281,8 @@ describe('review routes', () => {
         where: { id: 'deviation-123' },
         data: {
           status: 'draft',
+          curationStatus: 'curated',
+          curatedAt: expect.any(Date),
           updatedAt: expect.any(Date),
         },
       });
@@ -468,6 +470,8 @@ describe('review routes', () => {
         where: { id: { in: deviationIds } },
         data: {
           status: 'draft',
+          curationStatus: 'curated',
+          curatedAt: expect.any(Date),
           updatedAt: expect.any(Date),
         },
       });
