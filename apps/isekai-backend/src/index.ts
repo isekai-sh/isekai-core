@@ -43,6 +43,7 @@ import { automationDefaultValuesRouter } from './routes/automation-default-value
 import { adminRouter } from './routes/admin.js';
 import { configRouter } from './routes/config.js';
 import { curationRouter } from './routes/curation.js';
+import { dashboardRouter } from './routes/dashboard.js';
 import { errorHandler } from './middleware/error.js';
 import { authMiddleware } from './middleware/auth.js';
 import { hybridAuthMiddleware } from './middleware/hybrid-auth.js';
@@ -149,6 +150,7 @@ async function startServer() {
   app.use('/api/api-keys', authMiddleware, apiKeysRouter); // API key management
   app.use('/api/review', authMiddleware, reviewRouter); // Review management
   app.use('/api/curation', authMiddleware, curationRouter); // Draft curation and trash
+  app.use('/api/dashboard', authMiddleware, dashboardRouter); // Operational dashboard
   app.use('/api/price-presets', authMiddleware, pricePresetsRouter); // Price preset management
   app.use('/api/sale-queue', hybridAuthMiddleware, saleQueueRouter); // Sale queue management (supports session + API key)
   app.use('/api/automations', authMiddleware, automationsRouter); // Automation management

@@ -33,6 +33,7 @@ import type {
   ApiKey,
   CreateApiKeyRequest,
   CreateApiKeyResponse,
+  DashboardOverviewResponse,
 } from '@isekai/shared';
 
 // Runtime-only configuration - NO build-time environment variables
@@ -769,6 +770,11 @@ export const automations = {
     request<{ message: string; config: any }>(`/automations/${id}/test`, {
       method: 'POST',
     }),
+};
+
+// Dashboard
+export const dashboard = {
+  overview: () => request<DashboardOverviewResponse>('/dashboard/overview'),
 };
 
 export const automationScheduleRules = {

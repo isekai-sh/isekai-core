@@ -416,6 +416,85 @@ export interface AdminStatsResponse {
 }
 
 // ============================================
+// User Dashboard Types
+// ============================================
+
+export interface DashboardCounts {
+  review: number;
+  uncurated: number;
+  curatedDrafts: number;
+  scheduled: number;
+  failed: number;
+  published24Hours: number;
+  published7Days: number;
+  salePending: number;
+  saleProcessing: number;
+  saleFailed: number;
+}
+
+export interface DashboardFileVariantSummary {
+  width: number;
+  format: string;
+  storageUrl: string;
+}
+
+export interface DashboardFileSummary {
+  storageUrl: string;
+  variants: DashboardFileVariantSummary[];
+}
+
+export interface DashboardDeviationSummary {
+  id: string;
+  title: string;
+  status: DeviationStatus;
+  ingestSource: DeviationIngestSource | null;
+  curationStatus: DraftCurationStatus;
+  curatedAt: string | null;
+  scheduledAt: string | null;
+  actualPublishAt: string | null;
+  createdAt: string;
+  files: DashboardFileSummary[];
+}
+
+export interface DashboardAutomationScheduleRule {
+  id: string;
+  type: string;
+  timeOfDay: string | null;
+  intervalMinutes: number | null;
+  deviationsPerInterval: number | null;
+  dailyQuota: number | null;
+  daysOfWeek: string[] | null;
+  priority: number;
+  enabled: boolean;
+}
+
+export interface DashboardAutomationExecution {
+  executedAt: string;
+  scheduledCount: number;
+  errorMessage: string | null;
+}
+
+export interface DashboardAutomationSummary {
+  id: string;
+  name: string;
+  color: string;
+  icon: string | null;
+  enabled: boolean;
+  isExecuting: boolean;
+  scheduleRules: DashboardAutomationScheduleRule[];
+  lastExecution: DashboardAutomationExecution | null;
+}
+
+export interface DashboardOverviewResponse {
+  counts: DashboardCounts;
+  recentIntake: DashboardDeviationSummary[];
+  upcoming: DashboardDeviationSummary[];
+  automations: DashboardAutomationSummary[];
+  oldestPendingSaleAt: string | null;
+  generatedAt: string;
+}
+
+// ============================================
 // Publisher Module
 // ============================================
 

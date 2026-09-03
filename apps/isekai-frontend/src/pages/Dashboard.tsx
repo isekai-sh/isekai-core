@@ -15,560 +15,553 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fallbackImageToOriginal, selectImageVariant, ImageSize } from '@/lib/image';
+import { formatDistanceToNow } from 'date-fns';
 import {
-  ClipboardCheck,
-  FileImage,
-  Clock,
-  History,
-  Zap,
+  AlertCircle,
+  CalendarClock,
+  CheckCircle2,
   ChevronRight,
-  Globe,
-  User,
-  Sparkles,
-  Tag,
-  Server,
-  ExternalLink,
-  BookOpen,
+  Clock3,
+  FileImage,
+  History,
+  Loader2,
+  RefreshCw,
   Rocket,
+  ShoppingBag,
+  Sparkles,
+  TriangleAlert,
+  Zap,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import type { DashboardOverviewResponse } from '@isekai/shared';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { deviations, automations } from '@/lib/api';
-import { useAuthStore } from '@/stores/auth';
+import { dashboard } from '@/lib/api';
+import { fallbackImageToOriginal, ImageSize, selectImageVariant } from '@/lib/image';
+import { formatScheduleDateTimeShort } from '@/lib/timezone';
 import { cn } from '@/lib/utils';
 
-export function Dashboard() {
-  const { user } = useAuthStore();
+type DashboardDeviation = DashboardOverviewResponse['recentIntake'][number];
+type DashboardAutomation = DashboardOverviewResponse['automations'][number];
+type DashboardRule = DashboardAutomation['scheduleRules'][number];
 
-  // Fetch stats
-  const { data: reviewData, isLoading: loadingReview } = useQuery({
-    queryKey: ['deviations', { status: 'review' }],
-    queryFn: () => deviations.list({ status: 'review', limit: 8 }),
-    staleTime: 30 * 1000,
-  });
+const POLL_INTERVAL_MS = 15_000;
 
-  const { data: draftsData, isLoading: loadingDrafts } = useQuery({
-    queryKey: ['deviations', { status: 'draft' }],
-    queryFn: () => deviations.list({ status: 'draft', limit: 8 }),
-    staleTime: 30 * 1000,
-  });
+function formatRule(rule: DashboardRule): string {
+  let description = 'Custom schedule';
 
-  const { data: scheduledData, isLoading: loadingScheduled } = useQuery({
-    queryKey: ['deviations', { status: 'scheduled' }],
-    queryFn: () => deviations.list({ status: 'scheduled', limit: 2 }),
-    staleTime: 30 * 1000,
-  });
+  if (rule.type === 'fixed_time' && rule.timeOfDay) {
+    description = `Fixed time · ${rule.timeOfDay} account time`;
+  } else if (rule.type === 'fixed_interval' && rule.intervalMinutes && rule.deviationsPerInterval) {
+    description = `${rule.deviationsPerInterval} every ${rule.intervalMinutes} min`;
+  } else if (rule.type === 'daily_quota' && rule.dailyQuota) {
+    description = `${rule.dailyQuota} per day`;
+  }
 
-  const { data: publishedData, isLoading: loadingPublished } = useQuery({
-    queryKey: ['deviations', { status: 'published' }],
-    queryFn: () => deviations.list({ status: 'published', limit: 5 }),
-    staleTime: 30 * 1000,
-  });
+  if ((rule.daysOfWeek?.length ?? 0) > 0) {
+    const days = rule.daysOfWeek!.map((day) => day.slice(0, 3)).join(', ');
+    return `${description} · ${days}`;
+  }
 
-  const { data: automationsData, isLoading: loadingAutomations } = useQuery({
-    queryKey: ['automations'],
-    queryFn: () => automations.list(),
-    staleTime: 30 * 1000,
-  });
+  return description;
+}
 
-  const activeAutomations = automationsData?.automations ?? [];
+function statusLabel(status: string): string {
+  return status.replace(/_/g, ' ').replace(/^./, (letter) => letter.toUpperCase());
+}
 
-  const isLoading =
-    loadingReview || loadingDrafts || loadingScheduled || loadingPublished || loadingAutomations;
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  href,
+  urgent = false,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  icon: typeof FileImage;
+  href?: string;
+  urgent?: boolean;
+}) {
+  const content = (
+    <Card
+      className={cn(
+        'h-full border-border/60 bg-card/70 transition-colors',
+        href && 'hover:border-primary/50 hover:bg-card',
+        urgent && value > 0 && 'border-destructive/40'
+      )}
+    >
+      <CardContent className="flex h-full items-start justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p
+            className={cn(
+              'mt-1 text-3xl font-semibold tabular-nums',
+              urgent && value > 0 && 'text-destructive'
+            )}
+          >
+            {value.toLocaleString()}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+        </div>
+        <div
+          className={cn(
+            'rounded-lg bg-primary/10 p-2 text-primary',
+            urgent && value > 0 && 'bg-destructive/10 text-destructive'
+          )}
+        >
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  const stats = [
-    { label: 'Pending', value: reviewData?.total ?? 0, icon: ClipboardCheck, href: '/review' },
-    { label: 'Drafts', value: draftsData?.total ?? 0, icon: FileImage, href: '/draft' },
-    { label: 'Scheduled', value: scheduledData?.total ?? 0, icon: Clock, href: '/scheduled' },
-    { label: 'Published', value: publishedData?.total ?? 0, icon: History, href: '/published' },
-  ];
+  return href ? (
+    <Link
+      className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      to={href}
+    >
+      {content}
+    </Link>
+  ) : (
+    content
+  );
+}
 
-  const hasNoData =
-    !isLoading &&
-    (reviewData?.total ?? 0) === 0 &&
-    (draftsData?.total ?? 0) === 0 &&
-    (scheduledData?.total ?? 0) === 0 &&
-    (publishedData?.total ?? 0) === 0 &&
-    activeAutomations.length === 0;
+function ArtworkThumbnail({ deviation }: { deviation: DashboardDeviation }) {
+  const file = deviation.files[0];
 
   return (
-    <div className="space-y-4">
-      {/* Row 1: Stats - compact horizontal row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          const isReview = stat.href === '/review';
-          return (
-            <Link key={stat.label} to={stat.href}>
-              <Card
-                className={cn(
-                  'relative overflow-hidden transition-all group',
-                  isReview
-                    ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-card hover:border-primary/50'
-                    : 'border-border/50 bg-card/50 hover:border-primary/30'
-                )}
+    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted sm:h-16 sm:w-16">
+      {file?.storageUrl ? (
+        <img
+          src={selectImageVariant(file, ImageSize.XS)}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          onError={(event) => fallbackImageToOriginal(event.currentTarget, file.storageUrl)}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <FileImage className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IntakeRow({ deviation }: { deviation: DashboardDeviation }) {
+  const isUncurated = deviation.curationStatus === 'uncurated';
+
+  return (
+    <Link
+      to={`/deviations/${deviation.id}`}
+      className="flex items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <ArtworkThumbnail deviation={deviation} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{deviation.title || 'Untitled deviation'}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <Badge variant={deviation.status === 'review' ? 'default' : 'secondary'}>
+            {statusLabel(deviation.status)}
+          </Badge>
+          {deviation.status === 'draft' && (
+            <Badge variant={isUncurated ? 'outline' : 'secondary'}>
+              {isUncurated ? 'Uncurated' : 'Curated'}
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Added {formatDistanceToNow(new Date(deviation.createdAt), { addSuffix: true })}
+        </p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function UpcomingRow({ deviation }: { deviation: DashboardDeviation }) {
+  return (
+    <Link
+      to={`/deviations/${deviation.id}`}
+      className="flex items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <ArtworkThumbnail deviation={deviation} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{deviation.title || 'Untitled deviation'}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {deviation.actualPublishAt
+            ? formatScheduleDateTimeShort(deviation.actualPublishAt)
+            : 'Publish time unavailable'}
+        </p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function AutomationRow({ automation }: { automation: DashboardAutomation }) {
+  const activeRules = automation.scheduleRules.filter((rule) => rule.enabled);
+  const status = automation.isExecuting ? 'Running now' : 'Enabled';
+  const StatusIcon = automation.isExecuting ? Loader2 : CheckCircle2;
+  const lastExecution = automation.lastExecution;
+  const lastRunSummary = lastExecution
+    ? lastExecution.errorMessage
+      ? `Last run: ${lastExecution.errorMessage} · ${formatDistanceToNow(new Date(lastExecution.executedAt), { addSuffix: true })}`
+      : `Last run scheduled ${lastExecution.scheduledCount} · ${formatDistanceToNow(new Date(lastExecution.executedAt), { addSuffix: true })}`
+    : 'No execution recorded';
+
+  return (
+    <Link
+      to={`/automation/${automation.id}`}
+      className="block rounded-lg border border-border/60 p-3 transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{automation.name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{lastRunSummary}</p>
+        </div>
+        <Badge variant="default" className="shrink-0 gap-1">
+          <StatusIcon
+            className={cn('h-3 w-3', automation.isExecuting && 'animate-spin')}
+            aria-hidden="true"
+          />
+          {status}
+        </Badge>
+      </div>
+      <div className="mt-2 space-y-1">
+        {activeRules.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No active schedule rules</p>
+        ) : (
+          activeRules.slice(0, 2).map((rule) => (
+            <p key={rule.id} className="truncate text-xs text-muted-foreground">
+              {formatRule(rule)}
+            </p>
+          ))
+        )}
+        {activeRules.length > 2 && (
+          <p className="text-xs text-muted-foreground">+{activeRules.length - 2} more rules</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <div className="space-y-6" role="status" aria-label="Loading dashboard">
+      <div className="space-y-2">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-4 w-72 max-w-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }, (_, index) => (
+          <Skeleton key={index} className="h-28 rounded-lg" />
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-80 rounded-lg" />
+        <Skeleton className="h-80 rounded-lg" />
+      </div>
+      <span className="sr-only">Loading dashboard</span>
+    </div>
+  );
+}
+
+export function Dashboard() {
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
+    queryKey: ['dashboard', 'overview'],
+    queryFn: dashboard.overview,
+    staleTime: 5_000,
+    refetchInterval: POLL_INTERVAL_MS,
+    refetchOnMount: 'always',
+    retry: false,
+  });
+
+  if (isLoading) return <DashboardLoading />;
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Publishing operations at a glance.</p>
+        </div>
+        <Card className="border-destructive/40">
+          <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center">
+            <AlertCircle className="h-6 w-6 shrink-0 text-destructive" aria-hidden="true" />
+            <div className="flex-1">
+              <h2 className="font-semibold">Dashboard could not be loaded</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : 'Check the connection and try again.'}
+              </p>
+            </div>
+            <Button onClick={() => void refetch()}>Retry</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { counts } = data;
+  const exclusiveJobs = counts.salePending + counts.saleProcessing + counts.saleFailed;
+  const hasNoData =
+    counts.review === 0 &&
+    counts.uncurated === 0 &&
+    counts.curatedDrafts === 0 &&
+    counts.scheduled === 0 &&
+    counts.failed === 0 &&
+    counts.published7Days === 0 &&
+    exclusiveJobs === 0 &&
+    data.automations.length === 0;
+
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Publishing operations at a glance. Updates every 15 seconds.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground" aria-live="polite">
+            Updated {formatDistanceToNow(new Date(data.generatedAt), { addSuffix: true })}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            aria-label="Refresh dashboard"
+          >
+            <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} aria-hidden="true" />
+            Refresh
+          </Button>
+        </div>
+      </header>
+
+      {isError && (
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center"
+        >
+          <AlertCircle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+          <p className="flex-1">
+            Live refresh failed. Showing the last successful dashboard snapshot.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Retry refresh
+          </Button>
+        </div>
+      )}
+
+      {hasNoData && (
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-card">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+            <div className="rounded-lg bg-primary/10 p-3 text-primary">
+              <Rocket className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold">Start your publishing pipeline</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add artwork to Drafts, then schedule it manually or with an automation.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link to="/draft">Open Drafts</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/automation">Set up automation</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <section aria-labelledby="attention-heading" className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="attention-heading" className="text-lg font-semibold">
+            Needs attention
+          </h2>
+          {data.oldestPendingSaleAt && (
+            <p className="text-xs text-muted-foreground">
+              Oldest pending exclusive job{' '}
+              {formatDistanceToNow(new Date(data.oldestPendingSaleAt), { addSuffix: true })}
+            </p>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MetricCard
+            label="Review"
+            value={counts.review}
+            detail="Awaiting approval"
+            icon={Sparkles}
+            href="/review"
+          />
+          <MetricCard
+            label="Uncurated"
+            value={counts.uncurated}
+            detail="Filter in Drafts to check"
+            icon={TriangleAlert}
+            href="/draft"
+            urgent
+          />
+          <MetricCard
+            label="Publishing failed"
+            value={counts.failed}
+            detail="Failed records to inspect"
+            icon={AlertCircle}
+            urgent
+          />
+          <MetricCard
+            label="Exclusive jobs"
+            value={exclusiveJobs}
+            detail={`${counts.salePending} pending · ${counts.saleProcessing} processing · ${counts.saleFailed} failed`}
+            icon={ShoppingBag}
+            href="/exclusives-queue"
+            urgent={counts.saleFailed > 0}
+          />
+        </div>
+      </section>
+
+      <section aria-labelledby="pipeline-heading" className="space-y-3">
+        <h2 id="pipeline-heading" className="text-lg font-semibold">
+          Pipeline
+        </h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MetricCard
+            label="Curated drafts"
+            value={counts.curatedDrafts}
+            detail="Marked as curated"
+            icon={CheckCircle2}
+            href="/draft"
+          />
+          <MetricCard
+            label="Scheduled"
+            value={counts.scheduled}
+            detail="Marked for publishing"
+            icon={CalendarClock}
+            href="/scheduled"
+          />
+          <MetricCard
+            label="Published · 24h"
+            value={counts.published24Hours}
+            detail="Rolling 24 hours"
+            icon={Clock3}
+            href="/published"
+          />
+          <MetricCard
+            label="Published · 7d"
+            value={counts.published7Days}
+            detail="Rolling seven days"
+            icon={History}
+            href="/published"
+          />
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section aria-labelledby="recent-waiting-heading">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+              <h2
+                id="recent-waiting-heading"
+                className="text-base font-semibold leading-none tracking-tight"
               >
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                        {stat.label}
-                      </p>
-                      {isLoading ? (
-                        <Skeleton className="h-6 w-10 mt-0.5" />
-                      ) : (
-                        <p
-                          className={cn('text-xl font-bold font-mono', isReview && 'text-primary')}
-                        >
-                          {stat.value}
-                        </p>
-                      )}
-                    </div>
-                    <div
-                      className={cn(
-                        'p-1.5 rounded-md',
-                        isReview ? 'bg-primary/20' : 'bg-primary/10'
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+                Recent waiting items
+              </h2>
+              <div className="flex items-center gap-1">
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/review">Review</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/draft">Drafts</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-1 px-4 pb-4">
+              {data.recentIntake.length > 0 ? (
+                data.recentIntake.map((deviation) => (
+                  <IntakeRow key={deviation.id} deviation={deviation} />
+                ))
+              ) : (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  No recent artwork waiting.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section aria-labelledby="upcoming-heading">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+              <h2
+                id="upcoming-heading"
+                className="text-base font-semibold leading-none tracking-tight"
+              >
+                Upcoming
+              </h2>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/scheduled">Open schedule</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-1 px-4 pb-4">
+              {data.upcoming.length > 0 ? (
+                data.upcoming.map((deviation) => (
+                  <UpcomingRow key={deviation.id} deviation={deviation} />
+                ))
+              ) : (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  No future scheduled items.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
       </div>
 
-      {/* Empty State Hero */}
-      {hasNoData && (
-        <a
-          href="https://isekai.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group block"
-        >
-          <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-card/50 to-card/50 hover:border-primary/50 transition-all">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all" />
-            <CardContent className="p-8 relative">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                {/* Left Column - Content */}
-                <div className="space-y-4 px-4">
-                  <div className="flex items-center gap-3">
-                    <Rocket className="h-6 w-6 text-primary flex-shrink-0" />
-                    <h3 className="text-2xl font-bold">Get started with Isekai</h3>
-                  </div>
-                  <p className="text-muted-foreground font-sans text-base leading-relaxed">
-                    Welcome to Isekai! Start by uploading your first artwork, setting up automation
-                    workflows, or exploring the documentation to learn how to streamline your
-                    DeviantArt publishing workflow.
-                  </p>
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit">
-                    Read the Documentation
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Right Column - Documentation Preview Ornament */}
-                <div className="relative hidden lg:block">
-                  <div className="relative bg-gradient-to-br from-background/90 to-card/90 backdrop-blur-xl rounded-xl border-2 border-border/50 shadow-2xl group-hover:shadow-primary/20 transition-all">
-                    {/* Browser Chrome */}
-                    <div className="px-4 py-3 border-b border-border/50">
-                      <div className="flex items-center gap-3">
-                        {/* Traffic Lights */}
-                        <div className="flex gap-2 flex-shrink-0">
-                          <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                          <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                          <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                        </div>
-                        {/* Address Bar */}
-                        <span className="text-xs font-mono text-muted-foreground">
-                          https://isekai.sh
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Browser Content - Documentation Preview */}
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center gap-2 p-2 bg-primary/5 border border-primary/20 rounded-lg">
-                        <BookOpen className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-medium">Getting Started</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
-                        <Zap className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Automation
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
-                        <FileImage className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Upload Artwork
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-card/50 border border-border/30 rounded-lg">
-                        <Sparkles className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          ComfyUI Integration
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Decorative glow */}
-                  <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all" />
-                </div>
+      <section aria-labelledby="automations-heading">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+            <h2
+              id="automations-heading"
+              className="flex items-center gap-2 text-base font-semibold leading-none tracking-tight"
+            >
+              <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
+              Automations
+            </h2>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/automation">Manage</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {data.automations.length > 0 ? (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {data.automations.map((automation) => (
+                  <AutomationRow key={automation.id} automation={automation} />
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </a>
-      )}
-
-      {/* Row 2: Pending Review + Recent Drafts side by side */}
-      {!hasNoData && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Pending Review */}
-            <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-card">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2 font-mono">
-                    <ClipboardCheck className="h-4 w-4 text-primary" />
-                    Pending Review
-                  </CardTitle>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-                    <Link to="/review">
-                      View all <ChevronRight className="h-3 w-3 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {isLoading ? (
-                  <div className="grid grid-cols-4 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                      <Skeleton key={i} className="aspect-square rounded" />
-                    ))}
-                  </div>
-                ) : !reviewData?.deviations?.length ? (
-                  <div className="py-6 flex flex-col items-center justify-center text-muted-foreground">
-                    <Sparkles className="h-6 w-6 mb-2 opacity-50" />
-                    <p className="text-sm">All caught up!</p>
-                  </div>
-                ) : (
-                  <Link to="/review" className="grid grid-cols-4 gap-2">
-                    {reviewData.deviations
-                      .slice(0, 8)
-                      .map(
-                        (item: { id: string; title: string; files?: { storageUrl: string }[] }) => (
-                          <div
-                            key={item.id}
-                            className="aspect-square rounded-sm overflow-hidden group relative"
-                          >
-                            {item.files?.[0]?.storageUrl ? (
-                              <>
-                                <img
-                                  src={selectImageVariant(item.files[0], ImageSize.SM)}
-                                  alt={item.title}
-                                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  decoding="async"
-                                  onError={(event) =>
-                                    fallbackImageToOriginal(
-                                      event.currentTarget,
-                                      item.files?.[0]?.storageUrl ?? ''
-                                    )
-                                  }
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                              </>
-                            ) : (
-                              <div className="h-full w-full bg-muted flex items-center justify-center">
-                                <FileImage className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      )}
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Recent Drafts */}
-            <Card className="relative overflow-hidden border-border/50 bg-card/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2 font-mono">
-                    <FileImage className="h-4 w-4 text-primary" />
-                    Recent Drafts
-                  </CardTitle>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-                    <Link to="/draft">
-                      View all <ChevronRight className="h-3 w-3 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {isLoading ? (
-                  <div className="grid grid-cols-4 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                      <Skeleton key={i} className="aspect-square rounded" />
-                    ))}
-                  </div>
-                ) : !draftsData?.deviations?.length ? (
-                  <div className="py-6 flex flex-col items-center justify-center text-muted-foreground">
-                    <FileImage className="h-6 w-6 mb-2 opacity-50" />
-                    <p className="text-sm">No drafts yet</p>
-                  </div>
-                ) : (
-                  <Link to="/draft" className="grid grid-cols-4 gap-2">
-                    {draftsData.deviations
-                      .slice(0, 8)
-                      .map(
-                        (item: { id: string; title: string; files?: { storageUrl: string }[] }) => (
-                          <div
-                            key={item.id}
-                            className="aspect-square rounded-sm overflow-hidden group relative"
-                          >
-                            {item.files?.[0]?.storageUrl ? (
-                              <>
-                                <img
-                                  src={selectImageVariant(item.files[0], ImageSize.SM)}
-                                  alt={item.title}
-                                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  decoding="async"
-                                  onError={(event) =>
-                                    fallbackImageToOriginal(
-                                      event.currentTarget,
-                                      item.files?.[0]?.storageUrl ?? ''
-                                    )
-                                  }
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                              </>
-                            ) : (
-                              <div className="h-full w-full bg-muted flex items-center justify-center">
-                                <FileImage className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      )}
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Row 3: Schedule + Automations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Upcoming Schedule */}
-            <Card className="relative overflow-hidden border-border/50 bg-card/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2 font-mono">
-                    <Clock className="h-4 w-4 text-primary" />
-                    Upcoming Schedule
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-primary hover:text-primary"
-                    asChild
-                  >
-                    <Link to="/scheduled">
-                      View all <ChevronRight className="h-3 w-3 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2].map((i) => (
-                      <Skeleton key={i} className="h-10 w-full" />
-                    ))}
-                  </div>
-                ) : !scheduledData?.deviations?.length ? (
-                  <div className="py-6 flex flex-col items-center justify-center text-muted-foreground">
-                    <Clock className="h-6 w-6 mb-2 opacity-50" />
-                    <p className="text-sm">No scheduled posts</p>
-                  </div>
-                ) : (
-                  <Link to="/scheduled" className="block space-y-1">
-                    {scheduledData.deviations.slice(0, 2).map(
-                      (
-                        item: {
-                          id: string;
-                          title: string;
-                          scheduledAt?: string;
-                          files?: { storageUrl: string }[];
-                        },
-                        idx: number
-                      ) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                        >
-                          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground w-20 shrink-0">
-                            <div
-                              className={cn(
-                                'w-1.5 h-1.5 rounded-full shrink-0',
-                                idx === 0 ? 'bg-primary' : 'bg-muted-foreground/50'
-                              )}
-                            />
-                            <span>
-                              {item.scheduledAt
-                                ? new Date(item.scheduledAt).toLocaleTimeString(undefined, {
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                  })
-                                : '--:--'}
-                            </span>
-                          </div>
-                          {item.files?.[0]?.storageUrl ? (
-                            <img
-                              src={selectImageVariant(item.files[0], ImageSize.XS)}
-                              alt={item.title}
-                              className="h-8 w-8 rounded-sm object-cover"
-                              decoding="async"
-                              onError={(event) =>
-                                fallbackImageToOriginal(
-                                  event.currentTarget,
-                                  item.files?.[0]?.storageUrl ?? ''
-                                )
-                              }
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded-sm bg-muted flex items-center justify-center">
-                              <FileImage className="h-3 w-3 text-muted-foreground" />
-                            </div>
-                          )}
-                          <p className="text-sm truncate group-hover:text-primary transition-colors flex-1">
-                            {item.title || 'Untitled'}
-                          </p>
-                        </div>
-                      )
-                    )}
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Active Automations */}
-            <Card className="relative overflow-hidden border-border/50 bg-card/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2 font-mono">
-                    <Zap className="h-4 w-4 text-primary" />
-                    Active Automations
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-primary hover:text-primary"
-                    asChild
-                  >
-                    <Link to="/automation">
-                      View all <ChevronRight className="h-3 w-3 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2].map((i) => (
-                      <Skeleton key={i} className="h-10 w-full" />
-                    ))}
-                  </div>
-                ) : !activeAutomations.filter((a: { isEnabled: boolean }) => a.isEnabled).length ? (
-                  <div className="py-6 flex flex-col items-center justify-center text-muted-foreground">
-                    <Zap className="h-6 w-6 mb-2 opacity-50" />
-                    <p className="text-sm">No active automations</p>
-                  </div>
-                ) : (
-                  <Link to="/automation" className="block space-y-1">
-                    {activeAutomations
-                      .filter((a: { isEnabled: boolean }) => a.isEnabled)
-                      .slice(0, 2)
-                      .map(
-                        (automation: {
-                          id: string;
-                          name: string;
-                          scheduleType: string;
-                          intervalMinutes?: number | null;
-                        }) => (
-                          <div
-                            key={automation.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                          >
-                            <div className="h-8 w-8 rounded-sm bg-primary/10 flex items-center justify-center">
-                              <Zap className="h-3.5 w-3.5 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm truncate group-hover:text-primary transition-colors">
-                                {automation.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {automation.scheduleType === 'interval'
-                                  ? `Every ${automation.intervalMinutes} min`
-                                  : 'Fixed schedule'}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 rounded text-emerald-500">
-                              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              <span className="text-[10px] font-medium">Running</span>
-                            </div>
-                          </div>
-                        )
-                      )}
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Row 4: Instance Info */}
-          <Card className="border-border/50 bg-card/30">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-center justify-between gap-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Account:</span>
-                  <span className="font-mono text-muted-foreground/80">
-                    {user?.username || 'Not connected'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Instance:</span>
-                  <span className="font-mono text-muted-foreground/80">
-                    {window.location.origin}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Version:</span>
-                  <span className="font-mono text-muted-foreground/80">{__APP_VERSION__}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Server className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Environment:</span>
-                  <span className="font-mono text-muted-foreground/80 capitalize">
-                    {import.meta.env.MODE}
-                  </span>
-                </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <p className="text-sm text-muted-foreground">No enabled automations.</p>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/automation">Create automation</Link>
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
